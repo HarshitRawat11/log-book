@@ -1,0 +1,20 @@
+node_modules
+dist
+dist-ssr
+.DS_Store
+*.local
+
+# Secrets. The anon key is public by design, but the file also holds whatever
+# else ends up here, so the whole thing stays out of git.
+.env
+.env.local
+.env.*.local
+
+# Personal training data (see README - data provenance)
+data/raw-notes.txt
+data/import-review.csv
+
+# Generated PWA artefacts
+dev-dist
+public/icon-*.png
+public/apple-touch-icon.png

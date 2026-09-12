@@ -1,0 +1,98 @@
+@import 'tailwindcss';
+
+/* ---------------------------------------------------------------------------
+   Palette.
+
+   Dark by default (brief 8: gym lighting and evening use), honouring
+   prefers-color-scheme. Semantic names only - no raw colours in components,
+   so a palette change is one file.
+
+   Contrast targets: --text on --bg and --text on --surface both clear 7:1,
+   because this gets read at arm's length, out of breath, under bad light.
+--------------------------------------------------------------------------- */
+
+:root {
+  --bg: #0b0f14;
+  --surface: #141a22;
+  --surface-2: #1d252f;
+  --border: #2a3441;
+  --text: #e8edf3;
+  --text-dim: #97a3b3;
+  --accent: #4ea3ff;
+  --accent-text: #04121f;
+  --danger: #ff6b6b;
+  --ok: #3ddc97;
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f7f9fb;
+    --surface: #ffffff;
+    --surface-2: #eef2f6;
+    --border: #d5dde6;
+    --text: #101720;
+    --text-dim: #5a6675;
+    --accent: #0b6bcb;
+    --accent-text: #ffffff;
+    --danger: #c62828;
+    --ok: #1b7f5a;
+    color-scheme: light;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-text: var(--text);
+  --color-text-dim: var(--text-dim);
+  --color-accent: var(--accent);
+  --color-accent-text: var(--accent-text);
+  --color-danger: var(--danger);
+  --color-ok: var(--ok);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+  /* Stops Android Chrome inflating text in landscape and breaking the layout. */
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Tap targets are 44px+ everywhere; the grey flash on top of that just looks
+   broken. Focus-visible rings are kept - they are the keyboard affordance. */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Numeric inputs: no spinners, tabular figures so digits do not jump width
+   while you are typing a weight one-handed. */
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
