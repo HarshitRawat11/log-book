@@ -1,0 +1,60 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# Single-page app. Every unmatched path must serve index.html so React Router
+# can resolve it client-side. Without this, a hard load of /train or - more
+# importantly - the magic-link landing at /auth/callback returns a 404.
+#
+# Netlify matches real files before applying this, so /sw.js, /manifest.webmanifest
+# and /icon-*.png are still served as themselves.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    # No geolocation, camera or microphone anywhere in this app.
+    Permissions-Policy = "geolocation=(), camera=(), microphone=(), interest-cohort=()"
+    # connect-src is the one that matters: it pins which hosts the app may talk
+    # to. Supabase for data and auth; Open Food Facts is listed ahead of Phase 3
+    # so adding food search later does not silently fail on a CSP violation.
+    Content-Security-Policy = """
+      default-src 'self'; \
+      base-uri 'self'; \
+      object-src 'none'; \
+      frame-ancestors 'none'; \
+      form-action 'self'; \
+      img-src 'self' data: blob:; \
+      style-src 'self' 'unsafe-inline'; \
+      script-src 'self'; \
+      manifest-src 'self'; \
+      worker-src 'self'; \
+      connect-src 'self' https://*.supabase.co wss://*.supabase.co https://world.openfoodfacts.org https://search.openfoodfacts.org\
+    """
+
+# The service worker must never be cached, or a new deploy never reaches a
+# phone that already has the old one registered.
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# Hashed asset filenames, so these are safe to cache hard.
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
