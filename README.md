@@ -82,14 +82,33 @@ It is a known limitation, not an oversight. If a real conflict ever occurs, revi
 ## Data provenance
 
 - **Training and food entries** are yours, stored in your own Supabase project.
-- **Imported history** (the one-time ETL from phone notes) is stamped `source = 'import'`
-  with a shared `import_batch_id` on both `workouts` and `sets`, so the entire import can be
-  removed with a single statement.
+- **History is entered by hand.** A one-time ETL from two months of phone notes was attempted
+  and abandoned — see below.
 - **`food_log` rows snapshot their macros at the moment of logging.** They are never
   recomputed from the current `foods` row. Correcting a food's macros in November does not
   rewrite August. History is a record, not a view.
-- `data/raw-notes.txt` and `data/import-review.csv` are gitignored as personal data. The
-  parser and the exercise map are committed, so the import rules stay auditable.
+- Anything under `data/*.txt`, plus `data/import-review.csv`, is gitignored as personal data.
+
+### The abandoned import
+
+A parser was written and run against a representative session before this was called off, so
+the reasoning is on the record rather than a matter of taste.
+
+It put **18 of 18 rows in `ambiguous`** — correctly. The notes carry no dates at all, and
+`workouts.date` is `not null`, so no session can be placed. Beyond that: per-side drop sets
+are written on one line (`10 kg - 4, 5 kg - 6 R, 10 kg - 6, 5 kg - 4 L`) with no side or
+drop-set column to receive them; machine settings ride inside the exercise name
+(`Peck deck fly w 1 seat and 3 pin`), which forks one exercise into two the week a seat
+position changes; and warm-ups are unmarked, so every set would import as a working set and
+feed the progression engine.
+
+None of that is a parser bug. The information genuinely is not in the text, and a rule that
+guesses at it produces plausible wrong numbers instead of visible gaps. Reviewing two months
+of that by hand costs more than retyping the sessions, so history is backfilled through
+**History → pick a date**.
+
+`source` and `import_batch_id` remain on `workouts` and `sets`. They cost nothing, and they
+are the right shape if a bulk load is ever worth doing.
 
 ## Units
 
@@ -197,3 +216,6 @@ Magic links only work for origins Supabase knows about. In
       repeat-a-session
 - [x] **Phase 3** — diet: foods, recipes with yield, food log, targets, provider search
 - [x] **Phase 4** — progress: charts, bodyweight, weekly rollups, export, deployed
+
+All seven v1 acceptance criteria are met. The historical import is **not being done** — history
+is typed in by hand, for the reasons under data provenance above.

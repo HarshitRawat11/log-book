@@ -11,7 +11,7 @@ dist-ssr
 .env.*.local
 
 # Personal training data (see README - data provenance)
-data/raw-notes.txt
+data/*.txt
 data/import-review.csv
 
 # Generated PWA artefacts
