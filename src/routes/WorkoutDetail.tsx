@@ -75,6 +75,7 @@ export function WorkoutDetail() {
             exercise={e}
             workoutId={workout.id}
             sets={sets ?? []}
+            showSuggestion={false}
             onRemove={() => {
               if ((sets ?? []).some((s) => s.exercise_id === e.id)) return
               void removeExerciseFromSession(workout.id, e.id)

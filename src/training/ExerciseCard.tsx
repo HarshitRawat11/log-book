@@ -20,11 +20,18 @@ export function ExerciseCard({
   workoutId,
   sets,
   onRemove,
+  showSuggestion = true,
 }: {
   exercise: Exercise
   workoutId: string
   sets: WorkoutSet[]
   onRemove: () => void
+  /**
+   * Off when reviewing a past session. "Next time do 62.5kg" is noise when you
+   * have opened a session from nine days ago to correct a typo, and worse than
+   * noise if it gets read as advice about that day.
+   */
+  showSuggestion?: boolean
 }) {
   const mine = useMemo(
     () => sets.filter((s) => s.exercise_id === exercise.id).sort((a, b) => a.set_index - b.set_index),
@@ -38,8 +45,8 @@ export function ExerciseCard({
   )
 
   const suggestion = useMemo(
-    () => (history && history.length ? suggestNext(exercise, history) : null),
-    [exercise, history],
+    () => (showSuggestion && history && history.length ? suggestNext(exercise, history) : null),
+    [exercise, history, showSuggestion],
   )
   const lastSession = history?.[0]
 
