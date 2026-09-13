@@ -21,3 +21,6 @@ public/apple-touch-icon.png
 
 # Supabase CLI local state
 supabase/.temp/
+
+# Netlify CLI local state
+.netlify/
