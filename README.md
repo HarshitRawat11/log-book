@@ -14,9 +14,9 @@ one hand free, and for being easy to change later.
 | UI | React 18 + TypeScript |
 | Styling | Tailwind CSS 4 |
 | Routing | React Router 7 |
-| Local store | IndexedDB via Dexie *(Phase 2)* |
+| Local store | IndexedDB via Dexie |
 | Backend | Supabase (Postgres + Auth), region `ap-south-1` |
-| Charts | Recharts *(Phase 4)* |
+| Charts | Recharts |
 | PWA | `vite-plugin-pwa` (Workbox) |
 
 React 18 rather than 19 is deliberate: it is what the project brief specifies, and it has
@@ -120,6 +120,30 @@ for weeks.
 Anything a provider returns is cached into the local `foods` table on first use,
 so the library becomes self-sufficient.
 
+## Charts
+
+Four views, each answering one question. Formulas are exactly the three the
+brief specifies:
+
+- **Estimated 1RM** per exercise — Epley, `weight × (1 + reps/30)`, taking the
+  best set of each session. Labelled an estimate in the UI, with the caveat that
+  accuracy degrades above ~10–12 reps. A single rep returns the weight itself
+  rather than the formula's inflated 1.033×.
+- **Session tonnage** — `Σ (weight × reps)` across working sets, warm-ups excluded.
+- **Weekly working sets** per muscle group, by ISO week. Called *working* sets,
+  not "hard" sets: in the literature a hard set means one taken near failure, and
+  since RIR is optional here that cannot be filtered on honestly.
+- **Bodyweight** with a 7-day moving average, computed over a 7-day *window*
+  rather than the last 7 readings — so a gap in weighing widens the window
+  instead of silently averaging across three weeks.
+
+Series colours are fixed validated slots (`--series-1..7` in `index.css`),
+assigned by slot and never cycled. They pass lightness-band, chroma, adjacent-pair
+CVD separation, normal-vision and contrast checks against both card surfaces. In
+light mode three slots fall below 3:1 on white, so the stacked chart ships a
+**table view** as relief. A ninth muscle group is never given a generated hue —
+past six, series fold into "Other".
+
 ## Deployment
 
 Netlify, site `log-book-hr` → **https://log-book-hr.netlify.app**
@@ -172,4 +196,4 @@ Magic links only work for origins Supabase knows about. In
 - [x] **Phase 2** — training: exercise library, logging, set editing, outbox and sync, progression,
       repeat-a-session
 - [x] **Phase 3** — diet: foods, recipes with yield, food log, targets, provider search
-- [ ] **Phase 4** — progress: charts, bodyweight, rollups, export, deployment
+- [x] **Phase 4** — progress: charts, bodyweight, weekly rollups, export, deployed

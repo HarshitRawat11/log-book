@@ -6,6 +6,12 @@ import { useAuth } from '../auth/AuthProvider'
 import { getSyncStatus, subscribeSync, syncNow, type SyncStatus } from '../db/sync'
 import { collectDiagnostics, formatDiagnostics } from '../lib/diagnostics'
 import { Targets } from '../food/Targets'
+import {
+  exportBodyweightCsv,
+  exportFoodCsv,
+  exportJson,
+  exportSetsCsv,
+} from '../lib/export'
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
@@ -150,6 +156,38 @@ export function Settings() {
         </button>
       )}
 
+      <h2 className="mb-2 mt-6 px-1 text-sm font-semibold text-text-dim">Export</h2>
+      <p className="mb-2 px-1 text-xs text-text-dim">
+        Everything is exported from this device, so it works offline and includes anything not yet
+        synced.
+      </p>
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          onClick={() => void exportJson()}
+          className="min-h-12 rounded-xl border border-border bg-surface text-sm font-medium"
+        >
+          All data (JSON)
+        </button>
+        <button
+          onClick={() => void exportSetsCsv()}
+          className="min-h-12 rounded-xl border border-border bg-surface text-sm font-medium"
+        >
+          Sets (CSV)
+        </button>
+        <button
+          onClick={() => void exportFoodCsv()}
+          className="min-h-12 rounded-xl border border-border bg-surface text-sm font-medium"
+        >
+          Food log (CSV)
+        </button>
+        <button
+          onClick={() => void exportBodyweightCsv()}
+          className="min-h-12 rounded-xl border border-border bg-surface text-sm font-medium"
+        >
+          Bodyweight (CSV)
+        </button>
+      </div>
+
       <h2 className="mb-2 mt-6 px-1 text-sm font-semibold text-text-dim">Diagnostics</h2>
       <p className="mb-2 px-1 text-xs text-text-dim">
         A snapshot of build, sync and storage state. No tokens, and no workout data — outbox
@@ -183,10 +221,6 @@ export function Settings() {
                      text-[11px] leading-snug outline-none"
         />
       )}
-
-      <p className="mt-6 px-1 text-sm text-text-dim">
-        Charts, bodyweight tracking and data export arrive in Phase 4.
-      </p>
 
       {blocked !== null ? (
         <div className="mt-6 rounded-xl border border-danger/40 bg-danger/10 p-4">

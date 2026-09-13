@@ -23,6 +23,18 @@
   --danger: #ff6b6b;
   --ok: #3ddc97;
   color-scheme: dark;
+
+  /* Chart series, in fixed slot order - assigned by slot, never cycled.
+     Validated against the dark card surface (#141a22): lightness band, chroma
+     floor, adjacent-pair CVD separation, normal-vision floor and 3:1 contrast
+     all pass. Do not re-order or substitute without re-validating. */
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-4: #c98500;
+  --series-5: #d55181;
+  --series-6: #008300;
+  --series-7: #9085e9;
 }
 
 @media (prefers-color-scheme: light) {
@@ -38,6 +50,17 @@
     --danger: #c62828;
     --ok: #1b7f5a;
     color-scheme: light;
+
+    /* Same eight hues re-stepped for the light surface, not an automatic flip.
+       Aqua, yellow and magenta fall below 3:1 on white, so any chart using
+       them ships a table view as relief - see Progress. */
+    --series-1: #2a78d6;
+    --series-2: #eb6834;
+    --series-3: #1baf7a;
+    --series-4: #eda100;
+    --series-5: #e87ba4;
+    --series-6: #008300;
+    --series-7: #4a3aa7;
   }
 }
 
