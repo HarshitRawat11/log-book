@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 import { setCurrentUserId } from '../db/mutate'
-import { clearLocal } from '../db/db'
+import { clearLocal, requestPersistentStorage } from '../db/db'
 import { resumeAfterAuth, startSync, stopSync } from '../db/sync'
 
 type AuthState = {
@@ -43,6 +43,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (next) {
         startSync()
         resumeAfterAuth()
+        // Ask once we know the app is actually in use - Chrome weighs
+        // engagement and installation when deciding whether to grant it.
+        void requestPersistentStorage()
       }
     }
 

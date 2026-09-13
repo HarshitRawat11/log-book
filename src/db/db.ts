@@ -66,6 +66,28 @@ export class LogBookDB extends Dexie {
 export const db = new LogBookDB()
 
 /**
+ * Ask the browser not to evict our IndexedDB.
+ *
+ * Without this, storage is "best effort": Android can clear it under storage
+ * pressure. For an offline-first app that is not a cosmetic risk - the outbox
+ * is the ONLY copy of a set logged in a basement until it syncs.
+ *
+ * Chrome grants this silently for installed PWAs and high-engagement sites, so
+ * there is normally no prompt. A refusal is not an error worth surfacing:
+ * nothing behaves differently, the data is just evictable. Settings →
+ * Diagnostics reports the outcome as `storage.persisted`.
+ */
+export async function requestPersistentStorage(): Promise<boolean | null> {
+  try {
+    if (!navigator.storage?.persist) return null
+    if (await navigator.storage.persisted()) return true
+    return await navigator.storage.persist()
+  } catch {
+    return null
+  }
+}
+
+/**
  * Wipes every local table. Used on sign-out: the next person to sign in on this
  * device must not inherit the previous account's cache.
  *

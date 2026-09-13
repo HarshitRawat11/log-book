@@ -4,6 +4,7 @@ import { Screen } from '../components/Screen'
 import { SyncPill } from '../components/SyncPill'
 import { useAuth } from '../auth/AuthProvider'
 import { getSyncStatus, subscribeSync, syncNow, type SyncStatus } from '../db/sync'
+import { collectDiagnostics, formatDiagnostics } from '../lib/diagnostics'
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
@@ -19,8 +20,28 @@ export function Settings() {
   const [sync, setSync] = useState<SyncStatus>(getSyncStatus)
   const [blocked, setBlocked] = useState<number | null>(null)
   const [update, setUpdate] = useState<'idle' | 'checking' | 'found' | 'current'>('idle')
+  const [diag, setDiag] = useState<string | null>(null)
+  const [copied, setCopied] = useState<'idle' | 'ok' | 'failed'>('idle')
 
   useEffect(() => subscribeSync(setSync), [])
+
+  async function copyDiagnostics() {
+    const text = formatDiagnostics(await collectDiagnostics())
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopied('ok')
+      setTimeout(() => setCopied('idle'), 2500)
+    } catch {
+      // Clipboard access can be refused - a non-secure context, or the page not
+      // being focused. Falling back to showing the text beats a dead button.
+      setCopied('failed')
+      setDiag(text)
+    }
+  }
+
+  async function showDiagnostics() {
+    setDiag(diag ? null : formatDiagnostics(await collectDiagnostics()))
+  }
 
   /**
    * The service worker only swaps on demand (registerType 'prompt'), which is
@@ -118,6 +139,40 @@ export function Settings() {
         >
           Reload now
         </button>
+      )}
+
+      <h2 className="mb-2 mt-6 px-1 text-sm font-semibold text-text-dim">Diagnostics</h2>
+      <p className="mb-2 px-1 text-xs text-text-dim">
+        A snapshot of build, sync and storage state. No tokens, and no workout data — outbox
+        entries list their field names only.
+      </p>
+      <div className="flex gap-2">
+        <button
+          onClick={() => void copyDiagnostics()}
+          className="min-h-12 flex-1 rounded-xl border border-border bg-surface font-medium"
+        >
+          {copied === 'ok'
+            ? 'Copied'
+            : copied === 'failed'
+              ? 'Copy failed — shown below'
+              : 'Copy diagnostics'}
+        </button>
+        <button
+          onClick={() => void showDiagnostics()}
+          className="min-h-12 rounded-xl border border-border bg-surface px-4 text-sm"
+        >
+          {diag ? 'Hide' : 'View'}
+        </button>
+      </div>
+      {diag && (
+        <textarea
+          readOnly
+          value={diag}
+          onFocus={(e) => e.currentTarget.select()}
+          rows={14}
+          className="mt-2 w-full rounded-xl border border-border bg-surface-2 p-3 font-mono
+                     text-[11px] leading-snug outline-none"
+        />
       )}
 
       <p className="mt-6 px-1 text-sm text-text-dim">
