@@ -9,9 +9,15 @@ import { db } from '../db/db'
 import { alive, newRow, putRow, deleteRow } from '../db/mutate'
 import { scheduleFlush } from '../db/sync'
 import type { Exercise, RoutineDay, Workout } from '../db/types'
-import { listExercises, setsForWorkout, tonnage } from '../training/queries'
+import {
+  listExercises,
+  recentSessionSummaries,
+  setsForWorkout,
+  tonnage,
+  type SessionSummary,
+} from '../training/queries'
 import { formatKg } from '../training/progression'
-import { todayIso } from '../lib/dates'
+import { relativeAge, shortDate, todayIso } from '../lib/dates'
 
 /**
  * Today's session - the screen that matters most (brief 7.1).
@@ -66,6 +72,11 @@ export function Train() {
     [],
   )
   const allExercises = useLiveQuery(() => listExercises(), [], [])
+  const recent = useLiveQuery(
+    () => recentSessionSummaries({ limit: 5, excludeDate: date }),
+    [date, workout?.id],
+    [],
+  )
   const routineDays = useLiveQuery(
     async () => alive(await db.routine_days.toArray()).sort((a, b) => a.day_index - b.day_index),
     [],
@@ -81,12 +92,12 @@ export function Train() {
     month: 'long',
   })
 
-  async function startSession(day?: RoutineDay) {
-    await putRow(
+  async function startSession(opts: { day?: RoutineDay; repeat?: SessionSummary } = {}) {
+    const created = await putRow(
       'workouts',
       newRow({
         date,
-        routine_day_id: day?.id ?? null,
+        routine_day_id: opts.day?.id ?? opts.repeat?.routine_day_id ?? null,
         notes: null,
         started_at: new Date().toISOString(),
         finished_at: null,
@@ -94,6 +105,12 @@ export function Train() {
         import_batch_id: null,
       }),
     )
+    // Seed the exercise list from the session being repeated. This writes only
+    // the local order key - no sets are copied. Repeating a day means "put the
+    // same lifts in front of me", not "pretend I already did them".
+    if (opts.repeat) {
+      await db.meta.put({ key: orderKey(created.id), value: opts.repeat.exercise_ids })
+    }
     scheduleFlush()
   }
 
@@ -141,14 +158,51 @@ export function Train() {
               >
                 Start session
               </button>
+
+              {(recent ?? []).length > 0 && (
+                <div>
+                  <p className="mb-2 px-1 text-xs text-text-dim">
+                    or repeat — same lifts, nothing pre-logged
+                  </p>
+                  <ul className="divide-y divide-border overflow-hidden rounded-2xl border
+                                 border-border bg-surface">
+                    {recent!.map((s) => {
+                      const names = s.exercise_ids.map((id) => byId.get(id)?.name).filter(Boolean)
+                      const shown = names.slice(0, 3).join(', ')
+                      const extra = names.length > 3 ? `, +${names.length - 3}` : ''
+                      return (
+                        <li key={s.workout_id}>
+                          <button
+                            onClick={() => void startSession({ repeat: s })}
+                            className="flex min-h-14 w-full flex-col items-start gap-0.5 px-4 py-2
+                                       text-left"
+                          >
+                            <span className="text-sm font-medium">
+                              {shortDate(s.date)}{' '}
+                              <span className="font-normal text-text-dim">
+                                · {relativeAge(s.date)} · {s.set_count} sets
+                              </span>
+                            </span>
+                            <span className="line-clamp-1 text-xs text-text-dim">
+                              {shown || 'no exercises'}
+                              {extra}
+                            </span>
+                          </button>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                </div>
+              )}
+
               {(routineDays ?? []).length > 0 && (
                 <div>
-                  <p className="mb-2 text-xs text-text-dim">or start from a day</p>
+                  <p className="mb-2 px-1 text-xs text-text-dim">or start from a day</p>
                   <div className="flex flex-wrap gap-2">
                     {routineDays!.map((d) => (
                       <button
                         key={d.id}
-                        onClick={() => void startSession(d)}
+                        onClick={() => void startSession({ day: d })}
                         className="min-h-11 rounded-full border border-border bg-surface px-4
                                    text-sm font-medium"
                       >
