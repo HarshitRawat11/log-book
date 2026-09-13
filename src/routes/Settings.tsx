@@ -5,6 +5,7 @@ import { SyncPill } from '../components/SyncPill'
 import { useAuth } from '../auth/AuthProvider'
 import { getSyncStatus, subscribeSync, syncNow, type SyncStatus } from '../db/sync'
 import { collectDiagnostics, formatDiagnostics } from '../lib/diagnostics'
+import { Targets } from '../food/Targets'
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
@@ -113,7 +114,15 @@ export function Settings() {
             ›
           </span>
         </Link>
+        <Link to="/foods" className="flex min-h-14 items-center justify-between px-4">
+          <span>Foods and recipes</span>
+          <span aria-hidden="true" className="text-text-dim">
+            ›
+          </span>
+        </Link>
       </div>
+
+      <Targets />
 
       <h2 className="mb-2 mt-6 px-1 text-sm font-semibold text-text-dim">Version</h2>
       <section className="rounded-2xl border border-border bg-surface">
@@ -176,7 +185,7 @@ export function Settings() {
       )}
 
       <p className="mt-6 px-1 text-sm text-text-dim">
-        Diet targets, the BMR calculator and data export arrive in later phases.
+        Charts, bodyweight tracking and data export arrive in Phase 4.
       </p>
 
       {blocked !== null ? (

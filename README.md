@@ -37,6 +37,7 @@ npm run dev
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm test` | Vitest, run once |
 | `npm run icons` | Regenerate `public/icon-*.png` from `scripts/generate-icons.mjs` |
+| `npm run ifct` | Regenerate `src/data/ifct.json` from the IFCT 2017 source |
 
 ## Security model
 
@@ -94,6 +95,31 @@ It is a known limitation, not an oversight. If a real conflict ever occurs, revi
 
 Kilograms and grams throughout. No unit switcher.
 
+## Food data
+
+Two providers behind one interface (`src/food/provider.ts`), so swapping either
+is a one-file change:
+
+- **IFCT 2017**, bundled. 528 Indian foods from the Indian Food Composition
+  Tables (National Institute of Nutrition, Hyderabad), trimmed at build time to
+  the six fields we use — about 10KB gzipped, lazy-loaded. No key, no rate
+  limit, no outage. Searched first, and works in a gym basement.
+- **Open Food Facts**, remote. Packaged and branded goods only, behind an
+  explicit button. Note that a browser cannot set `User-Agent` (forbidden header),
+  so we send `X-User-Agent`, which OFF accepts for exactly this reason. Their
+  `/api/v2/search` ignores `search_terms` and returns the whole database, so we
+  use `cgi/search.pl`, which actually does full text. Data is ODbL.
+
+**IFCT energy is in kilojoules and the source documents no units at all.** The
+kJ→kcal conversion was inferred by arithmetic against foods with known values
+and is pinned by both a build-time tripwire in `scripts/generate-ifct.mjs` and a
+test. If a regenerated dataset ever ships raw kJ, every calorie in the app would
+silently become 4.184× too large — plausible enough on one row to go unnoticed
+for weeks.
+
+Anything a provider returns is cached into the local `foods` table on first use,
+so the library becomes self-sufficient.
+
 ## Deployment
 
 Netlify, site `log-book-hr` → **https://log-book-hr.netlify.app**
@@ -145,5 +171,5 @@ Magic links only work for origins Supabase knows about. In
 - [x] **Phase 1** — scaffold, schema, RLS, magic-link auth, app shell, PWA, deployed and installed
 - [x] **Phase 2** — training: exercise library, logging, set editing, outbox and sync, progression,
       repeat-a-session
-- [ ] **Phase 3** — diet: foods, recipes with yield, food log, provider search
+- [x] **Phase 3** — diet: foods, recipes with yield, food log, targets, provider search
 - [ ] **Phase 4** — progress: charts, bodyweight, rollups, export, deployment

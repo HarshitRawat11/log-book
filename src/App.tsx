@@ -11,6 +11,7 @@ import { Settings } from './routes/Settings'
 import { Exercises } from './routes/Exercises'
 import { History } from './routes/History'
 import { WorkoutDetail } from './routes/WorkoutDetail'
+import { Foods } from './routes/Foods'
 import { isConfigured } from './lib/env'
 
 function NotConfigured() {
@@ -60,6 +61,7 @@ function Router() {
       <Route element={<RequireAuth />}>
         <Route path="/train" element={<Train />} />
         <Route path="/food" element={<Food />} />
+        <Route path="/foods" element={<Foods />} />
         <Route path="/progress" element={<Progress />} />
         <Route path="/exercises" element={<Exercises />} />
         <Route path="/history" element={<History />} />

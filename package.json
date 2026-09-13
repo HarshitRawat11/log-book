@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "icons": "node scripts/generate-icons.mjs",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "ifct": "node scripts/generate-ifct.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.116.0",
@@ -21,6 +22,7 @@
     "react-router-dom": "^7.18.3"
   },
   "devDependencies": {
+    "@ifct2017/compositions": "^2.0.9",
     "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^26.5.1",
     "@types/react": "^18.3.31",
