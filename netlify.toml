@@ -41,6 +41,14 @@
       connect-src 'self' https://*.supabase.co wss://*.supabase.co https://world.openfoodfacts.org https://search.openfoodfacts.org\
     """
 
+# Netlify does not know the .webmanifest extension and serves it as
+# application/octet-stream, which makes Chrome ignore the manifest and drop
+# the install prompt. Pin the correct type.
+[[headers]]
+  for = "/manifest.webmanifest"
+  [headers.values]
+    Content-Type = "application/manifest+json"
+
 # The service worker must never be cached, or a new deploy never reaches a
 # phone that already has the old one registered.
 [[headers]]
