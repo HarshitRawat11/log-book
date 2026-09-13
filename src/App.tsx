@@ -29,7 +29,6 @@ function AppShell() {
     <div className="flex min-h-dvh flex-col">
       <Outlet />
       <TabBar />
-      <UpdatePrompt />
     </div>
   )
 }
@@ -68,13 +67,26 @@ function Router() {
 }
 
 export function App() {
-  if (!isConfigured) return <NotConfigured />
+  // UpdatePrompt owns the useRegisterSW() call, so it has to mount in EVERY
+  // state - including signed out and not-configured. Rendering it only inside
+  // the authenticated shell meant the service worker never registered until
+  // you signed in, which in turn meant the app was not installable until you
+  // signed in. Dev hid this: devOptions injects its own registration, so it
+  // only reproduced in a production build.
+  if (!isConfigured)
+    return (
+      <>
+        <NotConfigured />
+        <UpdatePrompt />
+      </>
+    )
 
   return (
     <AuthProvider>
       <BrowserRouter>
         <Router />
       </BrowserRouter>
+      <UpdatePrompt />
     </AuthProvider>
   )
 }

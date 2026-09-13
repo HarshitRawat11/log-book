@@ -18,3 +18,6 @@ data/import-review.csv
 dev-dist
 public/icon-*.png
 public/apple-touch-icon.png
+
+# Supabase CLI local state
+supabase/.temp/
