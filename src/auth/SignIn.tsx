@@ -3,6 +3,21 @@ import { authRedirectTo, supabase } from '../lib/supabase'
 
 type Status = { kind: 'idle' } | { kind: 'sending' } | { kind: 'sent' } | { kind: 'error'; message: string }
 
+/**
+ * Supabase's raw errors are written for developers, not for someone standing in
+ * a gym. The signup one in particular ("Signups not allowed for otp") is what
+ * you get from a simple typo, which is the likeliest way to hit this at all.
+ */
+function friendlyError(message: string): string {
+  if (/signups? not allowed/i.test(message)) {
+    return 'No account for that address. Check the spelling — this app is for one account only.'
+  }
+  if (/rate limit|too many/i.test(message)) {
+    return 'Too many requests. Wait a minute and try again.'
+  }
+  return message
+}
+
 export function SignIn() {
   const [email, setEmail] = useState('')
   const [status, setStatus] = useState<Status>({ kind: 'idle' })
@@ -16,13 +31,15 @@ export function SignIn() {
       email: email.trim(),
       options: {
         emailRedirectTo: authRedirectTo(),
-        // Single account. Nobody else should ever be able to create one by
-        // typing an address into this box.
-        shouldCreateUser: true,
+        // Single account, and the account already exists. A stranger who finds
+        // this URL must not be able to create one by typing an address into
+        // this box. Belt and braces with the project's own signup setting: if
+        // that ever gets flipped back on, this still refuses.
+        shouldCreateUser: false,
       },
     })
 
-    setStatus(error ? { kind: 'error', message: error.message } : { kind: 'sent' })
+    setStatus(error ? { kind: 'error', message: friendlyError(error.message) } : { kind: 'sent' })
   }
 
   return (

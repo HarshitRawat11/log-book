@@ -137,7 +137,7 @@ Magic links only work for origins Supabase knows about. In
 ## Phase status
 
 - [x] **Phase 0** — plan, schema, screen inventory, outbox design, food-API research
-- [x] **Phase 1** — scaffold, schema, RLS, magic-link auth, app shell, PWA
+- [x] **Phase 1** — scaffold, schema, RLS, magic-link auth, app shell, PWA, deployed and installed
 - [ ] **Phase 2** — training: exercises, routines, logging, outbox, progression
 - [ ] **Phase 3** — diet: foods, recipes with yield, food log, provider search
 - [ ] **Phase 4** — progress: charts, bodyweight, rollups, export, deployment
