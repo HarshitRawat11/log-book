@@ -1,9 +1,29 @@
+import { execSync } from 'node:child_process'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
+/**
+ * Stamp the build so Settings can show which version is actually running.
+ *
+ * Worth the four lines: with registerType 'prompt', a phone keeps serving the
+ * old bundle until the update pill is tapped, and "the screen looks wrong" and
+ * "I am on last week's build" are indistinguishable without this.
+ */
+function buildStamp() {
+  try {
+    return execSync('git rev-parse --short HEAD', { encoding: 'utf8' }).trim()
+  } catch {
+    return 'unknown'
+  }
+}
+
 export default defineConfig({
+  define: {
+    __BUILD_SHA__: JSON.stringify(buildStamp()),
+    __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+  },
   plugins: [
     react(),
     tailwindcss(),

@@ -66,6 +66,34 @@ export async function recentSessions(
     .slice(0, limit)
 }
 
+export type WorkoutSummary = {
+  workout: Workout
+  exercise_ids: string[]
+  working_sets: number
+  tonnage_kg: number
+}
+
+/** Every session, newest first, for the history screen. */
+export async function listWorkoutSummaries(): Promise<WorkoutSummary[]> {
+  const workouts = alive(await db.workouts.toArray()).sort((a, b) =>
+    a.date < b.date ? 1 : a.date > b.date ? -1 : 0,
+  )
+
+  const out: WorkoutSummary[] = []
+  for (const w of workouts) {
+    const sets = await setsForWorkout(w.id)
+    const exercise_ids: string[] = []
+    for (const s of sets) if (!exercise_ids.includes(s.exercise_id)) exercise_ids.push(s.exercise_id)
+    out.push({
+      workout: w,
+      exercise_ids,
+      working_sets: sets.filter((s) => !s.is_warmup).length,
+      tonnage_kg: tonnage(sets),
+    })
+  }
+  return out
+}
+
 export type SessionSummary = {
   workout_id: string
   date: string

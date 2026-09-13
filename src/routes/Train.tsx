@@ -8,7 +8,7 @@ import { ExerciseCard } from '../training/ExerciseCard'
 import { db } from '../db/db'
 import { alive, newRow, putRow, deleteRow } from '../db/mutate'
 import { scheduleFlush } from '../db/sync'
-import type { Exercise, RoutineDay, Workout } from '../db/types'
+import type { Exercise, RoutineDay } from '../db/types'
 import {
   listExercises,
   recentSessionSummaries,
@@ -17,6 +17,12 @@ import {
   type SessionSummary,
 } from '../training/queries'
 import { formatKg } from '../training/progression'
+import {
+  addExerciseToSession,
+  orderKey,
+  removeExerciseFromSession,
+  sessionExerciseIds,
+} from '../training/session'
 import { relativeAge, shortDate, todayIso } from '../lib/dates'
 
 /**
@@ -29,28 +35,6 @@ import { relativeAge, shortDate, todayIso } from '../lib/dates'
  * than in a synced table. It is presentation state: if it were lost, you would
  * re-add an exercise, never lose a set. Sets are what sync.
  */
-
-const orderKey = (workoutId: string) => `session:${workoutId}:exercises`
-
-async function sessionExerciseIds(workout: Workout): Promise<string[]> {
-  const [manual, sets, routineLinks] = await Promise.all([
-    db.meta.get(orderKey(workout.id)).then((m) => (m?.value as string[] | undefined) ?? []),
-    setsForWorkout(workout.id),
-    workout.routine_day_id
-      ? db.routine_day_exercises
-          .where('routine_day_id')
-          .equals(workout.routine_day_id)
-          .toArray()
-          .then((r) => alive(r).sort((a, b) => a.position - b.position))
-      : Promise.resolve([]),
-  ])
-
-  const ordered: string[] = []
-  for (const id of [...routineLinks.map((r) => r.exercise_id), ...manual, ...sets.map((s) => s.exercise_id)]) {
-    if (!ordered.includes(id)) ordered.push(id)
-  }
-  return ordered
-}
 
 export function Train() {
   const date = todayIso()
@@ -116,23 +100,32 @@ export function Train() {
 
   async function addExercise(id: string) {
     if (!workout) return
-    const current = (await db.meta.get(orderKey(workout.id)))?.value as string[] | undefined
-    await db.meta.put({ key: orderKey(workout.id), value: [...(current ?? []), id] })
+    await addExerciseToSession(workout.id, id)
     setPicking(false)
   }
 
   async function removeExercise(id: string) {
     if (!workout) return
-    const hasSets = (sets ?? []).some((s) => s.exercise_id === id)
-    if (hasSets) return // logged sets must be deleted individually, never silently
-    const current = ((await db.meta.get(orderKey(workout.id)))?.value as string[]) ?? []
-    await db.meta.put({ key: orderKey(workout.id), value: current.filter((x) => x !== id) })
+    // Logged sets must be deleted individually, never silently with the card.
+    if ((sets ?? []).some((s) => s.exercise_id === id)) return
+    await removeExerciseFromSession(workout.id, id)
   }
 
   const working = (sets ?? []).filter((s) => !s.is_warmup)
 
   return (
-    <Screen title="Train" subtitle={pretty} actions={<SyncPill />}>
+    <Screen
+      title="Train"
+      subtitle={pretty}
+      actions={
+        <div className="flex items-center gap-2">
+          <Link to="/history" className="text-sm text-accent underline underline-offset-4">
+            History
+          </Link>
+          <SyncPill />
+        </div>
+      }
+    >
       {workout === undefined ? null : !workout ? (
         <div className="flex flex-col gap-4">
           {(allExercises ?? []).length === 0 ? (

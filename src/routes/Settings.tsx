@@ -18,8 +18,30 @@ export function Settings() {
   const { session, signOut } = useAuth()
   const [sync, setSync] = useState<SyncStatus>(getSyncStatus)
   const [blocked, setBlocked] = useState<number | null>(null)
+  const [update, setUpdate] = useState<'idle' | 'checking' | 'found' | 'current'>('idle')
 
   useEffect(() => subscribeSync(setSync), [])
+
+  /**
+   * The service worker only swaps on demand (registerType 'prompt'), which is
+   * right - a background reload mid-set is not acceptable - but it means a
+   * phone can sit on an old bundle indefinitely if the update pill is missed.
+   * This is the manual escape hatch, next to the build stamp that reveals it.
+   */
+  async function checkForUpdate() {
+    setUpdate('checking')
+    try {
+      const regs = await navigator.serviceWorker.getRegistrations()
+      let found = false
+      for (const r of regs) {
+        await r.update()
+        if (r.waiting || r.installing) found = true
+      }
+      setUpdate(found ? 'found' : 'current')
+    } catch {
+      setUpdate('current')
+    }
+  }
 
   async function doSignOut(force = false) {
     const r = await signOut({ force })
@@ -57,16 +79,46 @@ export function Settings() {
       </button>
 
       <h2 className="mb-2 mt-6 px-1 text-sm font-semibold text-text-dim">Library</h2>
-      <Link
-        to="/exercises"
-        className="flex min-h-14 items-center justify-between rounded-2xl border border-border
-                   bg-surface px-4"
+      <div className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-surface">
+        <Link to="/exercises" className="flex min-h-14 items-center justify-between px-4">
+          <span>Exercises</span>
+          <span aria-hidden="true" className="text-text-dim">
+            ›
+          </span>
+        </Link>
+        <Link to="/history" className="flex min-h-14 items-center justify-between px-4">
+          <span>Workout history</span>
+          <span aria-hidden="true" className="text-text-dim">
+            ›
+          </span>
+        </Link>
+      </div>
+
+      <h2 className="mb-2 mt-6 px-1 text-sm font-semibold text-text-dim">Version</h2>
+      <section className="rounded-2xl border border-border bg-surface">
+        <Row label="Build" value={__BUILD_SHA__} />
+        <Row label="Built" value={new Date(__BUILD_TIME__).toLocaleString('en-GB')} />
+      </section>
+      <button
+        onClick={() => void checkForUpdate()}
+        className="mt-3 min-h-12 w-full rounded-xl border border-border bg-surface font-medium"
       >
-        <span>Exercises</span>
-        <span aria-hidden="true" className="text-text-dim">
-          ›
-        </span>
-      </Link>
+        {update === 'checking'
+          ? 'Checking…'
+          : update === 'found'
+            ? 'Update found — reload to apply'
+            : update === 'current'
+              ? 'Already up to date'
+              : 'Check for updates'}
+      </button>
+      {update === 'found' && (
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-2 min-h-12 w-full rounded-xl bg-accent font-semibold text-accent-text"
+        >
+          Reload now
+        </button>
+      )}
 
       <p className="mt-6 px-1 text-sm text-text-dim">
         Diet targets, the BMR calculator and data export arrive in later phases.

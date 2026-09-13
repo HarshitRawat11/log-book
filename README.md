@@ -104,9 +104,15 @@ Deploys are manual and from a local build — there is no git integration and no
 CI, deliberately, while the app is still being built out phase by phase:
 
 ```bash
+git commit ...      # commit FIRST: the build stamps git HEAD into the bundle
 npm run build
 npx netlify-cli deploy --prod --dir=dist --site=log-book-hr
 ```
+
+Settings shows that stamp. With `registerType: 'prompt'` a phone keeps serving
+the old bundle until the update pill is tapped, so "the screen looks wrong" and
+"I am on last week's build" are otherwise indistinguishable. Settings also has a
+**Check for updates** button as the manual escape hatch.
 
 `netlify.toml` carries the parts that are easy to get wrong:
 
