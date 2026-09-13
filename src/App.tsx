@@ -8,6 +8,7 @@ import { Train } from './routes/Train'
 import { Food } from './routes/Food'
 import { Progress } from './routes/Progress'
 import { Settings } from './routes/Settings'
+import { Exercises } from './routes/Exercises'
 import { isConfigured } from './lib/env'
 
 function NotConfigured() {
@@ -58,6 +59,7 @@ function Router() {
         <Route path="/train" element={<Train />} />
         <Route path="/food" element={<Food />} />
         <Route path="/progress" element={<Progress />} />
+        <Route path="/exercises" element={<Exercises />} />
         <Route path="/settings" element={<Settings />} />
       </Route>
       {/* Train is the landing route: cold open lands on the logging screen. */}

@@ -35,6 +35,7 @@ npm run dev
 | `npm run dev` | Dev server on :5173, service worker enabled |
 | `npm run build` | Typecheck, then production build |
 | `npm run typecheck` | `tsc --noEmit` |
+| `npm test` | Vitest, run once |
 | `npm run icons` | Regenerate `public/icon-*.png` from `scripts/generate-icons.mjs` |
 
 ## Security model
@@ -53,8 +54,6 @@ authorise anything. The database is protected by Row Level Security, and by noth
   no social providers.
 
 ## Sync model
-
-*(Implemented in Phase 2. Recorded here now because the schema already assumes it.)*
 
 Writes are offline-first through an outbox. Every mutation writes to IndexedDB and appends
 to a local queue in one transaction; the UI re-renders from local state and never blocks on
@@ -138,6 +137,6 @@ Magic links only work for origins Supabase knows about. In
 
 - [x] **Phase 0** — plan, schema, screen inventory, outbox design, food-API research
 - [x] **Phase 1** — scaffold, schema, RLS, magic-link auth, app shell, PWA, deployed and installed
-- [ ] **Phase 2** — training: exercises, routines, logging, outbox, progression
+- [x] **Phase 2** — training: exercise library, logging, set editing, outbox and sync, progression
 - [ ] **Phase 3** — diet: foods, recipes with yield, food log, provider search
 - [ ] **Phase 4** — progress: charts, bodyweight, rollups, export, deployment
