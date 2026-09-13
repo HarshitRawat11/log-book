@@ -6,7 +6,7 @@ import { EmptyState } from '../components/EmptyState'
 import { SyncPill } from '../components/SyncPill'
 import { ExerciseCard } from '../training/ExerciseCard'
 import { db } from '../db/db'
-import { alive, newRow, putRow, deleteRow } from '../db/mutate'
+import { alive, deleteRow } from '../db/mutate'
 import { scheduleFlush } from '../db/sync'
 import type { Exercise, RoutineDay } from '../db/types'
 import {
@@ -19,9 +19,10 @@ import {
 import { formatKg } from '../training/progression'
 import {
   addExerciseToSession,
-  orderKey,
+  createWorkout,
   removeExerciseFromSession,
   sessionExerciseIds,
+  workoutsOnDate,
 } from '../training/session'
 import { relativeAge, shortDate, todayIso } from '../lib/dates'
 
@@ -40,11 +41,14 @@ export function Train() {
   const date = todayIso()
   const [picking, setPicking] = useState(false)
 
-  const workout = useLiveQuery(
-    async () => alive(await db.workouts.where('date').equals(date).toArray())[0] ?? null,
-    [date],
-    undefined,
-  )
+  // Every session today, not just the first. Nothing forbids two in a day, and
+  // picking [0] made a second one invisible.
+  const todays = useLiveQuery(() => workoutsOnDate(date), [date], undefined)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const workout =
+    todays === undefined
+      ? undefined
+      : (todays.find((w) => w.id === selectedId) ?? todays[todays.length - 1] ?? null)
   const sets = useLiveQuery(
     async () => (workout ? await setsForWorkout(workout.id) : []),
     [workout?.id],
@@ -77,25 +81,13 @@ export function Train() {
   })
 
   async function startSession(opts: { day?: RoutineDay; repeat?: SessionSummary } = {}) {
-    const created = await putRow(
-      'workouts',
-      newRow({
-        date,
-        routine_day_id: opts.day?.id ?? opts.repeat?.routine_day_id ?? null,
-        notes: null,
-        started_at: new Date().toISOString(),
-        finished_at: null,
-        source: 'app' as const,
-        import_batch_id: null,
-      }),
-    )
-    // Seed the exercise list from the session being repeated. This writes only
-    // the local order key - no sets are copied. Repeating a day means "put the
-    // same lifts in front of me", not "pretend I already did them".
-    if (opts.repeat) {
-      await db.meta.put({ key: orderKey(created.id), value: opts.repeat.exercise_ids })
-    }
-    scheduleFlush()
+    // Repeating seeds the exercise list only - no sets are copied. It means
+    // "put the same lifts in front of me", not "pretend I already did them".
+    const created = await createWorkout(date, {
+      routineDayId: opts.day?.id ?? opts.repeat?.routine_day_id ?? null,
+      exerciseIds: opts.repeat?.exercise_ids,
+    })
+    setSelectedId(created.id)
   }
 
   async function addExercise(id: string) {
@@ -210,6 +202,26 @@ export function Train() {
         </div>
       ) : (
         <div className="flex flex-col gap-3 pb-4">
+          {(todays?.length ?? 0) > 1 && (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs text-text-dim">Sessions today</span>
+              {todays!.map((w, i) => (
+                <button
+                  key={w.id}
+                  onClick={() => setSelectedId(w.id)}
+                  className={[
+                    'min-h-9 rounded-full border px-3 text-sm font-medium',
+                    w.id === workout.id
+                      ? 'border-accent bg-accent/10 text-accent'
+                      : 'border-border bg-surface text-text-dim',
+                  ].join(' ')}
+                >
+                  {i + 1}
+                </button>
+              ))}
+            </div>
+          )}
+
           {inSession.map((e) => (
             <ExerciseCard
               key={e.id}
@@ -267,6 +279,16 @@ export function Train() {
               {working.length} working set{working.length === 1 ? '' : 's'} ·{' '}
               {formatKg(Math.round(tonnage(sets ?? [])))} tonnage
             </p>
+          )}
+
+          {working.length > 0 && (
+            <button
+              onClick={() => void startSession()}
+              className="min-h-12 w-full rounded-xl border border-dashed border-border text-sm
+                         font-medium text-text-dim"
+            >
+              + Start another session today
+            </button>
           )}
 
           <button

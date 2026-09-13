@@ -1,5 +1,6 @@
 import { db } from '../db/db'
-import { alive } from '../db/mutate'
+import { alive, newRow, putRow } from '../db/mutate'
+import { scheduleFlush } from '../db/sync'
 import type { Workout } from '../db/types'
 import { setsForWorkout } from './queries'
 
@@ -38,6 +39,43 @@ export async function sessionExerciseIds(workout: Workout): Promise<string[]> {
     if (!ordered.includes(id)) ordered.push(id)
   }
   return ordered
+}
+
+/**
+ * Create a session on any date.
+ *
+ * Nothing stops two sessions sharing a date - there is no unique constraint on
+ * workouts.date and there should not be. A second session in a day is unusual
+ * but legitimate, and forcing one per day would silently swallow the second.
+ */
+export async function createWorkout(
+  date: string,
+  opts: { routineDayId?: string | null; exerciseIds?: string[] } = {},
+): Promise<Workout> {
+  const created = await putRow(
+    'workouts',
+    newRow({
+      date,
+      routine_day_id: opts.routineDayId ?? null,
+      notes: null,
+      started_at: new Date().toISOString(),
+      finished_at: null,
+      source: 'app' as const,
+      import_batch_id: null,
+    }),
+  )
+  if (opts.exerciseIds?.length) {
+    await db.meta.put({ key: orderKey(created.id), value: opts.exerciseIds })
+  }
+  scheduleFlush()
+  return created
+}
+
+/** Every session on a date, oldest first, so "session 1 / 2" reads naturally. */
+export async function workoutsOnDate(date: string): Promise<Workout[]> {
+  return alive(await db.workouts.where('date').equals(date).toArray()).sort((a, b) =>
+    (a.started_at ?? '') < (b.started_at ?? '') ? -1 : 1,
+  )
 }
 
 export async function addExerciseToSession(workoutId: string, exerciseId: string) {
