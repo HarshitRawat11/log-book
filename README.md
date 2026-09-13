@@ -95,6 +95,43 @@ It is a known limitation, not an oversight. If a real conflict ever occurs, revi
 
 Kilograms and grams throughout. No unit switcher.
 
+## Deployment
+
+Netlify, site `gymlog-hr` → **https://gymlog-hr.netlify.app**
+
+Deploys are manual and from a local build — there is no git integration and no
+CI, deliberately, while the app is still being built out phase by phase:
+
+```bash
+npm run build
+npx netlify-cli deploy --prod --dir=dist --site=gymlog-hr
+```
+
+`netlify.toml` carries the parts that are easy to get wrong:
+
+- **SPA rewrite** (`/* → /index.html 200`). Without it `/auth/callback` 404s,
+  which breaks every magic link, since that is the URL the email points at.
+- **`Content-Type` for `/manifest.webmanifest`.** Netlify does not recognise the
+  extension and serves it as `application/octet-stream`; Chrome then ignores the
+  manifest and silently drops the install prompt, with no error anywhere.
+- **`Cache-Control: must-revalidate` on `/sw.js` and `/index.html`**, so a deploy
+  actually reaches a phone that already registered the old service worker.
+- **CSP** pinning `connect-src` to Supabase and Open Food Facts.
+
+Note that new sites on this Netlify account inherit `site_sso_login = true` from
+the account default, which puts them behind an SSO gate and returns 401 to
+everyone. This site has `sso_login` disabled at site level; the account default
+is untouched, so any *new* site will need the same treatment.
+
+### Supabase auth URLs
+
+Magic links only work for origins Supabase knows about. In
+**Authentication → URL Configuration**:
+
+- **Site URL**: `https://gymlog-hr.netlify.app`
+- **Redirect URLs**: `https://gymlog-hr.netlify.app/auth/callback`,
+  plus `http://localhost:5173/auth/callback` for local development.
+
 ## Phase status
 
 - [x] **Phase 0** — plan, schema, screen inventory, outbox design, food-API research
