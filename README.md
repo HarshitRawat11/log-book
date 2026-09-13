@@ -1,4 +1,4 @@
-# gymlog
+# log-book
 
 A single-user, installable PWA for logging resistance training and daily food intake, and
 for seeing whether any of it is working.
@@ -97,14 +97,16 @@ Kilograms and grams throughout. No unit switcher.
 
 ## Deployment
 
-Netlify, site `gymlog-hr` → **https://gymlog-hr.netlify.app**
+Netlify, site `log-book-hr` → **https://log-book-hr.netlify.app**
+
+(`log-book.netlify.app` was already taken by someone else, hence the suffix.)
 
 Deploys are manual and from a local build — there is no git integration and no
 CI, deliberately, while the app is still being built out phase by phase:
 
 ```bash
 npm run build
-npx netlify-cli deploy --prod --dir=dist --site=gymlog-hr
+npx netlify-cli deploy --prod --dir=dist --site=log-book-hr
 ```
 
 `netlify.toml` carries the parts that are easy to get wrong:
@@ -128,8 +130,8 @@ is untouched, so any *new* site will need the same treatment.
 Magic links only work for origins Supabase knows about. In
 **Authentication → URL Configuration**:
 
-- **Site URL**: `https://gymlog-hr.netlify.app`
-- **Redirect URLs**: `https://gymlog-hr.netlify.app/auth/callback`,
+- **Site URL**: `https://log-book-hr.netlify.app`
+- **Redirect URLs**: `https://log-book-hr.netlify.app/auth/callback`,
   plus `http://localhost:5173/auth/callback` for local development.
 
 ## Phase status

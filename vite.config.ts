@@ -20,8 +20,8 @@ export default defineConfig({
         navigateFallbackDenylist: [/^\/auth\/callback/],
       },
       manifest: {
-        name: 'gymlog',
-        short_name: 'gymlog',
+        name: 'log-book',
+        short_name: 'log-book',
         description: 'Personal gym and diet tracker',
         start_url: '/',
         scope: '/',

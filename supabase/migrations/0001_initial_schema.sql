@@ -1,5 +1,5 @@
 -- ============================================================================
--- gymlog - initial schema
+-- log-book - initial schema
 -- ============================================================================
 -- Units: kilograms and grams throughout. No unit switcher (brief 6).
 -- Every table carries: user_id, updated_at, deleted_at (tombstone), and RLS.

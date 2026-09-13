@@ -28,7 +28,7 @@ export function SignIn() {
   return (
     <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center gap-8 px-6 py-12">
       <header>
-        <h1 className="text-3xl font-semibold tracking-tight">gymlog</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">log-book</h1>
         <p className="mt-2 text-text-dim">Sign in with a magic link. No password.</p>
       </header>
 
