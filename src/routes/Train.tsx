@@ -111,7 +111,13 @@ export function Train() {
       subtitle={pretty}
       actions={
         <div className="flex items-center gap-2">
-          <Link to="/history" className="text-sm text-accent underline underline-offset-4">
+          {/* Styled as a button to match the sync pill beside it, but still an
+              anchor - it navigates, so the element should say so. */}
+          <Link
+            to="/history"
+            className="flex min-h-9 items-center rounded-full border border-border bg-surface-2
+                       px-3 text-xs font-medium text-text-dim active:bg-border"
+          >
             History
           </Link>
           <SyncPill />

@@ -137,8 +137,12 @@ export function Exercises() {
             </ul>
           )}
 
-          <Link to="/train" className="min-h-11 px-1 text-sm text-accent underline underline-offset-4">
-            Back to today's session
+          <Link
+            to="/train"
+            className="flex min-h-11 w-fit items-center rounded-full border border-border
+                       bg-surface-2 px-3 text-sm font-medium text-text-dim active:bg-border"
+          >
+            ‹ Today's session
           </Link>
         </div>
       )}
