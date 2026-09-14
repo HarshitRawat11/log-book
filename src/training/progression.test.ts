@@ -23,6 +23,7 @@ const bench: Exercise = {
   target_rep_max: 12,
   load_increment_kg: 2.5,
   min_weight_kg: 20,
+  machine_setup: null,
   archived: false,
 }
 
@@ -40,6 +41,7 @@ function set(weight: number, reps: number, idx = n++): WorkoutSet {
     reps,
     rir: null,
     is_warmup: false,
+    set_type: 'normal',
     source: 'app',
     import_batch_id: null,
   }

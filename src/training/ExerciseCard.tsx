@@ -1,12 +1,73 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import type { Exercise, WorkoutSet } from '../db/types'
+import { setTypeOf, type Exercise, type SetType, type WorkoutSet } from '../db/types'
 import { deleteRow, newRow, patchRow, putRow } from '../db/mutate'
 import { scheduleFlush } from '../db/sync'
 import { NumberField } from '../components/NumberField'
 import { formatKg, repeatOf, suggestNext } from './progression'
 import { nextSetIndex, recentSessions } from './queries'
 import { relativeAge, shortDate } from '../lib/dates'
+
+/**
+ * What you are about to log. One exclusive choice rather than a warm-up
+ * checkbox plus a type dropdown, because the combinations the two would allow
+ * are exactly the ones the database rejects - a warm-up drop set is not a
+ * thing. `kind` maps onto (is_warmup, set_type).
+ */
+type SetKind = 'working' | 'warmup' | 'dropset' | 'myorep'
+
+const KINDS: Array<{ kind: SetKind; label: string; hint: string; continuation: boolean }> = [
+  {
+    kind: 'working',
+    label: 'Working',
+    hint: 'A set in its own right. Counts everywhere.',
+    continuation: false,
+  },
+  {
+    kind: 'warmup',
+    label: 'Warm-up',
+    hint: 'Excluded from tonnage, volume and progression.',
+    continuation: false,
+  },
+  {
+    kind: 'dropset',
+    label: 'Drop',
+    hint: 'Part of the set above. Adds tonnage, but not another working set.',
+    continuation: true,
+  },
+  {
+    kind: 'myorep',
+    label: 'Myorep',
+    hint: 'A mini-set off the one above. Adds tonnage, but not another working set.',
+    continuation: true,
+  },
+]
+
+function toKind(s: Pick<WorkoutSet, 'is_warmup' | 'set_type'>): SetKind {
+  if (s.is_warmup) return 'warmup'
+  const t = setTypeOf(s)
+  return t === 'normal' ? 'working' : t
+}
+
+const fromKind = (k: SetKind): { is_warmup: boolean; set_type: SetType } => ({
+  is_warmup: k === 'warmup',
+  set_type: k === 'dropset' || k === 'myorep' ? k : 'normal',
+})
+
+/**
+ * The marker in the leftmost column of a logged set.
+ *
+ * Only working sets are numbered, and they are numbered by their position
+ * among working sets rather than by row, so the last number in the list always
+ * equals the session's working-set total. A continuation gets an arrow, a
+ * warm-up a dot.
+ */
+function setLabel(rows: WorkoutSet[], i: number): string {
+  const kind = toKind(rows[i]!)
+  if (kind === 'dropset' || kind === 'myorep') return '↳'
+  if (kind === 'warmup') return '·'
+  return String(rows.slice(0, i + 1).filter((r) => toKind(r) === 'working').length)
+}
 
 /**
  * One exercise inside today's session.
@@ -52,9 +113,17 @@ export function ExerciseCard({
 
   const [weight, setWeight] = useState('')
   const [reps, setReps] = useState('')
-  const [warmup, setWarmup] = useState(false)
+  const [kind, setKind] = useState<SetKind>('working')
   const [editing, setEditing] = useState<string | null>(null)
   const [showWhy, setShowWhy] = useState(false)
+
+  // A drop or a myorep hangs off the set before it, so neither means anything
+  // as the first row of an exercise. If the list is emptied while one is
+  // selected, fall back rather than leaving an impossible choice armed.
+  const canContinue = mine.length > 0
+  useEffect(() => {
+    if (!canContinue && (kind === 'dropset' || kind === 'myorep')) setKind('working')
+  }, [canContinue, kind])
 
   // Pre-fill with a REPEAT of what was actually done - the previous set in this
   // session, else last session's top set. This is a record of fact, not advice,
@@ -79,7 +148,7 @@ export function ExerciseCard({
         weight_kg: Number(weight),
         reps: Number(reps),
         rir: null,
-        is_warmup: warmup,
+        ...fromKind(kind),
         source: 'app' as const,
         import_batch_id: null,
       }),
@@ -117,6 +186,13 @@ export function ExerciseCard({
               ' · no history yet'
             )}
           </p>
+          {/* The setup numbers, at the top of the card, because the moment they
+              are useful is standing in front of the machine before set one. */}
+          {exercise.machine_setup && (
+            <p className="mt-1 inline-block rounded bg-surface-2 px-1.5 py-0.5 text-xs text-text-dim">
+              {exercise.machine_setup}
+            </p>
+          )}
         </div>
         <button
           onClick={onRemove}
@@ -181,13 +257,18 @@ export function ExerciseCard({
                   onClick={() => setEditing(s.id)}
                   className="flex min-h-12 w-full items-center gap-3 px-4 text-left"
                 >
-                  <span className="tabular w-5 text-xs text-text-dim">{i + 1}</span>
+                  {/* The number column counts working sets and nothing else, so
+                      it always agrees with the session total underneath. A
+                      continuation gets an arrow because it belongs to the set
+                      above; a warm-up gets a dot, because numbering it would
+                      claim it was set two of the day when it was not. */}
+                  <span className="tabular w-5 text-xs text-text-dim">{setLabel(mine, i)}</span>
                   <span className="tabular flex-1 font-medium">
                     {formatKg(s.weight_kg)} × {s.reps}
                   </span>
-                  {s.is_warmup && (
+                  {toKind(s) !== 'working' && (
                     <span className="rounded bg-surface-2 px-1.5 py-0.5 text-xs text-text-dim">
-                      warm-up
+                      {KINDS.find((k) => k.kind === toKind(s))!.label.toLowerCase()}
                     </span>
                   )}
                   <span aria-hidden="true" className="text-xs text-text-dim">
@@ -225,16 +306,35 @@ export function ExerciseCard({
         </button>
       </div>
 
+      {/* One exclusive choice rather than a checkbox plus a dropdown: the
+          combinations those would allow are the ones the database rejects. */}
       <div className="px-4 pb-3">
-        <label className="flex items-center gap-2 text-xs text-text-dim">
-          <input
-            type="checkbox"
-            checked={warmup}
-            onChange={(e) => setWarmup(e.target.checked)}
-            className="size-4 accent-[var(--accent)]"
-          />
-          Log as warm-up (excluded from tonnage and progression)
-        </label>
+        <div role="group" aria-label="Set type" className="grid grid-cols-4 gap-1">
+          {KINDS.map((k) => {
+            const disabled = k.continuation && !canContinue
+            return (
+              <button
+                key={k.kind}
+                onClick={() => setKind(k.kind)}
+                disabled={disabled}
+                aria-pressed={kind === k.kind}
+                title={disabled ? 'Log a set first — this one attaches to it' : k.hint}
+                className={[
+                  'min-h-11 rounded-lg border text-xs font-medium',
+                  kind === k.kind
+                    ? 'border-accent bg-accent/10 text-accent'
+                    : 'border-border bg-surface-2 text-text-dim',
+                  disabled ? 'opacity-30' : '',
+                ].join(' ')}
+              >
+                {k.label}
+              </button>
+            )
+          })}
+        </div>
+        <p className="mt-1.5 text-xs leading-relaxed text-text-dim">
+          {KINDS.find((k) => k.kind === kind)!.hint}
+        </p>
       </div>
     </section>
   )
@@ -255,6 +355,7 @@ function EditSetRow({
 }) {
   const [w, setW] = useState(String(set.weight_kg))
   const [r, setR] = useState(String(set.reps))
+  const [k, setK] = useState<SetKind>(toKind(set))
 
   return (
     <div className="flex flex-col gap-2 bg-surface-2 px-4 py-3">
@@ -262,10 +363,30 @@ function EditSetRow({
         <NumberField label="Weight (kg)" value={w} onChange={setW} step={increment || 1} />
         <NumberField label="Reps" value={r} onChange={setR} step={1} min={1} />
       </div>
+      {/* Editable here too - a set tagged wrong in the moment is otherwise
+          only fixable by deleting and re-logging it. */}
+      <div role="group" aria-label="Set type" className="grid grid-cols-4 gap-1">
+        {KINDS.map((x) => (
+          <button
+            key={x.kind}
+            onClick={() => setK(x.kind)}
+            aria-pressed={k === x.kind}
+            title={x.hint}
+            className={[
+              'min-h-11 rounded-lg border text-xs font-medium',
+              k === x.kind
+                ? 'border-accent bg-accent/10 text-accent'
+                : 'border-border bg-surface text-text-dim',
+            ].join(' ')}
+          >
+            {x.label}
+          </button>
+        ))}
+      </div>
       <div className="flex items-center gap-2">
         <button
           onClick={async () => {
-            await onSave({ weight_kg: Number(w), reps: Number(r) })
+            await onSave({ weight_kg: Number(w), reps: Number(r), ...fromKind(k) })
             onDone()
           }}
           className="min-h-11 flex-1 rounded-lg bg-accent px-3 text-sm font-semibold text-accent-text"

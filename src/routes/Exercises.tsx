@@ -17,6 +17,7 @@ type Draft = {
   target_rep_max: string
   load_increment_kg: string
   min_weight_kg: string
+  machine_setup: string
 }
 
 const blank: Draft = {
@@ -27,6 +28,7 @@ const blank: Draft = {
   target_rep_max: '12',
   load_increment_kg: '2.5',
   min_weight_kg: '20',
+  machine_setup: '',
 }
 
 function toDraft(e: Exercise): Draft {
@@ -38,6 +40,7 @@ function toDraft(e: Exercise): Draft {
     target_rep_max: String(e.target_rep_max),
     load_increment_kg: String(e.load_increment_kg),
     min_weight_kg: String(e.min_weight_kg),
+    machine_setup: e.machine_setup ?? '',
   }
 }
 
@@ -65,6 +68,9 @@ export function Exercises() {
       target_rep_max: Number(draft.target_rep_max),
       load_increment_kg: Number(draft.load_increment_kg),
       min_weight_kg: Number(draft.min_weight_kg),
+      // Empty means "no setup to remember", which is null and not '' - an
+      // empty string would render as a blank badge on the logging screen.
+      machine_setup: draft.machine_setup.trim() || null,
     }
     if (!fields.name) return
     if (fields.target_rep_max < fields.target_rep_min) return
@@ -129,6 +135,11 @@ export function Exercises() {
                         {' · +'}
                         {e.load_increment_kg}kg
                       </span>
+                      {e.machine_setup && (
+                        <span className="mt-0.5 block text-xs text-text-dim">
+                          {e.machine_setup}
+                        </span>
+                      )}
                     </span>
                     <span className="text-xs text-text-dim">edit</span>
                   </button>
@@ -257,6 +268,20 @@ function EditorForm({
           />
         </Field>
       </div>
+
+      <Field label="Machine setting (optional)">
+        <input
+          value={draft.machine_setup}
+          onChange={(e) => set('machine_setup', e.target.value)}
+          placeholder="seat 1, pin 3"
+          className={inputCls}
+        />
+      </Field>
+      <p className="-mt-3 text-xs leading-relaxed text-text-dim">
+        Seat, pin or notch numbers — whatever makes the machine repeatable. Shown on the logging
+        screen. Keep it out of the name: rename an exercise when the seat moves and it becomes a
+        second exercise, which breaks its progression and its 1RM chart.
+      </p>
       <p className="-mt-2 text-xs text-text-dim">
         Lightest loadable is the empty bar, or the lightest pin on a machine. A deload will never
         suggest less than this.

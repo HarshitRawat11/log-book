@@ -1,5 +1,5 @@
 import { db } from '../db/db'
-import { SYNC_TABLES } from '../db/types'
+import { isWorkingSet, setTypeOf, SYNC_TABLES } from '../db/types'
 import { todayIso } from './dates'
 
 /**
@@ -69,13 +69,20 @@ export async function exportSetsCsv(): Promise<void> {
         date: w?.date ?? '',
         exercise: e?.name ?? '',
         muscle_group: e?.muscle_group ?? '',
+        machine_setup: e?.machine_setup ?? '',
         set_index: s.set_index + 1,
         weight_kg: s.weight_kg,
         reps: s.reps,
         rir: s.rir,
         is_warmup: s.is_warmup,
+        // normal | dropset | myorep. A drop or myorep row is a continuation of
+        // the set above it, so counting rows here overstates the set count -
+        // filter to `normal` to reproduce what the app reports.
+        set_type: setTypeOf(s),
+        counts_as_working_set: isWorkingSet(s),
         volume_kg: Math.round(s.weight_kg * s.reps * 100) / 100,
         source: s.source,
+        session_note: w?.notes ?? '',
       }
     })
     .sort((a, b) => a.date.localeCompare(b.date) || a.exercise.localeCompare(b.exercise))

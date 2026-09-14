@@ -1,4 +1,4 @@
-import type { Bodyweight, Exercise, WorkoutSet } from '../db/types'
+import { isWorkingSet, type Bodyweight, type Exercise, type WorkoutSet } from '../db/types'
 import { isoWeek } from '../lib/dates'
 import { epley1RM } from './progression'
 import type { SessionPerformance } from './progression'
@@ -34,7 +34,12 @@ export function e1rmSeries(sessions: SessionPerformance[]): Point[] {
     .map((p) => ({ ...p, value: Math.round(p.value * 10) / 10 }))
 }
 
-/** Session tonnage: sum of weight x reps, working sets only. */
+/**
+ * Session tonnage: sum of weight x reps across every non-warm-up set.
+ *
+ * Drops and myorep mini-sets are included here even though they do not count
+ * as separate sets elsewhere - the reps happened, so the volume is real.
+ */
 export function tonnageSeries(
   workouts: Array<{ id: string; date: string }>,
   sets: WorkoutSet[],
@@ -63,6 +68,10 @@ export type WeeklySets = { week: string; total: number } & Record<string, string
  * Each exercise counts towards ONE muscle group, so compound lifts undercount
  * their secondary movers - bench adds nothing to triceps. Known limitation,
  * accepted at the Phase 0 gate.
+ *
+ * Counts working sets, so a top set with three drops hanging off it adds one
+ * to the bar and not four. Counting the drops separately would show a volume
+ * spike on a week the training did not actually change.
  */
 export function weeklyWorkingSets(
   workouts: Array<{ id: string; date: string }>,
@@ -75,7 +84,7 @@ export function weeklyWorkingSets(
 
   const byWeek = new Map<string, Map<string, number>>()
   for (const s of sets) {
-    if (s.is_warmup) continue
+    if (!isWorkingSet(s)) continue
     const date = dateOf.get(s.workout_id)
     const group = groupOf.get(s.exercise_id)
     if (!date || !group) continue

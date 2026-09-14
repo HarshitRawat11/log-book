@@ -111,6 +111,28 @@ of that by hand costs more than retyping the sessions, so history is backfilled 
 `source` and `import_batch_id` remain on `workouts` and `sets`. They cost nothing, and they
 are the right shape if a bulk load is ever worth doing.
 
+## What counts as a set
+
+A set row carries `is_warmup` and a `set_type` of `normal`, `dropset` or `myorep`. A drop or
+a myorep mini-set is a **continuation** of the set logged before it, not a set of its own —
+which is what lets counting work without a grouping id. The single definition lives in
+`isWorkingSet` (`db/types.ts`), and everything counts through it:
+
+| | counted as a set | tonnage |
+|---|---|---|
+| `normal` | yes | yes |
+| `dropset`, `myorep` | **no** | **yes** |
+| warm-up | no | no |
+
+So a top set with three drops is one working set on the weekly chart, but all four rows'
+weight × reps land in tonnage — the reps were genuinely performed. Drops and myoreps are
+also kept out of progression and estimated 1RM: a drop to 18kg is not a top set, and letting
+one in would drag both down after a session that was in fact harder than usual.
+
+The database enforces the pairing (`warmup_is_normal`), and the logging screen offers the
+four as one exclusive choice rather than a checkbox plus a dropdown, so the combinations the
+constraint rejects cannot be expressed.
+
 ## Units
 
 Kilograms and grams throughout. No unit switcher.

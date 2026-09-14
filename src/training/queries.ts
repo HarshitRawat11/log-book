@@ -1,7 +1,11 @@
 import { db } from '../db/db'
 import { alive } from '../db/mutate'
-import type { Exercise, Workout, WorkoutSet } from '../db/types'
+import { isWorkingSet, type Exercise, type Workout, type WorkoutSet } from '../db/types'
 import type { SessionPerformance } from './progression'
+
+// Defined in db/types so analytics.ts can use it without pulling in Dexie,
+// re-exported here because this is where callers expect set predicates to live.
+export { isWorkingSet }
 
 /**
  * Derived reads over the local store.
@@ -30,8 +34,12 @@ export async function setsForWorkout(workoutId: string): Promise<WorkoutSet[]> {
 /**
  * Recent sessions for one exercise, most recent first, WORKING SETS ONLY.
  *
- * This is what the progression engine consumes, so the warm-up filter lives
- * here rather than being everyone's responsibility to remember.
+ * This is what the progression engine and the 1RM chart consume, so the filter
+ * lives here rather than being everyone's responsibility to remember.
+ *
+ * Drops and myorep mini-sets are excluded along with warm-ups: a drop to 18kg
+ * is not a top set, and letting one in would drag both the suggestion and the
+ * estimated 1RM down after a session that was actually harder than usual.
  */
 export async function recentSessions(
   exerciseId: string,
@@ -40,7 +48,7 @@ export async function recentSessions(
   const { limit = 5, excludeWorkoutId } = opts
 
   const sets = alive(await db.sets.where('exercise_id').equals(exerciseId).toArray()).filter(
-    (s) => !s.is_warmup && s.workout_id !== excludeWorkoutId,
+    (s) => isWorkingSet(s) && s.workout_id !== excludeWorkoutId,
   )
   if (sets.length === 0) return []
 
@@ -87,7 +95,7 @@ export async function listWorkoutSummaries(): Promise<WorkoutSummary[]> {
     out.push({
       workout: w,
       exercise_ids,
-      working_sets: sets.filter((s) => !s.is_warmup).length,
+      working_sets: sets.filter(isWorkingSet).length,
       tonnage_kg: tonnage(sets),
     })
   }
@@ -135,13 +143,20 @@ export async function recentSessionSummaries(
       date: w.date,
       routine_day_id: w.routine_day_id,
       exercise_ids,
-      set_count: sets.filter((s) => !s.is_warmup).length,
+      set_count: sets.filter(isWorkingSet).length,
     })
   }
   return summaries
 }
 
-/** Session tonnage: sum of weight x reps across working sets only. */
+/**
+ * Session tonnage: sum of weight x reps across every non-warm-up set.
+ *
+ * Deliberately NOT isWorkingSet. Drops and myorep mini-sets are excluded from
+ * set COUNTS because they are continuations rather than separate sets, but the
+ * reps were still performed and the load still moved, so they belong in the
+ * tonnage total.
+ */
 export function tonnage(sets: WorkoutSet[]): number {
   return sets.filter((s) => !s.is_warmup).reduce((t, s) => t + s.weight_kg * s.reps, 0)
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { bodyweightSeries, e1rmSeries, tonnageSeries, weeklyWorkingSets } from './analytics'
-import type { Bodyweight, Exercise, WorkoutSet } from '../db/types'
+import { isWorkingSet, type Bodyweight, type Exercise, type WorkoutSet } from '../db/types'
 import type { SessionPerformance } from './progression'
 
 const set = (over: Partial<WorkoutSet>): WorkoutSet => ({
@@ -15,6 +15,7 @@ const set = (over: Partial<WorkoutSet>): WorkoutSet => ({
   reps: 10,
   rir: null,
   is_warmup: false,
+  set_type: 'normal',
   source: 'app',
   import_batch_id: null,
   ...over,
@@ -32,6 +33,7 @@ const exercise = (over: Partial<Exercise>): Exercise => ({
   target_rep_max: 12,
   load_increment_kg: 2.5,
   min_weight_kg: 20,
+  machine_setup: null,
   archived: false,
   ...over,
 })
@@ -147,5 +149,90 @@ describe('bodyweightSeries', () => {
   it('sorts oldest first regardless of input order', () => {
     const pts = bodyweightSeries([bw('2026-09-12', 79), bw('2026-09-10', 80)])
     expect(pts.map((p) => p.date)).toEqual(['2026-09-10', '2026-09-12'])
+  })
+})
+
+/**
+ * Set types.
+ *
+ * A drop or a myorep mini-set is a CONTINUATION of the set before it, not a set
+ * of its own. That distinction is the whole point of the column, and it pulls
+ * in two directions at once - out of set counts, but into tonnage - so both
+ * directions are pinned here.
+ */
+describe('isWorkingSet', () => {
+  it('counts a plain working set', () => {
+    expect(isWorkingSet(set({}))).toBe(true)
+  })
+
+  it('does not count a warm-up', () => {
+    expect(isWorkingSet(set({ is_warmup: true }))).toBe(false)
+  })
+
+  it('does not count a drop or a myorep', () => {
+    expect(isWorkingSet(set({ set_type: 'dropset' }))).toBe(false)
+    expect(isWorkingSet(set({ set_type: 'myorep' }))).toBe(false)
+  })
+
+  it('treats a row written before the column existed as a working set', () => {
+    // Local rows created before the migration have no set_type at all. They
+    // were working sets when they were logged and must stay that way, or every
+    // historical weekly count silently drops to zero.
+    const legacy = set({})
+    delete (legacy as Partial<WorkoutSet>).set_type
+    expect(isWorkingSet(legacy)).toBe(true)
+  })
+})
+
+describe('weeklyWorkingSets with continuations', () => {
+  const workouts = [{ id: 'w1', date: '2026-09-14' }]
+  const chest = [exercise({ id: 'e1', muscle_group: 'chest' })]
+
+  it('counts a top set with three drops as one set, not four', () => {
+    const sets = [
+      set({ weight_kg: 40, reps: 10, set_index: 0 }),
+      set({ weight_kg: 30, reps: 6, set_index: 1, set_type: 'dropset' }),
+      set({ weight_kg: 20, reps: 6, set_index: 2, set_type: 'dropset' }),
+      set({ weight_kg: 10, reps: 8, set_index: 3, set_type: 'dropset' }),
+    ]
+    const rows = weeklyWorkingSets(workouts, sets, chest)
+    expect(rows).toHaveLength(1)
+    expect(rows[0]!.chest).toBe(1)
+    expect(rows[0]!.total).toBe(1)
+  })
+
+  it('counts myorep mini-sets the same way', () => {
+    const sets = [
+      set({ set_index: 0 }),
+      set({ set_index: 1, set_type: 'myorep' }),
+      set({ set_index: 2, set_type: 'myorep' }),
+    ]
+    expect(weeklyWorkingSets(workouts, sets, chest)[0]!.chest).toBe(1)
+  })
+
+  it('still counts genuinely separate working sets separately', () => {
+    const sets = [set({ set_index: 0 }), set({ set_index: 1 }), set({ set_index: 2 })]
+    expect(weeklyWorkingSets(workouts, sets, chest)[0]!.chest).toBe(3)
+  })
+})
+
+describe('tonnageSeries with continuations', () => {
+  const workouts = [{ id: 'w1', date: '2026-09-14' }]
+
+  it('includes drops, because the reps were actually performed', () => {
+    const sets = [
+      set({ weight_kg: 40, reps: 10, set_index: 0 }), // 400
+      set({ weight_kg: 30, reps: 6, set_index: 1, set_type: 'dropset' }), // 180
+      set({ weight_kg: 20, reps: 5, set_index: 2, set_type: 'dropset' }), // 100
+    ]
+    expect(tonnageSeries(workouts, sets)[0]!.value).toBe(680)
+  })
+
+  it('still excludes warm-ups', () => {
+    const sets = [
+      set({ weight_kg: 40, reps: 10, set_index: 0 }), // 400
+      set({ weight_kg: 20, reps: 10, set_index: 1, is_warmup: true }), // excluded
+    ]
+    expect(tonnageSeries(workouts, sets)[0]!.value).toBe(400)
   })
 })

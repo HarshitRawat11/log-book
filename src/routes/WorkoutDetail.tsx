@@ -5,11 +5,12 @@ import { Screen } from '../components/Screen'
 import { EmptyState } from '../components/EmptyState'
 import { SyncPill } from '../components/SyncPill'
 import { ExerciseCard } from '../training/ExerciseCard'
+import { SessionNotes } from '../training/SessionNotes'
 import { db } from '../db/db'
 import { deleteRow } from '../db/mutate'
 import { scheduleFlush } from '../db/sync'
 import type { Exercise } from '../db/types'
-import { listExercises, setsForWorkout, tonnage } from '../training/queries'
+import { isWorkingSet, listExercises, setsForWorkout, tonnage } from '../training/queries'
 import { addExerciseToSession, removeExerciseFromSession, sessionExerciseIds } from '../training/session'
 import { formatKg } from '../training/progression'
 import { relativeAge, shortDate } from '../lib/dates'
@@ -38,7 +39,7 @@ export function WorkoutDetail() {
 
   const byId = new Map((allExercises ?? []).map((e) => [e.id, e]))
   const inSession = (exerciseIds ?? []).map((id) => byId.get(id)).filter(Boolean) as Exercise[]
-  const working = (sets ?? []).filter((s) => !s.is_warmup)
+  const working = (sets ?? []).filter(isWorkingSet)
 
   if (workout === undefined) return <Screen title="Session">{null}</Screen>
   if (!workout || workout.deleted_at) {
@@ -137,6 +138,10 @@ export function WorkoutDetail() {
             {formatKg(Math.round(tonnage(sets ?? [])))} tonnage
           </p>
         )}
+
+        <div className="mb-4">
+          <SessionNotes workout={workout} />
+        </div>
 
         {confirmDelete ? (
           <div className="rounded-xl border border-danger/40 bg-danger/10 p-4">

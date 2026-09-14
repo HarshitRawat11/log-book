@@ -5,11 +5,13 @@ import { Screen } from '../components/Screen'
 import { EmptyState } from '../components/EmptyState'
 import { SyncPill } from '../components/SyncPill'
 import { ExerciseCard } from '../training/ExerciseCard'
+import { SessionNotes } from '../training/SessionNotes'
 import { db } from '../db/db'
 import { alive, deleteRow } from '../db/mutate'
 import { scheduleFlush } from '../db/sync'
 import type { Exercise, RoutineDay } from '../db/types'
 import {
+  isWorkingSet,
   listExercises,
   recentSessionSummaries,
   setsForWorkout,
@@ -103,7 +105,7 @@ export function Train() {
     await removeExerciseFromSession(workout.id, id)
   }
 
-  const working = (sets ?? []).filter((s) => !s.is_warmup)
+  const working = (sets ?? []).filter(isWorkingSet)
 
   return (
     <Screen
@@ -279,6 +281,8 @@ export function Train() {
               + Add exercise
             </button>
           )}
+
+          <SessionNotes workout={workout} />
 
           {working.length > 0 && (
             <p className="tabular px-1 pt-2 text-xs text-text-dim">

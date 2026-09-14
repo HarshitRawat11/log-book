@@ -54,6 +54,14 @@ export type Exercise = SyncedRow & {
   load_increment_kg: number
   /** Floor for the deload branch: bar weight, or the lightest machine pin. */
   min_weight_kg: number
+  /**
+   * Seat, pin and notch numbers - whatever makes the machine repeatable.
+   *
+   * Its own field rather than part of the name. Written into the name, the
+   * first time a seat position changes the exercise forks in two and both the
+   * progression engine and the 1RM chart lose the thread.
+   */
+  machine_setup: string | null
   archived: boolean
 }
 
@@ -86,6 +94,18 @@ export type Workout = SyncedRow & {
   import_batch_id: string | null
 }
 
+/**
+ * What kind of set a row is.
+ *
+ * `dropset` and `myorep` are CONTINUATIONS of the set logged immediately
+ * before them, not sets in their own right. Modelling them that way is what
+ * makes counting unambiguous without a grouping id - a working set is simply a
+ * `normal` row - and it is why `isWorkingSet` in queries.ts is the one place
+ * that decides.
+ */
+export const SET_TYPES = ['normal', 'dropset', 'myorep'] as const
+export type SetType = (typeof SET_TYPES)[number]
+
 export type WorkoutSet = SyncedRow & {
   workout_id: string
   exercise_id: string
@@ -95,9 +115,35 @@ export type WorkoutSet = SyncedRow & {
   /** Reps in reserve, 0-5. Optional. */
   rir: number | null
   is_warmup: boolean
+  /**
+   * Rows written before this column existed have no value at all locally, so
+   * every read goes through `setTypeOf()` rather than touching this directly.
+   */
+  set_type: SetType
   source: 'app' | 'import'
   import_batch_id: string | null
 }
+
+/** Tolerates rows written before `set_type` existed, which have no value. */
+export const setTypeOf = (s: Pick<WorkoutSet, 'set_type'>): SetType => s.set_type ?? 'normal'
+
+/**
+ * A working set: not a warm-up, and not a continuation of the set before it.
+ *
+ * The single definition everything counts through, so "how many sets was that"
+ * has one answer across the session header, the weekly volume chart and the
+ * progression engine.
+ *
+ * A drop or a myorep mini-set is part of the set it hangs off, so three drops
+ * off one top set is one working set and not four. Their TONNAGE still counts
+ * - the reps were genuinely performed - which is why tonnage() filters on
+ * warm-ups alone and not on this.
+ *
+ * Lives here beside the row types rather than in queries.ts so that
+ * analytics.ts can stay free of Dexie and keep testing without a database.
+ */
+export const isWorkingSet = (s: Pick<WorkoutSet, 'is_warmup' | 'set_type'>): boolean =>
+  !s.is_warmup && setTypeOf(s) === 'normal'
 
 export type Bodyweight = SyncedRow & {
   date: string
