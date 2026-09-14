@@ -212,6 +212,39 @@ export type FoodLog = SyncedRow & {
   fibre_g: number
 }
 
+/* ----- cardio, phase 5 ----- */
+
+export type CardioPreset = SyncedRow & {
+  name: string
+  /** Free text: the list grows (bag work, skipping) and a CHECK would not. */
+  activity: string
+  work_seconds: number
+  break_seconds: number
+  rounds: number
+}
+
+export type CardioSession = SyncedRow & {
+  /** Local calendar date, as workouts.date - not the UTC date of started_at. */
+  date: string
+  started_at: string
+  ended_at: string | null
+  activity: string
+  /**
+   * The configuration actually used, SNAPSHOT onto the row. There is
+   * deliberately no preset_id: editing the kickboxing preset in December must
+   * not rewrite what October's sessions claim to have been.
+   */
+  preset_name: string | null
+  work_seconds: number
+  break_seconds: number
+  rounds_planned: number
+  rounds_completed: number
+  completed: boolean
+  /** Both added afterwards, gloves off. Both genuinely optional. */
+  notes: string | null
+  rpe: number | null
+}
+
 /**
  * Flush order. Children must follow their parents or the first push of a new
  * workout fails on a foreign key: a `set` referencing a `workout` that does not
@@ -230,6 +263,8 @@ export const SYNC_TABLES = [
   'recipes',
   'recipe_items',
   'food_log',
+  'cardio_presets',
+  'cardio_sessions',
 ] as const
 
 export type SyncTable = (typeof SYNC_TABLES)[number]

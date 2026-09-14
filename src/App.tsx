@@ -32,6 +32,7 @@ const lazyRoute = <T extends Record<string, React.ComponentType>>(
 
 const Food = lazyRoute(() => import('./routes/Food'), 'Food')
 const Foods = lazyRoute(() => import('./routes/Foods'), 'Foods')
+const Cardio = lazyRoute(() => import('./routes/Cardio'), 'Cardio')
 const Progress = lazyRoute(() => import('./routes/Progress'), 'Progress')
 const Settings = lazyRoute(() => import('./routes/Settings'), 'Settings')
 const Exercises = lazyRoute(() => import('./routes/Exercises'), 'Exercises')
@@ -93,6 +94,7 @@ function Router() {
         <Route path="/train" element={<Train />} />
         <Route path="/food" element={<Food />} />
         <Route path="/foods" element={<Foods />} />
+        <Route path="/cardio" element={<Cardio />} />
         <Route path="/progress" element={<Progress />} />
         <Route path="/exercises" element={<Exercises />} />
         <Route path="/history" element={<History />} />

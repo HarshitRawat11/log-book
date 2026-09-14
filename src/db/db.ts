@@ -1,6 +1,8 @@
 import Dexie, { type EntityTable } from 'dexie'
 import type {
   Bodyweight,
+  CardioPreset,
+  CardioSession,
   Exercise,
   Food,
   FoodLog,
@@ -36,6 +38,8 @@ export class LogBookDB extends Dexie {
   recipes!: EntityTable<Recipe, 'id'>
   recipe_items!: EntityTable<RecipeItem, 'id'>
   food_log!: EntityTable<FoodLog, 'id'>
+  cardio_presets!: EntityTable<CardioPreset, 'id'>
+  cardio_sessions!: EntityTable<CardioSession, 'id'>
   outbox!: EntityTable<OutboxOp, 'seq'>
   meta!: EntityTable<{ key: string; value: unknown }, 'key'>
 
@@ -59,6 +63,15 @@ export class LogBookDB extends Dexie {
       // ++seq preserves submission order, which the flusher depends on.
       outbox: '++seq, table, row_id, next_attempt_at',
       meta: 'key',
+    })
+
+    // v2 adds the cardio tables. Declared as a second version rather than
+    // edited into v1: Dexie upgrades an existing database by applying the
+    // versions it has not seen, and rewriting v1 would leave anyone already on
+    // v1 without the new stores.
+    this.version(2).stores({
+      cardio_presets: 'id, name',
+      cardio_sessions: 'id, date',
     })
   }
 }

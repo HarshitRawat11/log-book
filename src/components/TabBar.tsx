@@ -21,6 +21,13 @@ const icons: Record<string, ReactNode> = {
       <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />
     </>
   ),
+  cardio: (
+    <>
+      {/* A stopwatch: the tab is the timer, not "some cardio". */}
+      <circle cx="12" cy="13" r="8" />
+      <path d="M12 9v4l2.5 2M9 2h6M18.5 5.5l1.5-1.5" />
+    </>
+  ),
   settings: (
     <>
       <circle cx="12" cy="12" r="3" />
@@ -32,6 +39,7 @@ const icons: Record<string, ReactNode> = {
 const tabs = [
   { to: '/train', label: 'Train', icon: 'train' },
   { to: '/food', label: 'Food', icon: 'food' },
+  { to: '/cardio', label: 'Cardio', icon: 'cardio' },
   { to: '/progress', label: 'Progress', icon: 'progress' },
   { to: '/settings', label: 'Settings', icon: 'settings' },
 ] as const
@@ -54,7 +62,7 @@ export function TabBar() {
                 [
                   // 60px tall: comfortably past the 44px minimum tap target,
                   // and this is the control used most while out of breath.
-                  'flex min-h-15 flex-col items-center justify-center gap-1 py-2 text-xs',
+                  'flex min-h-15 flex-col items-center justify-center gap-1 py-2 text-[11px]',
                   isActive ? 'text-accent' : 'text-text-dim',
                 ].join(' ')
               }
