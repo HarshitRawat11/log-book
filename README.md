@@ -236,6 +236,24 @@ npx netlify-cli deploy --prod --dir=dist --site=d30fc361-f894-43cd-89f2-9b2e7a38
 one — `netlify-cli status` will happily confirm you are signed in. `netlify-cli sites:list`
 prints the ID.
 
+### If `--prod` returns `JSONHTTPError: Forbidden`
+
+Seen on 14 Sep 2026, after several successful deploys the same day. The account is fine —
+still signed in, site `state: current`, no stuck deploy, nothing over its limit — and a
+**draft deploy of the identical directory succeeds**. Only the production publish is
+refused, so it is something server-side rather than anything in this repo.
+
+Deploy as a draft, verify it, then promote that deploy id:
+
+```bash
+npx netlify-cli deploy --dir=dist --site=<site-id>        # prints a deploy id + preview URL
+npx netlify-cli api restoreSiteDeploy --data '{"site_id":"<site-id>","deploy_id":"<id>"}'
+```
+
+The promoted deploy serves correctly at the production URL, but keeps
+`context: deploy-preview` in the API, so do not read that field as evidence of what is
+live — check `getSite`'s `published_deploy.id`, or just fetch the build stamp.
+
 Settings shows that stamp. With `registerType: 'prompt'` a phone keeps serving
 the old bundle until the update pill is tapped, so "the screen looks wrong" and
 "I am on last week's build" are otherwise indistinguishable. Settings also has a
