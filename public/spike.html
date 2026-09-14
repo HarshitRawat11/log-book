@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0b0f14" />
+    <title>Cardio audio spike</title>
+    <style>
+      :root { color-scheme: dark; }
+      body {
+        margin: 0; padding: 16px 16px 48px;
+        background: #0b0f14; color: #e8edf3;
+        font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        -webkit-text-size-adjust: 100%;
+      }
+      h1 { font-size: 18px; margin: 0 0 4px; }
+      p, li { font-size: 14px; line-height: 1.5; color: #97a3b3; }
+      .card { background: #141a22; border: 1px solid #2a3441; border-radius: 16px; padding: 14px; margin: 12px 0; }
+      button { font: inherit; }
+      .mode { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+      .mode button {
+        min-height: 52px; border-radius: 10px; border: 1px solid #2a3441;
+        background: #1d252f; color: #97a3b3; font-size: 13px; font-weight: 600;
+      }
+      .mode button[aria-pressed='true'] { border-color: #4ea3ff; background: rgba(78,163,255,.12); color: #4ea3ff; }
+      #go {
+        width: 100%; min-height: 68px; border: 0; border-radius: 14px;
+        background: #4ea3ff; color: #04121f; font-size: 20px; font-weight: 700; margin-top: 12px;
+      }
+      #go:disabled { opacity: .4; }
+      #clock { font-size: 56px; font-weight: 700; font-variant-numeric: tabular-nums; margin: 4px 0; }
+      #lag { font-size: 34px; font-weight: 700; font-variant-numeric: tabular-nums; }
+      .ok { color: #3ddc97; } .bad { color: #ff6b6b; } .dim { color: #97a3b3; }
+      textarea {
+        width: 100%; box-sizing: border-box; min-height: 190px; background: #1d252f;
+        color: #e8edf3; border: 1px solid #2a3441; border-radius: 10px; padding: 8px;
+        font-family: ui-monospace, monospace; font-size: 11px; line-height: 1.35;
+      }
+      ol { padding-left: 20px; } li { margin: 3px 0; }
+      code { color: #e8edf3; }
+    </style>
+  </head>
+  <body>
+    <h1>Cardio audio spike</h1>
+    <p>
+      Answers one question: <strong>with the screen off, do pre-scheduled cues still sound?</strong>
+      Run each mode once. Takes about 80 seconds each.
+    </p>
+
+    <div class="card">
+      <p style="margin-top:0"><strong style="color:#e8edf3">How to run</strong></p>
+      <ol>
+        <li>Set the volume to what you would use in the gym.</li>
+        <li>Pick a mode, tap <strong>Start</strong>.</li>
+        <li><strong>Immediately press the power button</strong> to lock the screen.</li>
+        <li>Listen. Cue 1 is one beep, cue 2 is two beeps, up to cue 6 at 60&nbsp;s.
+            <strong>Count which ones you actually hear.</strong></li>
+        <li>After the long low tone at 70&nbsp;s, unlock and read the numbers below.</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <div class="mode">
+        <button data-mode="plain" aria-pressed="true">1. Plain</button>
+        <button data-mode="tone" aria-pressed="false">2. + Tone</button>
+        <button data-mode="media" aria-pressed="false">3. + Media</button>
+      </div>
+      <p id="modeNote" style="margin-bottom:0"></p>
+      <button id="go">Start</button>
+    </div>
+
+    <div class="card">
+      <div class="dim" style="font-size:12px">Elapsed</div>
+      <div id="clock">0.0s</div>
+      <div class="dim" style="font-size:12px">
+        Audio clock lag &mdash; how long the audio engine was frozen
+      </div>
+      <div id="lag" class="dim">&mdash;</div>
+      <div id="verdict" style="font-size:14px;margin-top:6px"></div>
+    </div>
+
+    <div class="card">
+      <p style="margin-top:0"><strong style="color:#e8edf3">Log</strong> &mdash; copy this back</p>
+      <textarea id="log" readonly></textarea>
+      <button
+        id="copy"
+        style="width:100%;min-height:48px;margin-top:8px;border-radius:10px;border:1px solid #2a3441;background:#1d252f;color:#e8edf3"
+      >
+        Copy log
+      </button>
+    </div>
+
+    <script>
+      // ---------------------------------------------------------------------
+      // Deliberately dependency-free and outside the app: this is a throwaway
+      // measurement, and it must not be able to break anything that matters.
+      //
+      // The key number is the AUDIO CLOCK LAG. AudioContext.currentTime only
+      // advances while the audio engine is running, whereas Date.now() never
+      // stops. Subtract one elapsed from the other and the difference is
+      // exactly how long the engine was suspended. That is machine evidence,
+      // independent of whether anybody heard anything.
+      // ---------------------------------------------------------------------
+
+      const CUES = [10, 20, 30, 40, 50, 60] // seconds; cue N sounds N beeps
+      const END = 70
+
+      const NOTES = {
+        plain: 'Scheduled Web Audio only. The architecture as specified.',
+        tone: 'Adds a continuous audible low tone, to try to hold Chrome’s "playing audio" exemption.',
+        media: 'Adds a looping <audio> element with MediaSession, so Chrome sees ordinary media playback.',
+      }
+
+      let mode = 'plain'
+      let ctx = null
+      let running = false
+      let t0Wall = 0
+      let t0Ctx = 0
+      let wakeLock = null
+      let audioEl = null
+      const lines = []
+
+      const $ = (id) => document.getElementById(id)
+      const now = () => (Date.now() - t0Wall) / 1000
+
+      function log(msg) {
+        lines.push(`[${now().toFixed(2).padStart(6)}s] ${msg}`)
+        $('log').value = lines.join('\n')
+        $('log').scrollTop = $('log').scrollHeight
+      }
+
+      /**
+       * Seconds the audio engine has been frozen: wall-clock elapsed minus
+       * audio-clock elapsed. currentTime only advances while the engine runs,
+       * and suspension never recovers, so this only ever climbs.
+       *
+       * Reported RAW, deliberately. Starting a context costs a small offset,
+       * and an earlier version subtracted a baseline sample to cancel it - but
+       * across two desktop runs that baseline came out at 0.56s and then 2.00s,
+       * because it was absorbing real early suspension rather than a fixed
+       * latency. A correction that can quietly swallow a genuine freeze fails
+       * in the one direction that matters, so it is gone. The baseline is still
+       * recorded in the log as context.
+       *
+       * The signal being looked for is tens of seconds. A sub-second startup
+       * offset does not obscure it.
+       */
+      let baselineLag = null
+      const lagSeconds = () => (ctx ? now() - (ctx.currentTime - t0Ctx) : 0)
+
+      document.querySelectorAll('.mode button').forEach((b) => {
+        b.onclick = () => {
+          if (running) return
+          mode = b.dataset.mode
+          document.querySelectorAll('.mode button').forEach((x) =>
+            x.setAttribute('aria-pressed', String(x === b)),
+          )
+          $('modeNote').textContent = NOTES[mode]
+        }
+      })
+      $('modeNote').textContent = NOTES.plain
+
+      /** One cue = n short beeps, so the ear can tell which cue it was. */
+      function scheduleBeeps(at, n) {
+        for (let i = 0; i < n; i++) {
+          const t = at + i * 0.16
+          const osc = ctx.createOscillator()
+          const g = ctx.createGain()
+          osc.type = 'square'
+          osc.frequency.setValueAtTime(1400, t)
+          g.gain.setValueAtTime(0.0001, t)
+          g.gain.exponentialRampToValueAtTime(0.8, t + 0.004)
+          g.gain.exponentialRampToValueAtTime(0.0001, t + 0.09)
+          osc.connect(g).connect(ctx.destination)
+          osc.start(t)
+          osc.stop(t + 0.11)
+          if (i === n - 1) {
+            // Fires on the main thread, so it can be late even when the audio
+            // was on time. Useful as corroboration, never as proof.
+            osc.onended = () => log(`cue ${n} onended (expected ~${CUES[n - 1]}s)`)
+          }
+        }
+      }
+
+      /** A 1s looping WAV, generated so nothing binary has to be committed. */
+      function toneWavDataUri(freq, amp, seconds) {
+        const rate = 22050
+        const n = rate * seconds
+        const buf = new ArrayBuffer(44 + n * 2)
+        const v = new DataView(buf)
+        const str = (o, s) => [...s].forEach((c, i) => v.setUint8(o + i, c.charCodeAt(0)))
+        str(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); str(8, 'WAVEfmt ')
+        v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true)
+        v.setUint32(24, rate, true); v.setUint32(28, rate * 2, true)
+        v.setUint16(32, 2, true); v.setUint16(34, 16, true)
+        str(36, 'data'); v.setUint32(40, n * 2, true)
+        for (let i = 0; i < n; i++) {
+          // Whole number of cycles, so the loop point does not click.
+          v.setInt16(44 + i * 2, Math.sin((2 * Math.PI * freq * i) / rate) * amp * 32767, true)
+        }
+        let bin = ''
+        new Uint8Array(buf).forEach((b) => (bin += String.fromCharCode(b)))
+        return 'data:audio/wav;base64,' + btoa(bin)
+      }
+
+      async function requestWakeLock() {
+        try {
+          wakeLock = await navigator.wakeLock.request('screen')
+          log('wake lock acquired')
+          wakeLock.addEventListener('release', () => log('wake lock RELEASED by the system'))
+        } catch (e) {
+          log('wake lock failed: ' + e.message)
+        }
+      }
+
+      document.addEventListener('visibilitychange', () => {
+        if (!running) return
+        log(`visibility -> ${document.visibilityState} (ctx.state=${ctx && ctx.state})`)
+        if (document.visibilityState === 'visible') {
+          requestWakeLock()
+          if (ctx && ctx.state === 'suspended') {
+            // Note but do NOT replay: a bell for a round that ended four
+            // minutes ago is worse than silence.
+            log('ctx was suspended on return; resuming (missed cues NOT replayed)')
+            ctx.resume()
+          }
+        }
+      })
+
+      $('go').onclick = async () => {
+        if (running) return
+        running = true
+        $('go').disabled = true
+        lines.length = 0
+
+        ctx = new AudioContext()
+        if (ctx.state === 'suspended') await ctx.resume()
+
+        t0Wall = Date.now()
+        t0Ctx = ctx.currentTime
+        log(`START mode=${mode} sampleRate=${ctx.sampleRate} state=${ctx.state}`)
+        log(`ua=${navigator.userAgent}`)
+
+        await requestWakeLock()
+
+        // Every cue for the whole run, scheduled up front on the audio clock.
+        CUES.forEach((s, i) => scheduleBeeps(t0Ctx + s, i + 1))
+        // A long, unmistakable low tone marks the end.
+        const endOsc = ctx.createOscillator()
+        const endG = ctx.createGain()
+        endOsc.type = 'square'
+        endOsc.frequency.setValueAtTime(300, t0Ctx + END)
+        endG.gain.setValueAtTime(0.0001, t0Ctx + END)
+        endG.gain.exponentialRampToValueAtTime(0.8, t0Ctx + END + 0.01)
+        endG.gain.exponentialRampToValueAtTime(0.0001, t0Ctx + END + 1.4)
+        endOsc.connect(endG).connect(ctx.destination)
+        endOsc.start(t0Ctx + END)
+        endOsc.stop(t0Ctx + END + 1.5)
+        log(`scheduled ${CUES.length} cues + end marker`)
+
+        if (mode === 'tone') {
+          const osc = ctx.createOscillator()
+          const g = ctx.createGain()
+          osc.type = 'sine'
+          osc.frequency.value = 220
+          g.gain.value = 0.06 // audible, not painful
+          osc.connect(g).connect(ctx.destination)
+          osc.start(t0Ctx)
+          osc.stop(t0Ctx + END + 2)
+          log('continuous 220Hz tone started (gain 0.06)')
+        }
+
+        if (mode === 'media') {
+          audioEl = new Audio(toneWavDataUri(180, 0.05, 1))
+          audioEl.loop = true
+          try {
+            await audioEl.play()
+            log('audio element playing (looping 1s WAV)')
+          } catch (e) {
+            log('audio element play() failed: ' + e.message)
+          }
+          if ('mediaSession' in navigator) {
+            navigator.mediaSession.metadata = new MediaMetadata({
+              title: 'Cardio spike',
+              artist: 'log-book',
+            })
+            navigator.mediaSession.playbackState = 'playing'
+            log('mediaSession metadata set')
+          }
+        }
+
+        const tick = setInterval(() => {
+          const e = now()
+          $('clock').textContent = e.toFixed(1) + 's'
+
+          // Take the baseline once the context has settled, and only while the
+          // page is still visible - if the screen is already off, the offset
+          // would have suspension baked into it.
+          if (baselineLag === null && e >= 2) {
+            baselineLag = lagSeconds()
+            log(`startup offset at 2s: ${baselineLag.toFixed(2)}s (context only, NOT subtracted)`)
+          }
+
+          const lag = lagSeconds()
+          $('lag').textContent = lag.toFixed(2) + 's'
+          $('lag').className = lag < 0.5 ? 'ok' : lag < 2 ? 'dim' : 'bad'
+
+          if (e >= END + 3) {
+            clearInterval(tick)
+            running = false
+            $('go').disabled = false
+            const finalLag = lagSeconds()
+            log(
+              `FINISHED. audio clock lag = ${finalLag.toFixed(2)}s ` +
+                `(startup offset was ${(baselineLag ?? 0).toFixed(2)}s), ctx.state=${ctx.state}`,
+            )
+            $('verdict').innerHTML =
+              finalLag < 2
+                ? '<span class="ok">Audio engine ran the whole time.</span> If you also heard all six cues, this mode survives the screen going off.'
+                : `<span class="bad">Audio engine was frozen for about ${finalLag.toFixed(
+                    0,
+                  )}s.</span> Any cue due in that window did not sound.`
+            if (audioEl) audioEl.pause()
+            if (wakeLock) wakeLock.release().catch(() => {})
+          }
+        }, 250)
+      }
+
+      $('copy').onclick = async () => {
+        try {
+          await navigator.clipboard.writeText($('log').value)
+          $('copy').textContent = 'Copied'
+          setTimeout(() => ($('copy').textContent = 'Copy log'), 2000)
+        } catch {
+          $('log').select()
+          $('copy').textContent = 'Select all and copy manually'
+        }
+      }
+    </script>
+  </body>
+</html>
