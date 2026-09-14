@@ -55,7 +55,9 @@
         <li><strong>Immediately press the power button</strong> to lock the screen.</li>
         <li>Listen. Cue 1 is one beep, cue 2 is two beeps, up to cue 6 at 60&nbsp;s.
             <strong>Count which ones you actually hear.</strong></li>
-        <li>After the long low tone at 70&nbsp;s, unlock and read the numbers below.</li>
+        <li>A long low tone marks the end. Unlock and read the numbers below.</li>
+        <li>For the 35-minute run the cues are 5 minutes apart, so cue&nbsp;1 lands at 5&nbsp;min
+            and cue&nbsp;6 at 30. You do not need to watch it.</li>
       </ol>
     </div>
 
@@ -65,7 +67,12 @@
         <button data-mode="tone" aria-pressed="false">2. + Tone</button>
         <button data-mode="media" aria-pressed="false">3. + Media</button>
       </div>
-      <p id="modeNote" style="margin-bottom:0"></p>
+      <p id="modeNote"></p>
+      <div class="mode" style="grid-template-columns:1fr 1fr">
+        <button data-len="short" aria-pressed="true">70 seconds</button>
+        <button data-len="long" aria-pressed="false">35 minutes</button>
+      </div>
+      <p id="lenNote" style="margin-bottom:0"></p>
       <button id="go">Start</button>
       <div
         id="err"
@@ -107,8 +114,24 @@
       // independent of whether anybody heard anything.
       // ---------------------------------------------------------------------
 
-      const CUES = [10, 20, 30, 40, 50, 60] // seconds; cue N sounds N beeps
-      const END = 70
+      /**
+       * Short proves the mechanism; long proves it lasts.
+       *
+       * A 70-second pass says the audio engine survived the screen going off.
+       * It does not say it survives thirty minutes: Chrome escalates
+       * background throttling the longer a page stays hidden, and Android can
+       * reclaim the page under memory pressure. The long run also tests
+       * something the short one cannot - whether an oscillator scheduled
+       * THIRTY-FIVE MINUTES ahead still fires, which is exactly what the real
+       * engine will be asking of it.
+       */
+      const LENGTHS = {
+        short: { cues: [10, 20, 30, 40, 50, 60], end: 70, label: '70 seconds' },
+        long: { cues: [300, 600, 900, 1200, 1500, 1800], end: 2100, label: '35 minutes' },
+      }
+      let length = 'short'
+      let CUES = LENGTHS.short.cues
+      let END = LENGTHS.short.end
 
       const NOTES = {
         plain: 'Scheduled Web Audio only. The architecture as specified.',
@@ -190,6 +213,24 @@
         }
       })
       $('modeNote').textContent = NOTES.plain
+
+      const LEN_NOTES = {
+        short: 'Cues every 10s. Proves the mechanism.',
+        long: 'Cues every 5 min, ending at 35. Start it, lock the screen, put the phone down and come back — this is the one that matters.',
+      }
+      document.querySelectorAll('[data-len]').forEach((b) => {
+        b.onclick = () => {
+          if (running) return
+          length = b.dataset.len
+          CUES = LENGTHS[length].cues
+          END = LENGTHS[length].end
+          document
+            .querySelectorAll('[data-len]')
+            .forEach((x) => x.setAttribute('aria-pressed', String(x === b)))
+          $('lenNote').textContent = LEN_NOTES[length]
+        }
+      })
+      $('lenNote').textContent = LEN_NOTES.short
 
       /** One cue = n short beeps, so the ear can tell which cue it was. */
       function scheduleBeeps(at, n) {
@@ -316,7 +357,10 @@
         endOsc.connect(endG).connect(ctx.destination)
         endOsc.start(t0Ctx + END)
         endOsc.stop(t0Ctx + END + 1.5)
-        log(`scheduled ${CUES.length} cues + end marker`)
+        log(
+          `scheduled ${CUES.length} cues + end marker over ${LENGTHS[length].label} ` +
+            `(furthest cue is ${CUES[CUES.length - 1]}s ahead)`,
+        )
 
         if (mode === 'tone') {
           const osc = ctx.createOscillator()
