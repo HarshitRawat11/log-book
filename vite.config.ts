@@ -19,10 +19,49 @@ function buildStamp() {
   }
 }
 
+/**
+ * Which node_modules package a module belongs to, or null for our own code.
+ * Ids use forward slashes on every platform, including Windows.
+ */
+function packageOf(id: string): string | null {
+  const after = id.split('node_modules/')[1]
+  if (!after) return null
+  const parts = after.split('/')
+  return parts[0]!.startsWith('@') ? `${parts[0]}/${parts[1]}` : parts[0]!
+}
+
+const REACT_PKGS = ['react', 'react-dom', 'react-router', 'react-router-dom', 'scheduler']
+
 export default defineConfig({
   define: {
     __BUILD_SHA__: JSON.stringify(buildStamp()),
     __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        /**
+         * Pin the two stable vendor groups into their own chunks.
+         *
+         * This is about update size, not download size - Workbox precaches
+         * everything either way. Left to itself the bundler folded Dexie and
+         * Supabase in alongside whichever component first pulled them, so
+         * editing that component changed the hash of a 326kB chunk and the
+         * phone re-fetched all of it. Pinned, our code and our dependencies
+         * have independent hashes, and a normal deploy only moves the former.
+         *
+         * Recharts is deliberately absent: only Progress imports it, so it
+         * lands in that route's chunk, which is exactly where it should be.
+         */
+        manualChunks(id: string) {
+          const pkg = packageOf(id)
+          if (!pkg) return
+          if (REACT_PKGS.includes(pkg)) return 'vendor-react'
+          if (pkg === 'dexie' || pkg === 'dexie-react-hooks' || pkg.startsWith('@supabase/'))
+            return 'vendor-data'
+        },
+      },
+    },
   },
   plugins: [
     react(),

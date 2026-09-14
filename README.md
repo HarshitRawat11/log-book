@@ -34,6 +34,7 @@ npm run dev
 |---|---|
 | `npm run dev` | Dev server on :5173, service worker enabled |
 | `npm run build` | Typecheck, then production build |
+| `npm run preview` | Serves `dist/` on :4173 — the only way to see real chunking |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm test` | Vitest, run once |
 | `npm run icons` | Regenerate `public/icon-*.png` from `scripts/generate-icons.mjs` |
@@ -162,6 +163,36 @@ CVD separation, normal-vision and contrast checks against both card surfaces. In
 light mode three slots fall below 3:1 on white, so the stacked chart ships a
 **table view** as relief. A ninth muscle group is never given a generated hue —
 past six, series fold into "Other".
+
+## Bundle
+
+Train is the only eager route. Everything else is a `lazy()` chunk, and the two stable
+vendor groups (`vendor-react`, `vendor-data`) are pinned in `vite.config.ts`.
+
+| | raw | gzip |
+|---|---|---|
+| Boot JS, one chunk (before) | 969 kB | 279 kB |
+| Boot JS, split | **529 kB** | **159 kB** |
+| ...of which our own code | 29 kB | 9 kB |
+| Progress, on demand | 385 kB | 110 kB |
+
+**The point is update size, not download size.** Workbox precaches every chunk either way,
+so an install still fetches the lot — and that is what keeps the lazy routes working
+offline. What changed is that Workbox revisions each file separately: as one bundle, any
+edit re-downloaded 279 kB onto the phone at every deploy. Split, a normal change to app
+code moves ~9 kB and the vendor chunks stay put in the cache.
+
+The measurement that drove it, from a throwaway build that split every package apart:
+Recharts is 255 kB raw, and drags in d3 (~60 kB), its own redux (~28 kB), `es-toolkit`
+(14 kB) and `decimal.js-light` (13 kB) — about 370 kB, a third of the bundle, to draw a
+screen opened once a week. Only `Progress` imports it, so it now rides in that chunk.
+
+**Known, not done:** `supabase-js` eagerly constructs a realtime client, so
+`realtime-js` + `phoenix` + `storage-js` + `functions-js` — about 87 kB raw, 25 kB gzipped
+of features this app never uses — sit in the boot path and will not tree-shake. Removing
+them means dropping the umbrella package for `auth-js` + `postgrest-js` directly, which is
+a rewrite of the auth path for 25 kB on a bundle that is precached anyway. Not worth the
+risk to the one flow that must never break.
 
 ## Deployment
 

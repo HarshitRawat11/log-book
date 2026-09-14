@@ -1,3 +1,4 @@
+import { Suspense, lazy } from 'react'
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { AuthProvider, useAuth } from './auth/AuthProvider'
 import { AuthCallback } from './auth/AuthCallback'
@@ -5,14 +6,37 @@ import { SignIn } from './auth/SignIn'
 import { TabBar } from './components/TabBar'
 import { UpdatePrompt } from './components/UpdatePrompt'
 import { Train } from './routes/Train'
-import { Food } from './routes/Food'
-import { Progress } from './routes/Progress'
-import { Settings } from './routes/Settings'
-import { Exercises } from './routes/Exercises'
-import { History } from './routes/History'
-import { WorkoutDetail } from './routes/WorkoutDetail'
-import { Foods } from './routes/Foods'
 import { isConfigured } from './lib/env'
+
+/**
+ * Train is eager; everything else is a separate chunk.
+ *
+ * Two reasons, and the second is the one that actually matters day to day:
+ *
+ * 1. Cold open lands on Train, so nothing else needs to be parsed first.
+ *    Progress alone pulled in Recharts and its d3/redux/decimal dependencies -
+ *    around 370kB raw, roughly a third of the bundle - to render a screen you
+ *    open once a week.
+ * 2. Workbox precaches every chunk and revisions them individually. As one
+ *    file, *any* change re-downloaded the whole bundle onto the phone at every
+ *    deploy. Split, editing the logging screen re-downloads the logging
+ *    screen. Precaching also means these still work offline: the chunk is on
+ *    the device before the route is ever visited.
+ *
+ * Named exports, so each needs unwrapping into the default lazy() expects.
+ */
+const lazyRoute = <T extends Record<string, React.ComponentType>>(
+  load: () => Promise<T>,
+  name: keyof T,
+) => lazy(() => load().then((m) => ({ default: m[name]! })))
+
+const Food = lazyRoute(() => import('./routes/Food'), 'Food')
+const Foods = lazyRoute(() => import('./routes/Foods'), 'Foods')
+const Progress = lazyRoute(() => import('./routes/Progress'), 'Progress')
+const Settings = lazyRoute(() => import('./routes/Settings'), 'Settings')
+const Exercises = lazyRoute(() => import('./routes/Exercises'), 'Exercises')
+const History = lazyRoute(() => import('./routes/History'), 'History')
+const WorkoutDetail = lazyRoute(() => import('./routes/WorkoutDetail'), 'WorkoutDetail')
 
 function NotConfigured() {
   return (
@@ -31,7 +55,14 @@ function NotConfigured() {
 function AppShell() {
   return (
     <div className="flex min-h-dvh flex-col">
-      <Outlet />
+      {/* The tab bar stays mounted while a route chunk arrives, so switching
+          tabs never flashes the shell away. Blank rather than a spinner, for
+          the same reason RequireAuth is blank: off the service worker cache
+          this resolves in a frame, and a spinner that flickers reads as
+          slowness. */}
+      <Suspense fallback={<div className="flex-1 bg-bg" />}>
+        <Outlet />
+      </Suspense>
       <TabBar />
     </div>
   )
