@@ -175,8 +175,13 @@ CI, deliberately, while the app is still being built out phase by phase:
 ```bash
 git commit ...      # commit FIRST: the build stamps git HEAD into the bundle
 npm run build
-npx netlify-cli deploy --prod --dir=dist --site=log-book-hr
+npx netlify-cli deploy --prod --dir=dist --site=d30fc361-f894-43cd-89f2-9b2e7a38200b
 ```
+
+`--site` takes the project **ID**, not the name. Passing `log-book-hr` fails with
+`Failed retrieving site data ... Not Found`, which reads like a login problem and is not
+one — `netlify-cli status` will happily confirm you are signed in. `netlify-cli sites:list`
+prints the ID.
 
 Settings shows that stamp. With `registerType: 'prompt'` a phone keeps serving
 the old bundle until the update pill is tapped, so "the screen looks wrong" and
