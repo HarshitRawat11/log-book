@@ -6,6 +6,7 @@ import { SignIn } from './auth/SignIn'
 import { TabBar } from './components/TabBar'
 import { UpdatePrompt } from './components/UpdatePrompt'
 import { Train } from './routes/Train'
+import { CardioProvider } from './cardio/SessionProvider'
 import { isConfigured } from './lib/env'
 
 /**
@@ -33,6 +34,7 @@ const lazyRoute = <T extends Record<string, React.ComponentType>>(
 const Food = lazyRoute(() => import('./routes/Food'), 'Food')
 const Foods = lazyRoute(() => import('./routes/Foods'), 'Foods')
 const Cardio = lazyRoute(() => import('./routes/Cardio'), 'Cardio')
+const CardioSession = lazyRoute(() => import('./routes/CardioSession'), 'CardioSession')
 const Progress = lazyRoute(() => import('./routes/Progress'), 'Progress')
 const Settings = lazyRoute(() => import('./routes/Settings'), 'Settings')
 const Exercises = lazyRoute(() => import('./routes/Exercises'), 'Exercises')
@@ -80,6 +82,24 @@ function RequireAuth() {
   return <AppShell />
 }
 
+/**
+ * The same auth guard with NO shell.
+ *
+ * The running cardio session must have no tab bar and no navigation on it at
+ * all - it is read from across a room with gloves on - so it cannot live under
+ * AppShell.
+ */
+function RequireAuthBare() {
+  const { session, loading } = useAuth()
+  if (loading) return <div className="min-h-dvh bg-bg" />
+  if (!session) return <Navigate to="/signin" replace />
+  return (
+    <Suspense fallback={<div className="min-h-dvh bg-bg" />}>
+      <Outlet />
+    </Suspense>
+  )
+}
+
 function Router() {
   const { session, loading } = useAuth()
 
@@ -90,6 +110,9 @@ function Router() {
         path="/signin"
         element={loading ? <div className="min-h-dvh bg-bg" /> : session ? <Navigate to="/train" replace /> : <SignIn />}
       />
+      <Route element={<RequireAuthBare />}>
+        <Route path="/cardio/session" element={<CardioSession />} />
+      </Route>
       <Route element={<RequireAuth />}>
         <Route path="/train" element={<Train />} />
         <Route path="/food" element={<Food />} />
@@ -125,7 +148,12 @@ export function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <Router />
+        {/* Above the routes, so the config screen's Start tap and the running
+            screen share one session - and one AudioContext. A second context
+            created on the running screen would be born suspended. */}
+        <CardioProvider>
+          <Router />
+        </CardioProvider>
       </BrowserRouter>
       <UpdatePrompt />
     </AuthProvider>

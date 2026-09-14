@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Screen } from '../components/Screen'
 import { SyncPill } from '../components/SyncPill'
 import type { CardioPreset } from '../db/types'
@@ -11,6 +12,7 @@ import {
   savePreset,
 } from '../cardio/queries'
 import { createOutput, ensureContext, playTestSequence } from '../cardio/audio'
+import { useSession } from '../cardio/SessionProvider'
 import { humanDuration, mmss, totalSeconds } from '../cardio/schedule'
 
 /**
@@ -53,6 +55,20 @@ const secs = (m: string, s: string) => (Number(m) || 0) * 60 + (Number(s) || 0)
 const digits = (v: string) => v.replace(/\D/g, '').slice(0, 3)
 
 export function Cardio() {
+  const navigate = useNavigate()
+  const { start } = useSession()
+  const [params] = useSearchParams()
+
+  /**
+   * Fast-forward, for verifying a whole multi-round cycle in under a minute.
+   *
+   * A URL parameter rather than a control, so it never clutters the screen
+   * that gets used with gloves on. ?speed=20 turns a 40-minute kickboxing
+   * session into two minutes, and the cue OFFSETS scale with it, so the fast
+   * run rehearses the real cue structure rather than a reduced one.
+   */
+  const speed = Math.min(120, Math.max(1, Number(params.get('speed')) || 1))
+
   const presets = useLiveQuery(listPresets, [], [])
   const remembered = useLiveQuery(lastUsedPresetId, [], null)
 
@@ -247,16 +263,34 @@ export function Cardio() {
           />
         )}
 
+        {speed > 1 && (
+          <p className="rounded-xl border border-danger/40 bg-danger/10 p-3 text-center text-xs
+                        text-danger">
+            Fast-forward ×{speed} — {humanDuration(totalSeconds(config) / speed)} instead of{' '}
+            {humanDuration(totalSeconds(config))}. Drop <code>?speed=</code> from the URL for a real
+            session.
+          </p>
+        )}
+
+        {/* Start must run inside this tap: an AudioContext unlocked anywhere
+            else is born suspended and stays silent with no error. */}
         <button
-          disabled
+          onClick={async () => {
+            if (!valid) return
+            await start({
+              config,
+              activity: draft.activity.trim() || 'other',
+              presetName: selected?.name ?? null,
+              speed,
+            })
+            navigate('/cardio/session')
+          }}
+          disabled={!valid}
           className="min-h-16 w-full rounded-xl bg-accent text-lg font-semibold text-accent-text
                      disabled:opacity-40"
         >
           Start session
         </button>
-        <p className="-mt-2 text-center text-xs text-text-dim">
-          The timer engine lands in the next step — start is deliberately inert until then.
-        </p>
       </div>
     </Screen>
   )
