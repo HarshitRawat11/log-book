@@ -67,6 +67,11 @@
       </div>
       <p id="modeNote" style="margin-bottom:0"></p>
       <button id="go">Start</button>
+      <div
+        id="err"
+        hidden
+        style="margin-top:10px;padding:10px;border-radius:10px;border:1px solid rgba(255,107,107,.4);background:rgba(255,107,107,.12);color:#ff6b6b;font-size:13px;line-height:1.45;word-break:break-word"
+      ></div>
     </div>
 
     <div class="card">
@@ -124,10 +129,36 @@
       const now = () => (Date.now() - t0Wall) / 1000
 
       function log(msg) {
-        lines.push(`[${now().toFixed(2).padStart(6)}s] ${msg}`)
+        const t = t0Wall ? now().toFixed(2).padStart(6) : '  --.--'
+        lines.push(`[${t}s] ${msg}`)
         $('log').value = lines.join('\n')
         $('log').scrollTop = $('log').scrollHeight
       }
+
+      /**
+       * Surface a failure instead of dying silently.
+       *
+       * The first version of this page set running=true and disabled=true
+       * before doing anything that could throw, and had no try/catch. One
+       * exception anywhere in the handler left the button permanently dead with
+       * nothing on screen to say why - which is exactly how it presented: "the
+       * start button is not working". A spike whose whole job is to find out
+       * what a device does must never fail quietly.
+       */
+      function fail(where, e) {
+        const detail =
+          e && e.name ? `${e.name}: ${e.message}` : e && e.message ? e.message : String(e)
+        log(`ERROR ${where} — ${detail}`)
+        const box = $('err')
+        box.hidden = false
+        box.textContent = `${where} — ${detail}`
+        running = false
+        $('go').disabled = false
+        $('go').textContent = 'Start (retry)'
+      }
+
+      window.addEventListener('error', (e) => fail('script error', e.error || e.message))
+      window.addEventListener('unhandledrejection', (e) => fail('unhandled rejection', e.reason))
 
       /**
        * Seconds the audio engine has been frozen: wall-clock elapsed minus
@@ -229,19 +260,48 @@
 
       $('go').onclick = async () => {
         if (running) return
+        try {
+          await start()
+        } catch (e) {
+          fail('start', e)
+        }
+      }
+
+      async function start() {
         running = true
-        $('go').disabled = true
         lines.length = 0
-
-        ctx = new AudioContext()
-        if (ctx.state === 'suspended') await ctx.resume()
-
+        $('err').hidden = true
         t0Wall = Date.now()
-        t0Ctx = ctx.currentTime
-        log(`START mode=${mode} sampleRate=${ctx.sampleRate} state=${ctx.state}`)
+        log('tap received')
         log(`ua=${navigator.userAgent}`)
+        log(`secureContext=${window.isSecureContext} wakeLockAPI=${'wakeLock' in navigator}`)
 
-        await requestWakeLock()
+        // Safari and some Android builds still only expose the prefixed one.
+        const AC = window.AudioContext || window.webkitAudioContext
+        if (!AC) throw new Error('No AudioContext on this browser')
+        ctx = new AC()
+        log(`context created, state=${ctx.state}`)
+
+        if (ctx.state === 'suspended') {
+          await ctx.resume()
+          log(`resumed, state=${ctx.state}`)
+        }
+        if (ctx.state !== 'running') {
+          throw new Error(`context is "${ctx.state}" after resume — audio is blocked`)
+        }
+
+        // Only now is it safe to lock the button: everything above can throw,
+        // and a disabled button with no explanation is the bug being fixed.
+        $('go').disabled = true
+        $('go').textContent = 'Running…'
+
+        t0Ctx = ctx.currentTime
+        log(`START mode=${mode} sampleRate=${ctx.sampleRate} baseLatency=${ctx.baseLatency ?? 'n/a'}`)
+
+        // Deliberately not awaited and not fatal. An earlier version awaited
+        // this, so a wake lock that hung or rejected took the whole run with
+        // it - and the wake lock is a convenience, not the measurement.
+        void requestWakeLock()
 
         // Every cue for the whole run, scheduled up front on the audio clock.
         CUES.forEach((s, i) => scheduleBeeps(t0Ctx + s, i + 1))
@@ -309,6 +369,7 @@
             clearInterval(tick)
             running = false
             $('go').disabled = false
+            $('go').textContent = 'Start'
             const finalLag = lagSeconds()
             log(
               `FINISHED. audio clock lag = ${finalLag.toFixed(2)}s ` +
