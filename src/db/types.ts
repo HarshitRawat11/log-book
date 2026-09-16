@@ -269,6 +269,17 @@ export const SYNC_TABLES = [
 
 export type SyncTable = (typeof SYNC_TABLES)[number]
 
+/**
+ * The primary key column for a table.
+ *
+ * `profile` is keyed by user_id and has no `id` column at all; everything else
+ * is keyed by `id`. This lives here rather than in the sync layer because the
+ * WRITE path needs it too - the outbox has to know what identifies a row in
+ * order to compact queued ops for it.
+ */
+export const pkOf = (table: SyncTable): 'id' | 'user_id' =>
+  table === 'profile' ? 'user_id' : 'id'
+
 /** One queued write. The payload is the whole row, never a delta. */
 export type OutboxOp = {
   seq?: number

@@ -1,5 +1,5 @@
 import { db } from './db'
-import type { SyncTable, SyncedRow } from './types'
+import { pkOf, type SyncTable, type SyncedRow } from './types'
 
 /**
  * The write path.
@@ -56,7 +56,11 @@ export function newRow<T extends object>(fields: T): T & SyncedRow {
  * a complete description of the intended state.
  */
 async function enqueue(table: SyncTable, row: Record<string, unknown>) {
-  const rowId = row.id as string
+  // Keyed on the table's real primary key. Assuming `id` here is what forced
+  // Targets to invent one for `profile`, and that invented column is exactly
+  // what the server rejected - PGRST204, every push, forever.
+  const rowId = row[pkOf(table)] as string
+  if (!rowId) throw new Error(`${table}: cannot queue a row with no ${pkOf(table)}`)
   await db.outbox.where('row_id').equals(rowId).and((op) => op.table === table).delete()
   await db.outbox.add({
     table,
@@ -70,7 +74,7 @@ async function enqueue(table: SyncTable, row: Record<string, unknown>) {
 }
 
 /** Insert or update a row locally and queue it for push. */
-export async function putRow<T extends { id: string }>(table: SyncTable, row: T): Promise<T> {
+export async function putRow<T extends object>(table: SyncTable, row: T): Promise<T> {
   const stamped = { ...row, updated_at: nowIso() }
   await db.transaction('rw', db.table(table), db.outbox, async () => {
     await db.table(table).put(stamped)
@@ -80,7 +84,7 @@ export async function putRow<T extends { id: string }>(table: SyncTable, row: T)
 }
 
 /** Patch some fields of an existing row. */
-export async function patchRow<T extends { id: string }>(
+export async function patchRow<T extends object>(
   table: SyncTable,
   id: string,
   patch: Partial<T>,

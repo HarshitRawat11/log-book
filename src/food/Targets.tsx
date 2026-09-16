@@ -54,8 +54,20 @@ async function saveProfile(existing: Profile | null, patch: Partial<Profile>) {
     updated_at: nowIso(),
     deleted_at: null,
   }
-  // profile is keyed by user_id, not id - putRow stamps updated_at either way.
-  await putRow('profile', { ...base, ...patch, id: base.user_id } as never)
+  /**
+   * No `id` field. profile is keyed by user_id and the table has no `id`
+   * column at all.
+   *
+   * This used to synthesise one so the outbox could key on it, and the server
+   * rejected every push as a result - PGRST204, "Could not find the 'id'
+   * column of 'profile'". Targets saved locally and never once reached
+   * Supabase. The outbox now keys on each table's real primary key, so the
+   * invention is unnecessary; `id` is stripped below because rows written by
+   * the old code still carry it locally and would keep failing.
+   */
+  const { id: _legacyId, ...clean } = { ...base, ...patch } as Profile & { id?: string }
+  void _legacyId
+  await putRow('profile', clean)
   scheduleFlush()
 }
 

@@ -1,6 +1,6 @@
 import { db } from './db'
 import { supabase } from '../lib/supabase'
-import { SYNC_TABLES, type SyncTable } from './types'
+import { SYNC_TABLES, pkOf, type SyncTable } from './types'
 
 /**
  * Outbox flusher and pull/reconcile.
@@ -52,11 +52,6 @@ export function subscribeSync(l: Listener): () => void {
 
 export function getSyncStatus(): SyncStatus {
   return status
-}
-
-/** profile is keyed by user_id; everything else by id. */
-function pkOf(table: SyncTable): string {
-  return table === 'profile' ? 'user_id' : 'id'
 }
 
 async function refreshCounts() {
@@ -236,6 +231,8 @@ export async function syncNow(opts: { manual?: boolean } = {}): Promise<void> {
 let started = false
 let interval: number | undefined
 let debounce: number | undefined
+/** Kept so stopSync can actually unbind them. */
+let teardown: (() => void) | null = null
 
 /** Nudge the flusher shortly after a local write, without spamming it. */
 export function scheduleFlush() {
@@ -266,6 +263,12 @@ export function startSync() {
     if (status.pending > 0) void flushOutbox()
   }, 30_000)
 
+  teardown = () => {
+    window.removeEventListener('online', onOnline)
+    window.removeEventListener('offline', onOffline)
+    document.removeEventListener('visibilitychange', onVisible)
+  }
+
   void refreshCounts()
   void syncNow()
 }
@@ -274,6 +277,14 @@ export function stopSync() {
   started = false
   haltedForAuth = false
   window.clearInterval(interval)
+  // Previously left bound. Sign out and back in and startSync ran again, so
+  // every cycle added another set: two listeners, then three, each firing its
+  // own syncNow on every visibility change. The single-flight guard made it
+  // cheap rather than harmful, which is exactly why it would never have been
+  // noticed.
+  teardown?.()
+  teardown = null
+  window.clearTimeout(debounce)
 }
 
 /** Called after a successful re-auth. */
