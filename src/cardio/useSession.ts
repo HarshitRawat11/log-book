@@ -173,6 +173,40 @@ export function useCardioSession() {
 
   /* ------------------------------------------------------------ control --- */
 
+  /**
+   * Write the ending onto the row and drop the active session.
+   *
+   * Takes the session explicitly rather than reading state, because restore()
+   * needs it before any state has been set.
+   */
+  const finalise = useCallback(
+    async (a: ActiveSession, ph: Phase[], opts: { completed: boolean; at?: number }) => {
+      const at = opts.at ?? a.pausedAt ?? Date.now()
+      // Count from the frozen instant if paused, not from the wall clock.
+      // Ending a paused session used Date.now(), which had carried on past a
+      // schedule that had not - so quitting with one second left in round two
+      // logged round two as completed. The row has to say what happened.
+      await patchRow<CardioSession>('cardio_sessions', a.rowId, {
+        ended_at: new Date(at).toISOString(),
+        rounds_completed: roundsCompletedBy(ph, at),
+        completed: opts.completed,
+      })
+      scheduleFlush()
+      await clearActive()
+    },
+    [],
+  )
+
+  /**
+   * Guards against finishing twice.
+   *
+   * The auto-finish effect runs on every render and `finalise` is async, so if
+   * a patch outlasts the 250ms tick a second render can pass the same guard
+   * before `status` has flipped.
+   */
+  const finishing = useRef(false)
+
+
   /** Must be called from inside the start tap, or the context stays silent. */
   const start = useCallback(
     async (opts: {
@@ -221,6 +255,9 @@ export function useCardioSession() {
       }
       phases.current = buildSchedule(scheduleConfigOf(a), originOf(a))
       lastRounds.current = 0
+      // Reset, or a second session in the same page lifetime would hit the
+      // double-finish guard left standing by the first and never close at all.
+      finishing.current = false
       scheduleFrom(a, phases.current)
       await saveActive(a)
       setActive(a)
@@ -234,14 +271,37 @@ export function useCardioSession() {
   /** Resume a session the page was killed during. */
   const restore = useCallback(
     async (a: ActiveSession) => {
-      phases.current = buildSchedule(scheduleConfigOf(a), originOf(a))
-      lastRounds.current = roundsCompletedBy(phases.current, Date.now())
+      const ph = buildSchedule(scheduleConfigOf(a), originOf(a))
+      phases.current = ph
+      lastRounds.current = roundsCompletedBy(ph, Date.now())
       setActive(a)
-      setStatus(a.pausedAt ? 'paused' : Date.now() >= endsAt(phases.current) ? 'finished' : 'running')
+
+      /**
+       * Already over by the time the app was reopened - the phone was killed
+       * mid-session and picked up an hour later.
+       *
+       * This has to CLOSE the session, not just display it as finished. It
+       * previously only set the status, which left ended_at null, the round
+       * count stale at whatever the last live write managed, and the active
+       * key in place forever: the session became a zombie that reopened every
+       * launch and never appeared in the unrated prompt, because that needs
+       * ended_at. Twenty minutes of work, silently gone.
+       *
+       * Finalised at the schedule's end, not at now: it ended when it ended,
+       * not when the app happened to be reopened.
+       */
+      if (!a.pausedAt && Date.now() >= endsAt(ph)) {
+        finishing.current = true
+        await finalise(a, ph, { completed: true, at: endsAt(ph) })
+        setStatus('finished')
+        return
+      }
+
+      setStatus(a.pausedAt ? 'paused' : 'running')
       // Audio needs a gesture, so cues are NOT rescheduled here. The screen
       // asks for a tap, and rearm() does it.
     },
-    [],
+    [finalise],
   )
 
   /** The tap that re-arms audio after a restore. */
@@ -293,25 +353,15 @@ export function useCardioSession() {
   /** Finish, whether the session ran out or was ended early. */
   const finish = useCallback(
     async (opts: { completed: boolean }) => {
-      if (!active) return null
+      if (!active || finishing.current) return null
+      finishing.current = true
       cancelCues()
       releaseWakeLock()
-      // Count from the frozen instant if paused, not from the wall clock.
-      // Ending a paused session used Date.now(), which had carried on past a
-      // schedule that had not - so quitting with one second left in round two
-      // logged round two as completed. The row has to say what happened.
-      const done = roundsCompletedBy(phases.current, active.pausedAt ?? Date.now())
-      await patchRow<CardioSession>('cardio_sessions', active.rowId, {
-        ended_at: new Date().toISOString(),
-        rounds_completed: done,
-        completed: opts.completed,
-      })
-      scheduleFlush()
-      await clearActive()
+      await finalise(active, phases.current, opts)
       setStatus('finished')
       return active.rowId
     },
-    [active, cancelCues, releaseWakeLock],
+    [active, cancelCues, releaseWakeLock, finalise],
   )
 
   /* ------------------------------------------------------------ effects --- */
