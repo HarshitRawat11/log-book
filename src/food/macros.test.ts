@@ -144,3 +144,56 @@ describe('mifflinStJeorBMR', () => {
     )
   })
 })
+
+/**
+ * A deleted ingredient must not silently leave a recipe.
+ *
+ * refreshRecipeDerived read listFoods(), which filters tombstones, so deleting
+ * a food quietly dropped it from every recipe's sum the next time that recipe
+ * was edited - taking its calories with it, with nothing on screen to say so.
+ * The derivation itself is pure, so what is pinned here is the arithmetic that
+ * must hold once the deleted food is passed in.
+ */
+describe('deriveRecipePer100g with a deleted ingredient', () => {
+  const food = (over: Partial<Food>): Food => ({
+    id: crypto.randomUUID(),
+    user_id: 'u',
+    updated_at: '',
+    deleted_at: null,
+    name: 'x',
+    brand: null,
+    kcal_100g: 100,
+    protein_100g: 0,
+    carbs_100g: 0,
+    fat_100g: 0,
+    fibre_100g: 0,
+    source: 'manual',
+    source_ref: null,
+    fetched_at: null,
+    is_favourite: false,
+    ...over,
+  })
+
+  const dal = food({ name: 'dal', kcal_100g: 120 })
+  const ghee = food({ name: 'ghee', kcal_100g: 900, deleted_at: '2026-09-16T00:00:00Z' })
+
+  it('counts a tombstoned ingredient exactly like a live one', () => {
+    // 200g dal = 240 kcal, 20g ghee = 180 kcal, 420 over a 400g yield.
+    const both = deriveRecipePer100g(
+      [
+        { food: dal, grams: 200 },
+        { food: ghee, grams: 20 },
+      ],
+      400,
+    )
+    expect(both!.total.kcal).toBe(420)
+    expect(both!.kcal_100g).toBe(105)
+  })
+
+  it('shows what dropping it would have cost - a 43% understatement', () => {
+    const withoutGhee = deriveRecipePer100g([{ food: dal, grams: 200 }], 400)
+    expect(withoutGhee!.kcal_100g).toBe(60)
+    // Silently plausible, which is what made it dangerous.
+    expect(60 / 105).toBeLessThan(0.6)
+  })
+})

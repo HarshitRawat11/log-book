@@ -168,7 +168,14 @@ export async function refreshRecipeDerived(recipeId: string): Promise<void> {
   const [recipe, items, foods] = await Promise.all([
     db.recipes.get(recipeId),
     recipeItems(recipeId),
-    listFoods(),
+    // db.foods, NOT listFoods(): tombstoned foods are deliberately included.
+    //
+    // A recipe contains what it contains. Deleting "ghee" from the library
+    // means stop offering it in search - it must not silently vanish from a
+    // curry and take that curry's calories down with it. listFoods() filters
+    // tombstones, so the ingredient was dropped from the sum with nothing to
+    // show for it, the next time the recipe happened to be edited.
+    db.foods.toArray(),
   ])
   if (!recipe) return
 

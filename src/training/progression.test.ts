@@ -183,3 +183,51 @@ describe('epley1RM', () => {
     expect(epley1RM(100, 1)).toBe(100)
   })
 })
+
+/**
+ * Pre-fill after a drop set.
+ *
+ * repeatOf took the highest set_index outright, so the row after a drop to
+ * 20kg pre-filled at 20kg - the drop is a continuation, and the weight being
+ * worked at was still 36. Every set following a drop would have needed
+ * correcting by hand.
+ */
+describe('repeatOf with continuations', () => {
+  const working = (w: number, r: number, idx: number): WorkoutSet => ({
+    ...set(w, r, idx),
+    set_type: 'normal',
+  })
+  const drop = (w: number, r: number, idx: number): WorkoutSet => ({
+    ...set(w, r, idx),
+    set_type: 'dropset',
+  })
+
+  it('repeats the working weight, not the drop hanging off it', () => {
+    expect(repeatOf([working(36, 10, 0), drop(20, 8, 1)], undefined)).toEqual({
+      weight_kg: 36,
+      reps: 10,
+    })
+  })
+
+  it('ignores a myorep mini-set the same way', () => {
+    const mini = { ...set(36, 4, 1), set_type: 'myorep' as const }
+    expect(repeatOf([working(36, 10, 0), mini], undefined)).toEqual({ weight_kg: 36, reps: 10 })
+  })
+
+  it('still takes the most recent working set when several exist', () => {
+    expect(
+      repeatOf([working(36, 10, 0), drop(20, 8, 1), working(36, 9, 2)], undefined),
+    ).toEqual({ weight_kg: 36, reps: 9 })
+  })
+
+  it('ignores warm-ups too', () => {
+    const warm = { ...set(20, 12, 0), is_warmup: true }
+    expect(repeatOf([warm, working(36, 10, 1)], undefined)).toEqual({ weight_kg: 36, reps: 10 })
+  })
+
+  it('falls back to last session when this one has only continuations', () => {
+    // Nothing working logged yet today, so there is nothing to repeat from it.
+    const lastSession = { workout_id: 'w', date: '2026-09-10', sets: [working(40, 8, 0)] }
+    expect(repeatOf([], lastSession)).toEqual({ weight_kg: 40, reps: 8 })
+  })
+})

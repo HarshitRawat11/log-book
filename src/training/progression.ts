@@ -1,4 +1,4 @@
-import type { Exercise, WorkoutSet } from '../db/types'
+import { isWorkingSet, type Exercise, type WorkoutSet } from '../db/types'
 import { daysBetween, relativeAge, shortDate, todayIso } from '../lib/dates'
 
 /**
@@ -188,12 +188,21 @@ export function suggestNext(
   }
 }
 
-/** What to pre-fill a new set with. NOT a suggestion - a repeat of fact. */
+/**
+ * What to pre-fill a new set with. NOT a suggestion - a repeat of fact.
+ *
+ * The last WORKING set, not simply the last row. A drop is a continuation of
+ * the set above it, so after logging a top set at 36kg and a drop to 20kg, the
+ * weight being worked at is still 36 - pre-filling 20 would mean correcting it
+ * by hand on every set following a drop.
+ */
 export function repeatOf(
   setsThisSession: WorkoutSet[],
   lastSession: SessionPerformance | undefined,
 ): { weight_kg: number; reps: number } | null {
-  const previousInSession = [...setsThisSession].sort((a, b) => b.set_index - a.set_index)[0]
+  const previousInSession = setsThisSession
+    .filter(isWorkingSet)
+    .sort((a, b) => b.set_index - a.set_index)[0]
   if (previousInSession) {
     return { weight_kg: previousInSession.weight_kg, reps: previousInSession.reps }
   }
