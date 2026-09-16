@@ -67,6 +67,22 @@ Two consequences are already visible in the schema:
   onto the same row rather than a duplicate set.
 - **Nothing is ever hard-deleted.** Deletion sets `deleted_at`. A hard `DELETE` cannot be
   replicated through the outbox — the row simply reappears on the next pull.
+- **The outbox keys each row on that table's real primary key**, via `pkOf()` in `db/types`.
+  Everything is keyed by `id` except `profile`, which is keyed by `user_id` and has no `id`
+  column at all.
+
+### Why pkOf exists, and the test that guards it
+
+The outbox originally assumed `id` everywhere, so the targets screen invented one for
+`profile` to satisfy it — and Supabase rejected every push with
+`PGRST204: Could not find the 'id' column of 'profile'`. Macro targets saved locally and
+never once reached the server, retrying quietly into the backoff. The app looked fine. That
+is the worst shape a sync bug can take, and it survived a whole phase.
+
+Nothing in TypeScript can catch this: types are erased, and the mismatch exists only between
+our payload and Postgres. `db/schema.test.ts` reads the migration SQL instead and asserts
+that `pkOf` names a column which actually exists, that `profile` has no `id`, that every
+other synced table does, and that all of them carry `user_id`, `updated_at` and `deleted_at`.
 
 ### Accepted limitation: last-write-wins
 
@@ -132,6 +148,11 @@ one in would drag both down after a session that was in fact harder than usual.
 The database enforces the pairing (`warmup_is_normal`), and the logging screen offers the
 four as one exclusive choice rather than a checkbox plus a dropdown, so the combinations the
 constraint rejects cannot be expressed.
+
+**Pre-fill follows the same rule.** `repeatOf` takes the last *working* set, not simply the
+last row logged. It took the highest `set_index` outright at first, so the set after a drop
+to 20kg pre-filled at 20kg — but a drop is a continuation and the weight being worked at is
+still 36, so every set following a drop would have needed correcting by hand.
 
 ## Cardio: the interval timer
 
@@ -264,6 +285,34 @@ for weeks.
 
 Anything a provider returns is cached into the local `foods` table on first use,
 so the library becomes self-sufficient.
+
+## Deleting, and what survives it
+
+Deletion is a tombstone, so the question is always what still *reads* the deleted row. The
+rule throughout: **removing something from the library never rewrites what it was part of.**
+
+- **A deleted food stays in the recipes that use it.** `refreshRecipeDerived` reads
+  `db.foods` directly rather than `listFoods()`, which filters tombstones. It did not, so
+  deleting a food quietly removed it from every recipe using it — not immediately, but the
+  next time that recipe was edited and its totals recomputed. Delete ghee, add a tomato to
+  the curry a week later, and the curry silently loses the ghee's calories entirely — the
+  pinned case in `macros.test.ts` drops from 105 to 60 kcal/100g. Every portion logged from
+  it afterwards is wrong, and plausibly wrong, which is what made it dangerous.
+- **An archived or deleted exercise stays in past sessions.** History, session detail, Train
+  and the weekly volume chart resolve through `listAllExercises()`; only pickers use the
+  filtered list. They all used the filtered list once, and dropped what they could not find,
+  so archiving a lift emptied the sessions containing it. A session with three real sets
+  rendered as *"Nothing logged in this session — add an exercise, or delete the session
+  below"*, with the sets sitting in the database the whole time.
+- **Logged entries are never affected by either**, because `food_log` carries its own macro
+  snapshot.
+
+Archiving means stop offering it today. It cannot mean rewrite last month.
+
+Every destructive action goes through `ConfirmDelete`, which states what is actually lost —
+ingredient counts, set counts — and what is not. Foods, recipes and exercises deleted on a
+single tap until that existed; only sessions asked. Deleting an exercise points at archiving
+as the gentler option, since that keeps the 1RM chart.
 
 ## Charts
 
