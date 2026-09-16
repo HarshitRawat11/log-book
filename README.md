@@ -133,6 +133,109 @@ The database enforces the pairing (`warmup_is_normal`), and the logging screen o
 four as one exclusive choice rather than a checkbox plus a dropdown, so the combinations the
 constraint rejects cannot be expressed.
 
+## Cardio: the interval timer
+
+Built around one constraint: **no screen contact between start and end.** Hands are wrapped
+and gloved from the moment a session starts, so if a design needs a tap mid-session to keep
+working, the design is wrong. Audio is the primary output, and there is no recovery path —
+a timer that drifts or stalls cannot be nudged back into life.
+
+### Nothing counts down
+
+The schedule is **absolute timestamps**, computed once at the start tap, for the whole
+session. The display is derived: take `Date.now()`, find the phase it falls in, subtract.
+If the main thread freezes for eight seconds and wakes late, the next render is simply
+correct, because nothing was being counted.
+
+Every cue for the entire session is handed to the **AudioContext clock** at the start tap.
+That clock runs independently of the main thread, so a throttled or frozen page cannot make
+a bell late.
+
+Measured on the device during the spike: the audio clock tracked wall time to **10ms across
+73 seconds** while main-thread events arrived 1.2s late by the end. That gap is the whole
+architecture.
+
+### What the spike settled
+
+Pre-scheduled Web Audio **survived the screen going off** on the Redmi — all six cues of a
+70-second run sounded. So there is no keepalive tone and no MediaSession element, both of
+which were on the table and both of which would have been heavier.
+
+Worth recording why the obvious workaround is not used: the widely-repeated trick is a
+zero-gain oscillator to keep a backgrounded tab alive, and **Chrome deliberately defeats
+it** — a tab is only exempt from background throttling while playing audio above a volume
+threshold, added precisely to stop pages doing this. If the screen-off case had failed, the
+fix would have been genuine media playback, not silence.
+
+### Cues
+
+Synthesised with `OscillatorNode`, so there are no audio assets to source, license or fail
+to load. Speech was dropped deliberately: `speechSynthesis` does not schedule on the audio
+clock, is throttled when the tab loses focus, and on Chrome Android its boundary events do
+not fire at all.
+
+| cue | when |
+|---|---|
+| ascending bell 880→1320 | round start |
+| three clicks at 1660 | 10s before a round ends — **rounds only** |
+| descending bell 740→494 | round end |
+| three ticks at 1200 | last three seconds of a break, leading into the round |
+| flourish | session end |
+
+Start ascends and end descends: mid-combo and not looking at the bench, the *direction* of
+the sound is the only thing that says which way the transition went. Fundamentals sit
+between 500Hz and 1.7kHz with a 4ms attack, because a phone speaker rolls off below ~500Hz
+and a sine at speaker volume disappears under a heavy bag.
+
+### The running screen
+
+Full-screen colour carries the state. The pair was measured, not chosen by eye — a first
+attempt looked obviously different on screen but came out at **2.31:1 under protanopia**:
+
+| | normal | protanopia | deuteranopia | tritanopia |
+|---|---|---|---|---|
+| `#ef6c00` work vs `#06283d` rest | 4.94:1 | 4.31:1 | 6.08:1 | 4.92:1 |
+
+The separation is carried by lightness as much as hue, which is what makes it survive. A
+red/green pair would not. Identity is never colour alone regardless: the word WORK or REST
+is on screen, and a progress bar reads before the numerals do at three metres.
+
+Tap anywhere pauses — and **pause plays its own sound**, because a stray glove that pauses
+you at minute twenty is otherwise discovered by still throwing punches. Ending needs a
+sustained two-second hold on top of that, so a knocked phone costs at most a pause.
+
+### What is logged
+
+The session row is written **at the start**, not the end, so a session the OS kills at
+minute twenty still exists. The active schedule is persisted locally, so reopening the app
+lands straight back in the running session at the correct point — it asks for one tap to
+re-arm audio, which a browser will not unlock without a gesture.
+
+A session ended early is logged with `completed = false` and the rounds actually finished.
+The interval configuration is **snapshot onto the row**, with no `preset_id`: editing the
+kickboxing preset in December must not rewrite what October's sessions claim to have been.
+
+**Work minutes count `rounds_completed` and exclude breaks.** Forty minutes on the clock
+with 2:00 rests is thirty minutes of work, and counting the clock would flatter every week.
+
+### Fast-forward
+
+`?speed=N` on `/cardio` compresses a session so a whole multi-round cycle is verifiable in
+under a minute — a URL parameter rather than a control, so it never clutters a screen used
+with gloves on. Both the schedule *and* the cue offsets scale, so a fast run rehearses the
+real cue structure rather than a reduced one. The row still records real durations: a ×20
+rehearsal must not be logged as fifteen-second rounds.
+
+### Phone settings this depends on
+
+HyperOS is more aggressive than stock Android, and no correct code fixes a device setting:
+
+- **Battery optimisation set to unrestricted** for Chrome, not adaptive.
+- **Lock Chrome in the recents list**, so the memory manager does not reclaim it.
+- **Allow background activity / autostart**, if listed separately.
+- Turn off aggressive battery-saver modes while training.
+- **Install as a PWA**, not a browser tab — it gets its own task entry.
+
 ## Units
 
 Kilograms and grams throughout. No unit switcher.
@@ -295,3 +398,11 @@ Magic links only work for origins Supabase knows about. In
 
 All seven v1 acceptance criteria are met. The historical import is **not being done** — history
 is typed in by hand, for the reasons under data provenance above.
+
+- [x] **Phase 5, step 0** — research; three of the specified assumptions confirmed, one corrected
+- [x] **step 1** — schema, presets, config screen; signed-out reads proven to return zero rows
+- [x] **step 2** — timer engine; full 8-round cycle verified in 46s at `?speed=5`
+- [x] **step 3** — session screen, notes and RPE, Progress charts, CSV export
+- [ ] **step 4** — a real 30-minute session on the phone. **Not yet run.** Until it is, the
+      timer is unproven where it matters: cue accuracy over thirty unattended minutes, total
+      drift under two seconds, and surviving a backgrounding mid-session.
