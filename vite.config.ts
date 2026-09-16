@@ -76,10 +76,7 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         // The Supabase REST API must never be served from cache: stale reads
         // would fight the outbox reconcile. Network only, no runtime caching.
-        // /spike.html is a standalone measurement page, not part of the SPA.
-        // Without the denylist the navigate fallback would hand back index.html
-        // and it would silently render the app instead.
-        navigateFallbackDenylist: [/^\/auth\/callback/, /^\/spike\.html$/],
+        navigateFallbackDenylist: [/^\/auth\/callback/],
       },
       manifest: {
         name: 'log-book',
