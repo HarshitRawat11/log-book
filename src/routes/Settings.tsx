@@ -134,7 +134,7 @@ export function Settings() {
       <h2 className="mb-2 mt-6 px-1 text-sm font-semibold text-text-dim">Version</h2>
       <section className="rounded-2xl border border-border bg-surface">
         <Row label="Build" value={__BUILD_SHA__} />
-        <Row label="Built" value={new Date(__BUILD_TIME__).toLocaleString('en-GB')} />
+        <Row label="Committed" value={new Date(__BUILD_TIME__).toLocaleString('en-GB')} />
       </section>
       <button
         onClick={() => void checkForUpdate()}

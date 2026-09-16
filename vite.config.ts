@@ -20,6 +20,30 @@ function buildStamp() {
 }
 
 /**
+ * The COMMIT time, not the build time - and that difference is load-bearing.
+ *
+ * This was `new Date().toISOString()`, which made every build unique. Because
+ * a `define` is substituted at transform time, that fresh timestamp changed
+ * the hash of every app chunk on every build, even with no source change at
+ * all: two builds of one commit produced entirely different filenames.
+ *
+ * Which quietly defeated the whole point of splitting the bundle. The vendor
+ * chunks stayed put - they come from node_modules and are not transformed with
+ * defines - but every route chunk was re-downloaded on every deploy regardless
+ * of whether a line of it had changed.
+ *
+ * Keyed to the commit, rebuilding the same commit is byte-identical, and a
+ * deploy only moves the chunks that actually changed.
+ */
+function commitTime() {
+  try {
+    return execSync('git log -1 --format=%cI', { encoding: 'utf8' }).trim()
+  } catch {
+    return new Date().toISOString()
+  }
+}
+
+/**
  * Which node_modules package a module belongs to, or null for our own code.
  * Ids use forward slashes on every platform, including Windows.
  */
@@ -35,7 +59,7 @@ const REACT_PKGS = ['react', 'react-dom', 'react-router', 'react-router-dom', 's
 export default defineConfig({
   define: {
     __BUILD_SHA__: JSON.stringify(buildStamp()),
-    __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+    __BUILD_TIME__: JSON.stringify(commitTime()),
   },
   build: {
     rollupOptions: {

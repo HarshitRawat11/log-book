@@ -356,6 +356,23 @@ offline. What changed is that Workbox revisions each file separately: as one bun
 edit re-downloaded 279 kB onto the phone at every deploy. Split, a normal change to app
 code moves ~9 kB and the vendor chunks stay put in the cache.
 
+### The build has to be reproducible for any of that to be true
+
+It was not, for a while, and the claim above was wrong the whole time.
+
+`__BUILD_TIME__` was `new Date().toISOString()`. A `define` is substituted at transform
+time, so a fresh timestamp on every build changed the hash of every app chunk on every
+build — **two builds of the same commit produced entirely different filenames**. The vendor
+chunks held, since node_modules is not transformed with defines, but every route chunk was
+re-downloaded on every deploy whether or not a line of it had changed.
+
+Caught by a docs-only commit moving eleven chunk hashes, then confirmed by building the same
+source twice and diffing. It is now keyed to the commit (`git log -1 --format=%cI`), which
+is as informative and is stable — hence the Settings row reading **Committed** rather than
+Built. Two builds of one commit are now identical, verified the same way.
+
+Anything else added to `define` must be a function of the commit, not of the moment.
+
 The measurement that drove it, from a throwaway build that split every package apart:
 Recharts is 255 kB raw, and drags in d3 (~60 kB), its own redux (~28 kB), `es-toolkit`
 (14 kB) and `decimal.js-light` (13 kB) — about 370 kB, a third of the bundle, to draw a
