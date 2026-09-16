@@ -24,6 +24,8 @@ import {
   TimeLine,
 } from '../training/charts'
 import { listExercises, recentSessions } from '../training/queries'
+import { listSessions } from '../cardio/queries'
+import { weeklyCardio } from '../cardio/analytics'
 import { todayIso } from '../lib/dates'
 
 /**
@@ -68,6 +70,7 @@ export function Progress() {
   )
   const sets = useLiveQuery(async () => alive(await db.sets.toArray()), [], [])
   const weights = useLiveQuery(async () => alive(await db.bodyweight.toArray()), [], [])
+  const cardio = useLiveQuery(listSessions, [], [])
 
   const e1rm = useMemo(() => e1rmSeries(sessions ?? []), [sessions])
   const tonnage = useMemo(() => tonnageSeries(workouts ?? [], sets ?? []), [workouts, sets])
@@ -103,6 +106,8 @@ export function Progress() {
     const keys = [...top, ...(folded.some((r) => r.Other) ? ['Other'] : [])]
     return { rows: folded, keys }
   }, [workouts, sets, exercises])
+
+  const cardioWeeks = useMemo(() => weeklyCardio(cardio ?? [], 12), [cardio])
 
   const hasTraining = (sets ?? []).length > 0
 
@@ -161,6 +166,28 @@ export function Progress() {
             </ChartCard>
 
             <WeeklyVolumeCard rows={weekly.rows} keys={weekly.keys} />
+          </>
+        )}
+
+        {/* Two measures on two different scales - a count and a duration - so
+            two charts. Never one chart with two y-axes: the reader cannot tell
+            which line belongs to which scale, and the crossing point is an
+            artefact of where the axes were put. */}
+        {cardioWeeks.length > 0 && (
+          <>
+            <ChartCard
+              title="Cardio sessions"
+              note="Completed sessions per ISO week, whether they ran to the end or not."
+            >
+              <StackedWeeks data={cardioWeeks} keys={['sessions']} />
+            </ChartCard>
+
+            <ChartCard
+              title="Cardio work"
+              note="Minutes of work per ISO week — rounds actually completed, breaks excluded. Forty minutes on the clock with 2:00 rests is thirty minutes of work."
+            >
+              <StackedWeeks data={cardioWeeks} keys={['workMinutes']} />
+            </ChartCard>
           </>
         )}
       </div>

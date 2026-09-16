@@ -7,16 +7,28 @@ import { mmss } from '../cardio/schedule'
  * The running session. Read from two or three metres away, with gloves on.
  *
  * Full-screen colour carries the state, so a glance says where you are without
- * reading anything. Orange for work, deep blue for rest: the pair differs in
- * both hue AND lightness, so it survives every common colour blindness and bad
- * gym lighting, which a red/green pair would not.
+ * reading anything. Orange for work, deep navy for rest.
  *
- * Nothing else is on this screen. No tab bar, no navigation, no stats.
+ * The pair was measured, not chosen by eye. Separation between the two
+ * backgrounds, including through dichromacy simulation:
+ *
+ *   normal 4.94:1 · protanopia 4.31:1 · deuteranopia 6.08:1 · tritanopia 4.92:1
+ *
+ * A first attempt (#d94f04 / #0a3d62) looked obviously different on screen but
+ * measured 2.31:1 under protanopia - the two states would have been close to
+ * the same brightness for a red-blind reader glancing across a room. The gap is
+ * carried by LIGHTNESS as much as hue, which is what makes it survive; a
+ * red/green pair would not.
+ *
+ * Identity is never colour alone regardless: the word WORK or REST is on the
+ * screen, at 6.27:1 and 13.7:1 against their own backgrounds.
+ *
+ * Nothing else is here. No tab bar, no navigation, no stats.
  */
 
 const SKIN = {
-  round: { bg: '#d94f04', fg: '#1a0a00', sub: 'rgba(26,10,0,.72)' },
-  break: { bg: '#0a3d62', fg: '#eaf4ff', sub: 'rgba(234,244,255,.72)' },
+  round: { bg: '#ef6c00', fg: '#1a0a00', sub: 'rgba(26,10,0,.72)' },
+  break: { bg: '#06283d', fg: '#eaf4ff', sub: 'rgba(234,244,255,.72)' },
   idle: { bg: '#0b0f14', fg: '#e8edf3', sub: '#97a3b3' },
 } as const
 
@@ -37,14 +49,24 @@ export function CardioSession() {
     if (status === 'idle' && !active) navigate('/cardio', { replace: true })
   }, [status, active, navigate])
 
+  // Ran to the end on its own. Straight to notes and RPE rather than a
+  // dead-end "Done" that has to be dismissed before anything can be recorded.
+  useEffect(() => {
+    if (status === 'finished' && active) {
+      navigate(`/cardio/review/${active.rowId}`, { replace: true })
+    }
+  }, [status, active, navigate])
+
   const skin = status === 'running' && phase ? SKIN[phase.kind] : SKIN.idle
 
   function startHold() {
     setHolding(true)
     holdTimer.current = setTimeout(async () => {
       setHolding(false)
-      await finish({ completed: false })
-      navigate('/cardio', { replace: true })
+      const rowId = await finish({ completed: false })
+      // A session ended at round three is still twenty minutes of work worth
+      // rating, so it gets the same review screen as one that ran out.
+      navigate(rowId ? `/cardio/review/${rowId}` : '/cardio', { replace: true })
     }, HOLD_MS)
   }
   function cancelHold() {
@@ -54,29 +76,6 @@ export function CardioSession() {
   }
   useEffect(() => () => cancelHold(), [])
 
-  if (status === 'finished') {
-    return (
-      <main
-        className="flex min-h-dvh flex-col items-center justify-center gap-6 p-6 text-center"
-        style={{ background: SKIN.idle.bg, color: SKIN.idle.fg }}
-      >
-        <p className="text-5xl font-bold">Done</p>
-        <p className="text-lg" style={{ color: SKIN.idle.sub }}>
-          {view.roundsCompleted} of {totalRounds} rounds
-        </p>
-        <button
-          onClick={() => navigate('/cardio', { replace: true })}
-          className="min-h-14 w-full max-w-xs rounded-xl bg-accent text-lg font-semibold
-                     text-accent-text"
-        >
-          Finish
-        </button>
-        <p className="text-xs" style={{ color: SKIN.idle.sub }}>
-          Notes and RPE arrive in the next step.
-        </p>
-      </main>
-    )
-  }
 
   return (
     <main
@@ -103,7 +102,23 @@ export function CardioSession() {
           <p className="mt-2 text-3xl font-semibold" style={{ color: skin.sub }}>
             Round {round} of {totalRounds}
           </p>
-          <p className="mt-8 text-sm" style={{ color: skin.sub }}>
+          {/* Phase progress. At three metres the bar is read before the
+              numerals are, and it says the same thing. */}
+          <div
+            aria-hidden="true"
+            className="mt-6 h-2 w-full max-w-md overflow-hidden rounded-full"
+            style={{ background: 'rgba(0,0,0,.18)' }}
+          >
+            <div
+              className="h-full rounded-full"
+              style={{
+                width: `${Math.max(0, Math.min(100, (1 - remaining / ((phase.endAt - phase.startAt) / 1000)) * 100))}%`,
+                background: skin.fg,
+                opacity: 0.55,
+              }}
+            />
+          </div>
+          <p className="mt-6 text-sm" style={{ color: skin.sub }}>
             Tap anywhere to pause
           </p>
         </>

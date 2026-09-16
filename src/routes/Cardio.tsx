@@ -8,9 +8,13 @@ import {
   STARTER_PRESETS,
   lastUsedPresetId,
   listPresets,
+  listSessions,
   rememberPreset,
   savePreset,
+  unratedSessions,
 } from '../cardio/queries'
+import { workMinutesOf } from '../cardio/analytics'
+import { relativeAge, shortDate } from '../lib/dates'
 import { createOutput, ensureContext, playTestSequence } from '../cardio/audio'
 import { useSession } from '../cardio/SessionProvider'
 import { humanDuration, mmss, totalSeconds } from '../cardio/schedule'
@@ -71,6 +75,8 @@ export function Cardio() {
 
   const presets = useLiveQuery(listPresets, [], [])
   const remembered = useLiveQuery(lastUsedPresetId, [], null)
+  const unrated = useLiveQuery(unratedSessions, [], [])
+  const recent = useLiveQuery(async () => (await listSessions()).slice(0, 5), [], [])
 
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [draft, setDraft] = useState<Draft>(BLANK)
@@ -147,6 +153,35 @@ export function Cardio() {
   return (
     <Screen title="Cardio" actions={<SyncPill />}>
       <div className="flex flex-col gap-4 pb-4">
+        {/* "Prompt me later", as asked. Skipping the review is meant to be
+            free, so the asking has to happen somewhere - here, where the next
+            session starts anyway. */}
+        {(unrated ?? []).length > 0 && (
+          <section className="rounded-2xl border border-accent/40 bg-accent/10 p-4">
+            <h2 className="text-sm font-semibold text-accent">
+              {unrated!.length === 1
+                ? 'One session still needs a rating'
+                : `${unrated!.length} sessions still need a rating`}
+            </h2>
+            <ul className="mt-2 flex flex-col gap-2">
+              {unrated!.slice(0, 3).map((s) => (
+                <li key={s.id}>
+                  <button
+                    onClick={() => navigate(`/cardio/review/${s.id}`)}
+                    className="flex min-h-11 w-full items-center justify-between gap-2 rounded-lg
+                               border border-accent/30 px-3 text-left text-sm"
+                  >
+                    <span>
+                      {shortDate(s.date)} · {s.activity}
+                    </span>
+                    <span className="text-xs text-text-dim">rate ›</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
         {(presets ?? []).length > 0 && (
           <div className="-mx-4 overflow-x-auto px-4">
             <div className="flex gap-2">
@@ -274,6 +309,34 @@ export function Cardio() {
 
         {/* Start must run inside this tap: an AudioContext unlocked anywhere
             else is born suspended and stays silent with no error. */}
+        {(recent ?? []).length > 0 && (
+          <section className="rounded-2xl border border-border bg-surface">
+            <h2 className="px-4 pt-3 text-sm font-semibold text-text-dim">Recent</h2>
+            <ul className="mt-1 divide-y divide-border">
+              {recent!.map((s) => (
+                <li key={s.id}>
+                  <button
+                    onClick={() => navigate(`/cardio/review/${s.id}`)}
+                    className="flex min-h-14 w-full flex-col items-start gap-0.5 px-4 py-2 text-left"
+                  >
+                    <span className="text-sm font-medium">
+                      {shortDate(s.date)}{' '}
+                      <span className="font-normal text-text-dim">
+                        · {relativeAge(s.date)} · {s.activity}
+                      </span>
+                    </span>
+                    <span className="tabular text-xs text-text-dim">
+                      {s.rounds_completed}/{s.rounds_planned} rounds · {workMinutesOf(s)} min work
+                      {!s.completed && ' · ended early'}
+                      {s.rpe !== null && ` · RPE ${s.rpe}`}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
         <button
           onClick={async () => {
             if (!valid) return

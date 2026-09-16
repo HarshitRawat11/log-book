@@ -8,6 +8,7 @@ import { collectDiagnostics, formatDiagnostics } from '../lib/diagnostics'
 import { Targets } from '../food/Targets'
 import {
   exportBodyweightCsv,
+  exportCardioCsv,
   exportFoodCsv,
   exportJson,
   exportSetsCsv,
@@ -185,6 +186,12 @@ export function Settings() {
           className="min-h-12 rounded-xl border border-border bg-surface text-sm font-medium"
         >
           Bodyweight (CSV)
+        </button>
+        <button
+          onClick={() => void exportCardioCsv()}
+          className="min-h-12 rounded-xl border border-border bg-surface text-sm font-medium"
+        >
+          Cardio (CSV)
         </button>
       </div>
 

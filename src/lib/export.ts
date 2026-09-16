@@ -118,3 +118,29 @@ export async function exportBodyweightCsv(): Promise<void> {
 
   download(`log-book-bodyweight-${todayIso()}.csv`, 'text/csv', toCsv(rows))
 }
+
+/** Cardio sessions, with the configuration each one actually ran. */
+export async function exportCardioCsv(): Promise<void> {
+  const rows = (await db.cardio_sessions.toArray())
+    .filter((s) => !s.deleted_at)
+    .map((s) => ({
+      date: s.date,
+      activity: s.activity,
+      preset: s.preset_name ?? '',
+      started_at: s.started_at,
+      ended_at: s.ended_at ?? '',
+      work_seconds: s.work_seconds,
+      break_seconds: s.break_seconds,
+      rounds_planned: s.rounds_planned,
+      rounds_completed: s.rounds_completed,
+      // Work only. The session occupies longer than this on the clock, and
+      // counting the breaks would flatter every total.
+      work_minutes: Math.round((s.rounds_completed * s.work_seconds) / 60),
+      completed: s.completed,
+      rpe: s.rpe ?? '',
+      notes: s.notes ?? '',
+    }))
+    .sort((a, b) => a.started_at.localeCompare(b.started_at))
+
+  download(`log-book-cardio-${todayIso()}.csv`, 'text/csv', toCsv(rows))
+}
