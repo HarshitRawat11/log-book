@@ -14,6 +14,21 @@ export { isWorkingSet }
  * screen renders identically on the gym floor with no signal.
  */
 
+/**
+ * EVERY exercise, including archived and tombstoned ones.
+ *
+ * For resolving names in history, never for a picker. Historical views looked
+ * exercises up in the filtered list and dropped whatever they could not find,
+ * so archiving a lift removed it - and its sets - from past sessions that
+ * genuinely contained it. The sets were still in the database, just invisible.
+ *
+ * Archiving means stop offering it today. It cannot mean rewrite last month.
+ */
+export async function listAllExercises(): Promise<Exercise[]> {
+  return (await db.exercises.toArray()).sort((a, b) => a.name.localeCompare(b.name))
+}
+
+/** Exercises to OFFER: alive, and archived only when asked for. */
 export async function listExercises(includeArchived = false): Promise<Exercise[]> {
   const rows = alive(await db.exercises.toArray())
   return rows

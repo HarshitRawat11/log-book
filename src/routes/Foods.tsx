@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Link } from 'react-router-dom'
 import { Screen } from '../components/Screen'
+import { ConfirmDelete } from '../components/ConfirmDelete'
 import { EmptyState } from '../components/EmptyState'
 import { SyncPill } from '../components/SyncPill'
 import { NumberField } from '../components/NumberField'
@@ -255,16 +256,21 @@ function FoodEditor({ food, onClose }: { food: Food | null; onClose: () => void 
           >
             {food.is_favourite ? 'Remove from favourites' : 'Add to favourites'}
           </button>
-          <button
-            onClick={async () => {
+          <ConfirmDelete
+            label="Delete food"
+            warning={
+              <>
+                Delete <strong>{food.name}</strong>? It stops appearing in search. Recipes using it
+                keep it in their totals, and anything already logged keeps its own snapshot — so
+                nothing you have eaten changes.
+              </>
+            }
+            onConfirm={async () => {
               await deleteRow('foods', food.id)
               scheduleFlush()
               onClose()
             }}
-            className="min-h-11 text-sm text-danger"
-          >
-            Delete food
-          </button>
+          />
         </>
       )}
     </div>

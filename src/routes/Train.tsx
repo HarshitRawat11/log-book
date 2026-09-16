@@ -12,6 +12,7 @@ import { scheduleFlush } from '../db/sync'
 import type { Exercise, RoutineDay } from '../db/types'
 import {
   isWorkingSet,
+  listAllExercises,
   listExercises,
   recentSessionSummaries,
   setsForWorkout,
@@ -62,6 +63,9 @@ export function Train() {
     [],
   )
   const allExercises = useLiveQuery(() => listExercises(), [], [])
+  // Resolved from EVERY exercise, not the offerable ones: a session that
+  // included a lift since archived must still show that lift and its sets.
+  const everyExercise = useLiveQuery(listAllExercises, [], [])
   const recent = useLiveQuery(
     () => recentSessionSummaries({ limit: 5, excludeDate: date }),
     [date, workout?.id],
@@ -73,7 +77,7 @@ export function Train() {
     [],
   )
 
-  const byId = new Map((allExercises ?? []).map((e) => [e.id, e]))
+  const byId = new Map((everyExercise ?? []).map((e) => [e.id, e]))
   const inSession = (exerciseIds ?? []).map((id) => byId.get(id)).filter(Boolean) as Exercise[]
 
   const pretty = new Date(date).toLocaleDateString('en-GB', {

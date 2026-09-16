@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Link } from 'react-router-dom'
 import { Screen } from '../components/Screen'
+import { ConfirmDelete } from '../components/ConfirmDelete'
 import { EmptyState } from '../components/EmptyState'
 import { SyncPill } from '../components/SyncPill'
 import { deleteRow, newRow, patchRow, putRow } from '../db/mutate'
@@ -301,9 +302,18 @@ function EditorForm({
         </button>
       </div>
       {onDelete && (
-        <button onClick={() => void onDelete()} className="min-h-11 text-sm text-danger">
-          Delete exercise
-        </button>
+        <ConfirmDelete
+          label="Delete exercise"
+          warning={
+            <>
+              Delete <strong>{draft.name || 'this exercise'}</strong>? Past sessions keep it and its
+              sets, but it stops being offered when you add a lift, and its 1RM chart goes with it.
+              If you have simply stopped doing it,{' '}
+              <strong>archiving</strong> keeps the chart and hides it from the picker.
+            </>
+          }
+          onConfirm={onDelete}
+        />
       )}
     </div>
   )

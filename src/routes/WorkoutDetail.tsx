@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Screen } from '../components/Screen'
+import { ConfirmDelete } from '../components/ConfirmDelete'
 import { EmptyState } from '../components/EmptyState'
 import { SyncPill } from '../components/SyncPill'
 import { ExerciseCard } from '../training/ExerciseCard'
@@ -10,7 +11,13 @@ import { db } from '../db/db'
 import { deleteRow } from '../db/mutate'
 import { scheduleFlush } from '../db/sync'
 import type { Exercise } from '../db/types'
-import { isWorkingSet, listExercises, setsForWorkout, tonnage } from '../training/queries'
+import {
+  isWorkingSet,
+  listAllExercises,
+  listExercises,
+  setsForWorkout,
+  tonnage,
+} from '../training/queries'
 import { addExerciseToSession, removeExerciseFromSession, sessionExerciseIds } from '../training/session'
 import { formatKg } from '../training/progression'
 import { relativeAge, shortDate } from '../lib/dates'
@@ -26,7 +33,6 @@ export function WorkoutDetail() {
   const { workoutId = '' } = useParams()
   const navigate = useNavigate()
   const [picking, setPicking] = useState(false)
-  const [confirmDelete, setConfirmDelete] = useState(false)
 
   const workout = useLiveQuery(async () => (await db.workouts.get(workoutId)) ?? null, [workoutId], undefined)
   const sets = useLiveQuery(() => setsForWorkout(workoutId), [workoutId], [])
@@ -36,8 +42,11 @@ export function WorkoutDetail() {
     [],
   )
   const allExercises = useLiveQuery(() => listExercises(), [], [])
+  // Resolved from EVERY exercise, not the offerable ones: a session that
+  // included a lift since archived must still show that lift and its sets.
+  const everyExercise = useLiveQuery(listAllExercises, [], [])
 
-  const byId = new Map((allExercises ?? []).map((e) => [e.id, e]))
+  const byId = new Map((everyExercise ?? []).map((e) => [e.id, e]))
   const inSession = (exerciseIds ?? []).map((id) => byId.get(id)).filter(Boolean) as Exercise[]
   const working = (sets ?? []).filter(isWorkingSet)
 
@@ -143,43 +152,25 @@ export function WorkoutDetail() {
           <SessionNotes workout={workout} />
         </div>
 
-        {confirmDelete ? (
-          <div className="rounded-xl border border-danger/40 bg-danger/10 p-4">
-            <p className="text-sm">
+        <ConfirmDelete
+          label="Delete session"
+          warning={
+            <>
               Delete this session and all {(sets ?? []).length} of its sets? This syncs to every
               device.
-            </p>
-            <div className="mt-3 flex gap-2">
-              <button
-                onClick={async () => {
-                  // Tombstone the sets too. The Postgres cascade would handle it
-                  // server-side, but the local store and the outbox would not
-                  // know, so the sets would linger on this device.
-                  for (const s of sets ?? []) await deleteRow('sets', s.id)
-                  await deleteRow('workouts', workout.id)
-                  scheduleFlush()
-                  navigate('/history', { replace: true })
-                }}
-                className="min-h-11 flex-1 rounded-lg bg-danger px-3 text-sm font-semibold text-white"
-              >
-                Delete
-              </button>
-              <button
-                onClick={() => setConfirmDelete(false)}
-                className="min-h-11 rounded-lg border border-border px-3 text-sm"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        ) : (
-          <button
-            onClick={() => setConfirmDelete(true)}
-            className="mt-2 min-h-11 text-sm text-danger"
-          >
-            Delete session
-          </button>
-        )}
+            </>
+          }
+          onConfirm={async () => {
+            // Tombstone the sets too. The Postgres cascade would handle it
+            // server-side, but the local store and the outbox would not know,
+            // so the sets would linger on this device.
+            for (const s of sets ?? []) await deleteRow('sets', s.id)
+            await deleteRow('workouts', workout.id)
+            scheduleFlush()
+            navigate('/history', { replace: true })
+          }}
+        />
+
       </div>
     </Screen>
   )

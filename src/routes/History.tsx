@@ -5,7 +5,7 @@ import { Screen } from '../components/Screen'
 import { EmptyState } from '../components/EmptyState'
 import { SyncPill } from '../components/SyncPill'
 import {
-  listExercises,
+  listAllExercises,
   listWorkoutSummaries,
   recentSessionSummaries,
   type SessionSummary,
@@ -25,7 +25,9 @@ import { createWorkout } from '../training/session'
 export function History() {
   const navigate = useNavigate()
   const summaries = useLiveQuery(() => listWorkoutSummaries(), [], [])
-  const exercises = useLiveQuery(() => listExercises(true), [], [])
+  // Names for history come from EVERY exercise, archived and deleted included,
+  // or a past session silently lists fewer lifts than it contained.
+  const exercises = useLiveQuery(listAllExercises, [], [])
   const byId = new Map((exercises ?? []).map((e) => [e.id, e]))
   const today = todayIso()
 

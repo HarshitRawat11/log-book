@@ -7,6 +7,7 @@ import { scheduleFlush } from '../db/sync'
 import type { Food, Recipe, RecipeItem } from '../db/types'
 import { deriveRecipePer100g } from './macros'
 import { listFoods, recipeItems, refreshRecipeDerived } from './queries'
+import { ConfirmDelete } from '../components/ConfirmDelete'
 import { ifctProvider, type ProviderFood } from './provider'
 import { cacheProviderFood } from './queries'
 
@@ -178,17 +179,22 @@ export function RecipeEditor({ recipe, onClose }: { recipe: Recipe; onClose: () 
         </button>
       </div>
 
-      <button
-        onClick={async () => {
+      <ConfirmDelete
+        label="Delete recipe"
+        warning={
+          <>
+            Delete <strong>{recipe.name}</strong> and its {(items ?? []).length} ingredient
+            {(items ?? []).length === 1 ? '' : 's'}? Meals already logged from it keep their own
+            snapshot and are unaffected.
+          </>
+        }
+        onConfirm={async () => {
           for (const i of items ?? []) await deleteRow('recipe_items', i.id)
           await deleteRow('recipes', recipe.id)
           scheduleFlush()
           onClose()
         }}
-        className="min-h-11 text-sm text-danger"
-      >
-        Delete recipe
-      </button>
+      />
     </div>
   )
 }

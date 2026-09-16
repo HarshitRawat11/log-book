@@ -23,7 +23,7 @@ import {
   TimeBars,
   TimeLine,
 } from '../training/charts'
-import { listExercises, recentSessions } from '../training/queries'
+import { listAllExercises, listExercises, recentSessions } from '../training/queries'
 import { listSessions } from '../cardio/queries'
 import { weeklyCardio } from '../cardio/analytics'
 import { todayIso } from '../lib/dates'
@@ -37,6 +37,10 @@ import { todayIso } from '../lib/dates'
  */
 export function Progress() {
   const exercises = useLiveQuery(() => listExercises(true), [], [])
+  // The weekly chart maps sets to muscle groups, so it needs EVERY exercise:
+  // looked up in the offerable list, an archived lift's sets fall out of the
+  // group map and silently vanish from the volume history.
+  const everyExercise = useLiveQuery(listAllExercises, [], [])
   const [exerciseId, setExerciseId] = useState<string>('')
 
   // Default to the lift trained most recently rather than the alphabetically
@@ -79,7 +83,7 @@ export function Progress() {
   // Cap the stack at six groups plus Other. A ninth categorical hue is never
   // generated - past the validated slots, series fold into "Other".
   const weekly = useMemo(() => {
-    const rows = weeklyWorkingSets(workouts ?? [], sets ?? [], exercises ?? [], 12)
+    const rows = weeklyWorkingSets(workouts ?? [], sets ?? [], everyExercise ?? [], 12)
     const totals = new Map<string, number>()
     for (const r of rows) {
       for (const [k, v] of Object.entries(r)) {
@@ -105,7 +109,7 @@ export function Progress() {
     })
     const keys = [...top, ...(folded.some((r) => r.Other) ? ['Other'] : [])]
     return { rows: folded, keys }
-  }, [workouts, sets, exercises])
+  }, [workouts, sets, everyExercise])
 
   const cardioWeeks = useMemo(() => weeklyCardio(cardio ?? [], 12), [cardio])
 
