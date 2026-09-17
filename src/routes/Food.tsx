@@ -87,7 +87,7 @@ export function Food() {
               <p className="tabular mt-1 text-lg font-semibold">
                 {Math.round(avg.kcal)} kcal
                 <span className="ml-2 text-sm font-normal text-text-dim">
-                  {avg.protein_g.toFixed(0)}g protein
+                  {avg.protein_g.toFixed(0)}&nbsp;g protein
                 </span>
               </p>
               <p className="mt-1 text-xs text-text-dim">
@@ -130,7 +130,7 @@ export function Food() {
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-sm">{e.name_snapshot}</span>
                         <span className="tabular block text-xs text-text-dim">
-                          {Math.round(e.grams)}g · {Math.round(e.kcal)} kcal · P
+                          {Math.round(e.grams)}&nbsp;g · {Math.round(e.kcal)} kcal · P
                           {e.protein_g.toFixed(0)}
                         </span>
                       </span>

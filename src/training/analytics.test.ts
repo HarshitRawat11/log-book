@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { bodyweightSeries, e1rmSeries, tonnageSeries, weeklyWorkingSets } from './analytics'
+import {
+  assistanceSeries,
+  bodyweightSeries,
+  e1rmSeries,
+  tonnageSeries,
+  weeklyWorkingSets,
+} from './analytics'
 import { isWorkingSet, type Bodyweight, type Exercise, type WorkoutSet } from '../db/types'
 import type { SessionPerformance } from './progression'
 
@@ -28,6 +34,7 @@ const exercise = (over: Partial<Exercise>): Exercise => ({
   deleted_at: null,
   name: 'Bench press',
   muscle_group: 'chest',
+  load_is_assistance: false,
   equipment: 'barbell',
   target_rep_min: 8,
   target_rep_max: 12,
@@ -80,6 +87,68 @@ describe('tonnageSeries', () => {
     const workouts = [{ id: 'w1', date: '2026-09-01' }]
     const sets = [set({ workout_id: 'w1', is_warmup: true })]
     expect(tonnageSeries(workouts, sets)).toEqual([])
+  })
+
+  /**
+   * An assisted machine's weight is what the stack contributed. Counting it
+   * would credit you with work you did not do - and credit you MORE on the
+   * sessions where you needed the most help, so the chart would rise as the
+   * training went backwards.
+   */
+  it('leaves assisted machines out entirely', () => {
+    const workouts = [{ id: 'w1', date: '2026-09-01' }]
+    const sets = [
+      set({ workout_id: 'w1', exercise_id: 'bench', weight_kg: 60, reps: 10 }), // 600
+      set({ workout_id: 'w1', exercise_id: 'assisted', weight_kg: 30, reps: 10 }),
+    ]
+    expect(tonnageSeries(workouts, sets, new Set(['assisted']))).toEqual([
+      { date: '2026-09-01', value: 600 },
+    ])
+  })
+
+  it('omits a session that was nothing but assisted work, rather than plotting zero', () => {
+    const workouts = [{ id: 'w1', date: '2026-09-01' }]
+    const sets = [set({ workout_id: 'w1', exercise_id: 'assisted', weight_kg: 30, reps: 10 })]
+    expect(tonnageSeries(workouts, sets, new Set(['assisted']))).toEqual([])
+  })
+})
+
+/**
+ * The assisted machine's replacement for the 1RM chart.
+ *
+ * Deliberately formula-free. Epley on an assisted pull-up would need bodyweight
+ * minus the stack; fed the stack alone it produces a line that RISES as you get
+ * weaker, which is the one shape a progress chart must never have.
+ */
+describe('assistanceSeries', () => {
+  it('plots the least assistance used in each session', () => {
+    const series = assistanceSeries([
+      { workout_id: 'w1', date: '2026-09-01', sets: [set({ weight_kg: 30 }), set({ weight_kg: 25 })] },
+      { workout_id: 'w2', date: '2026-09-08', sets: [set({ weight_kg: 20 })] },
+    ])
+    expect(series).toEqual([
+      { date: '2026-09-01', value: 25 },
+      { date: '2026-09-08', value: 20 },
+    ])
+  })
+
+  it('keeps a zero, because no assistance at all is the goal and not missing data', () => {
+    const series = assistanceSeries([
+      { workout_id: 'w1', date: '2026-09-01', sets: [set({ weight_kg: 0 })] },
+    ])
+    expect(series).toEqual([{ date: '2026-09-01', value: 0 }])
+  })
+
+  it('drops sessions with no sets rather than plotting Infinity', () => {
+    expect(assistanceSeries([{ workout_id: 'w', date: '2026-09-01', sets: [] }])).toEqual([])
+  })
+
+  it('sorts oldest first, whatever order the sessions arrive in', () => {
+    const series = assistanceSeries([
+      { workout_id: 'w2', date: '2026-09-08', sets: [set({ weight_kg: 20 })] },
+      { workout_id: 'w1', date: '2026-09-01', sets: [set({ weight_kg: 25 })] },
+    ])
+    expect(series.map((p) => p.date)).toEqual(['2026-09-01', '2026-09-08'])
   })
 })
 

@@ -46,7 +46,12 @@ function columnsByTable(): Map<string, Set<string>> {
   }
 
   // Columns added later by ALTER, which never appear in a create table body.
-  for (const m of sql.matchAll(/alter table (\w+) add column (?:if not exists )?(\w+)/g)) {
+  //
+  // \s+ rather than a literal space throughout: this pattern quietly missed a
+  // column whose ALTER was wrapped across two lines, which is the one failure
+  // this whole file exists to prevent - a column the code believes in and the
+  // parser cannot see reports as "schema fine" either way.
+  for (const m of sql.matchAll(/alter table\s+(\w+)\s+add column\s+(?:if not exists\s+)?(\w+)/g)) {
     tables.get(m[1]!)?.add(m[2]!)
   }
 
@@ -63,6 +68,8 @@ describe('migrations parse', () => {
   it('picks up columns added by later migrations, not just create table', () => {
     expect(TABLES.get('sets')).toContain('set_type')
     expect(TABLES.get('exercises')).toContain('machine_setup')
+    expect(TABLES.get('exercises')).toContain('load_is_assistance')
+    expect(TABLES.get('workouts')).toContain('name')
   })
 })
 

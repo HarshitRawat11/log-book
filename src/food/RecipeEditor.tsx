@@ -86,7 +86,7 @@ export function RecipeEditor({ recipe, onClose }: { recipe: Recipe; onClose: () 
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm">{food.name}</span>
                   <span className="tabular block text-xs text-text-dim">
-                    {grams}g · {Math.round((food.kcal_100g * grams) / 100)} kcal
+                    {grams}&nbsp;g · {Math.round((food.kcal_100g * grams) / 100)} kcal
                   </span>
                 </span>
                 <button
@@ -125,7 +125,7 @@ export function RecipeEditor({ recipe, onClose }: { recipe: Recipe; onClose: () 
         </button>
         <p className="mt-2 text-xs leading-relaxed text-text-dim">
           Weigh the pan contents after cooking. Ingredients here total{' '}
-          <span className="tabular text-text">{Math.round(rawWeight)}g</span> raw — the difference
+          <span className="tabular text-text">{Math.round(rawWeight)}&nbsp;g</span> raw — the difference
           is water lost, which is exactly what makes the per-100g figure right.
         </p>
       </section>
@@ -144,7 +144,7 @@ export function RecipeEditor({ recipe, onClose }: { recipe: Recipe; onClose: () 
             </p>
             <p className="tabular mt-2 text-xs text-text-dim">
               Whole dish: {Math.round(derived.total.kcal)} kcal ·{' '}
-              {derived.total.protein_g.toFixed(0)}g protein
+              {derived.total.protein_g.toFixed(0)}&nbsp;g protein
             </p>
           </>
         ) : (

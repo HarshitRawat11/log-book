@@ -62,6 +62,19 @@ export type Exercise = SyncedRow & {
    * progression engine and the 1RM chart lose the thread.
    */
   machine_setup: string | null
+  /**
+   * The load COUNTERWEIGHTS you - an assisted pull-up or dip machine.
+   *
+   * More weight is less work, so the whole load axis runs backwards: taking
+   * weight off is progression, a deload adds it back, the top set of a session
+   * is the LIGHTEST one, weight x reps is the machine's contribution rather
+   * than yours, and an Epley 1RM means nothing without bodyweight.
+   *
+   * A flag rather than a negative load_increment_kg, which would have carried
+   * the direction and nothing else while every rule above still needed its own
+   * special case.
+   */
+  load_is_assistance: boolean
   archived: boolean
 }
 
@@ -87,6 +100,13 @@ export type Workout = SyncedRow & {
   /** ISO date, yyyy-mm-dd. Local calendar date, not UTC - see dates.ts. */
   date: string
   routine_day_id: string | null
+  /**
+   * A label - "Pull", "Push B". Null on most sessions and meant to stay that
+   * way. Nothing keys off it except the exercise picker's ordering, which
+   * treats it as a hint and falls back to what the session already contains.
+   */
+  name: string | null
+  /** Free text about the whole day. Per-exercise notes are their own table. */
   notes: string | null
   started_at: string | null
   finished_at: string | null
@@ -144,6 +164,33 @@ export const setTypeOf = (s: Pick<WorkoutSet, 'set_type'>): SetType => s.set_typ
  */
 export const isWorkingSet = (s: Pick<WorkoutSet, 'is_warmup' | 'set_type'>): boolean =>
   !s.is_warmup && setTypeOf(s) === 'normal'
+
+/**
+ * One note against one exercise within one session.
+ *
+ * Its own table because there is nowhere else to put it: which exercises are in
+ * a session lives in the local-only `meta` table and never syncs, so there is
+ * no membership row to hang a column off.
+ *
+ * Emptied by clearing `note`, not by tombstoning, so the row is reused when you
+ * type into it again. That keeps the partial unique index on
+ * (workout_id, exercise_id) from accumulating dead rows.
+ */
+export type WorkoutExerciseNote = SyncedRow & {
+  workout_id: string
+  exercise_id: string
+  note: string | null
+}
+
+/**
+ * The exercises whose load counterweights the lifter.
+ *
+ * Lives here beside the row types, so analytics.ts can filter on it without
+ * pulling in Dexie - the same reason isWorkingSet does.
+ */
+export const assistedIds = (
+  exercises: ReadonlyArray<Pick<Exercise, 'id' | 'load_is_assistance'>>,
+): Set<string> => new Set(exercises.filter((e) => e.load_is_assistance).map((e) => e.id))
 
 export type Bodyweight = SyncedRow & {
   date: string
@@ -258,6 +305,7 @@ export const SYNC_TABLES = [
   'routine_day_exercises',
   'workouts',
   'sets',
+  'workout_exercise_notes',
   'bodyweight',
   'foods',
   'recipes',

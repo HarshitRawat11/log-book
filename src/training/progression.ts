@@ -24,6 +24,17 @@ import { daysBetween, relativeAge, shortDate, todayIso } from '../lib/dates'
  * Rule 5 is not in the original brief - the brief only said what to do after
  * TWO below-range sessions - and was added to make the function total. Approved
  * at the Phase 0 gate.
+ *
+ * ASSISTED MACHINES invert the load axis and nothing else. On an exercise with
+ * `load_is_assistance`, the stack counterweights you, so the same five rules
+ * run with every weight comparison mirrored:
+ *
+ *   - the top set of a session is the LIGHTEST one, not the heaviest
+ *   - rule 2 subtracts the increment instead of adding it, floored at
+ *     min_weight_kg (the least assistance the stack offers)
+ *   - rule 4 deloads by ADDING assistance, rounded up rather than down
+ *
+ * The rep rules are untouched. Reps mean the same thing either way.
  */
 
 /**
@@ -58,6 +69,12 @@ function roundDownToIncrement(weight: number, inc: number, floor: number): numbe
   return Math.max(Number(stepped.toFixed(2)), floor)
 }
 
+/** The deload direction on an assisted machine: more help, not less. */
+function roundUpToIncrement(weight: number, inc: number): number {
+  if (inc <= 0) return weight
+  return Number((Math.ceil(weight / inc) * inc).toFixed(2))
+}
+
 /** e.g. "3x12 @ 60kg" when uniform, "12/10/10 @ 60kg" when not. */
 function describeSets(sets: WorkoutSet[], weight: number): string {
   const reps = sets.map((s) => s.reps)
@@ -66,22 +83,39 @@ function describeSets(sets: WorkoutSet[], weight: number): string {
   return weight > 0 ? `${repText} @ ${formatKg(weight)}` : `${repText} bodyweight`
 }
 
+/**
+ * A weight and its unit, with a NON-BREAKING space between them.
+ *
+ * The space is the readable form. The non-breaking part matters because these
+ * land mid-sentence in suggestion text - "deload 60 kg to 55 kg" wrapping
+ * between the 60 and the kg on a 390px screen reads as a typo.
+ */
 export function formatKg(kg: number): string {
-  return `${Number(kg.toFixed(2))}kg`
+  return `${Number(kg.toFixed(2))}\u00A0kg`
 }
 
-/** Working sets at the heaviest weight used, in the order they were performed. */
-function topSets(session: SessionPerformance): { weight: number; sets: WorkoutSet[] } | null {
+/**
+ * Working sets at the HARDEST load used, in the order they were performed.
+ *
+ * Hardest means heaviest normally, and lightest on an assisted machine, where
+ * less counterweight is more work. Getting this backwards would have made the
+ * engine reason from an assisted lift's easiest sets and call them its top.
+ */
+function topSets(
+  session: SessionPerformance,
+  assistance: boolean,
+): { weight: number; sets: WorkoutSet[] } | null {
   if (session.sets.length === 0) return null
-  const weight = Math.max(...session.sets.map((s) => s.weight_kg))
+  const weights = session.sets.map((s) => s.weight_kg)
+  const weight = assistance ? Math.min(...weights) : Math.max(...weights)
   const sets = session.sets
     .filter((s) => s.weight_kg === weight)
     .sort((a, b) => a.set_index - b.set_index)
   return { weight, sets }
 }
 
-function isBelowRange(session: SessionPerformance, min: number): boolean {
-  const top = topSets(session)
+function isBelowRange(session: SessionPerformance, min: number, assistance: boolean): boolean {
+  const top = topSets(session, assistance)
   if (!top) return false
   return Math.min(...top.sets.map((s) => s.reps)) < min
 }
@@ -95,10 +129,11 @@ export function suggestNext(
   sessions: SessionPerformance[],
   now: Date = new Date(),
 ): Suggestion | null {
+  const assistance = exercise.load_is_assistance
   const last = sessions[0]
   if (!last) return null
 
-  const top = topSets(last)
+  const top = topSets(last, assistance)
   if (!top) return null
 
   const { weight, sets } = top
@@ -110,9 +145,40 @@ export function suggestNext(
   const basis = { date: last.date, age: relativeAge(last.date, now) }
   const when = `${shortDate(last.date, now)}, ${basis.age}`
   const did = describeSets(sets, weight)
+  // What the number is called in prose. On an assisted machine the load is the
+  // machine's help, and calling that "weight" makes every sentence ambiguous
+  // in the one direction that matters.
+  const noun = assistance ? 'assistance' : 'weight'
 
-  // --- rule 2: everything at the top of the range, add load ----------------
+  // --- rule 2: everything at the top of the range, make it harder ----------
   if (sets.every((s) => s.reps >= max)) {
+    if (assistance) {
+      const next = Math.max(Number((weight - inc).toFixed(2)), exercise.min_weight_kg)
+
+      // Already at the least this machine assists. Going further means adding
+      // weight to yourself, which this model cannot express, so it reports
+      // where you are rather than inventing a number.
+      if (next >= weight) {
+        return {
+          weight_kg: weight,
+          reps: max,
+          stalling: false,
+          basis,
+          reason:
+            `Last time (${when}) ${did} — top of range at ${formatKg(weight)}, ` +
+            `which is already the least this machine assists. Nothing left to take off.`,
+        }
+      }
+
+      return {
+        weight_kg: next,
+        reps: min,
+        stalling: false,
+        basis,
+        reason: `Last time (${when}) ${did} — top of range, so −${formatKg(inc)} assistance.`,
+      }
+    }
+
     const next = weight + inc
     return {
       weight_kg: Number(next.toFixed(2)),
@@ -134,17 +200,37 @@ export function suggestNext(
       basis,
       reason:
         `Last time (${when}) ${did} — in range, so ${nextReps} reps on ` +
-        `set ${targetIdx + 1}, same weight.`,
+        `set ${targetIdx + 1}, same ${noun}.`,
     }
   }
 
   // --- rules 4 and 5: below the range --------------------------------------
   const prev = sessions[1]
-  const prevAlsoBelow = prev ? isBelowRange(prev, min) : false
+  const prevAlsoBelow = prev ? isBelowRange(prev, min, assistance) : false
   const gap = prev ? daysBetween(prev.date, last.date) : Infinity
   const consecutive = prevAlsoBelow && gap <= STALL_WINDOW_DAYS
 
   if (consecutive) {
+    // A deload on an assisted machine means MORE help. There is no ceiling to
+    // clamp against - the stack has a top, but running out of plates is a
+    // practical problem rather than a data one - so this branch always has
+    // somewhere to go. The `+ inc` fallback covers the two cases where 1.1x
+    // rounds straight back onto the weight already in use: a coarse stack, and
+    // zero assistance, where 1.1x is still zero.
+    if (assistance) {
+      const stepped = roundUpToIncrement(weight * 1.1, inc)
+      const deloaded = stepped > weight ? stepped : Number((weight + inc).toFixed(2))
+      return {
+        weight_kg: deloaded,
+        reps: min,
+        stalling: true,
+        basis,
+        reason:
+          `Below ${min} reps twice running (last ${when}) — add assistance back, ` +
+          `${formatKg(weight)} to ${formatKg(deloaded)}.`,
+      }
+    }
+
     const deloaded = roundDownToIncrement(weight * 0.9, inc, exercise.min_weight_kg)
 
     // Already as light as this exercise goes - an empty bar, or the lightest
@@ -176,6 +262,7 @@ export function suggestNext(
   // Rule 5. Includes the layoff case: prev was also below range but too long
   // ago to count, which is a comeback rather than a stall.
   const layoff = prevAlsoBelow && gap > STALL_WINDOW_DAYS
+  const backwards = assistance ? 'adding assistance back' : 'deloading'
   return {
     weight_kg: weight,
     reps: min,
@@ -184,7 +271,7 @@ export function suggestNext(
     reason: layoff
       ? `Last time (${when}) ${did} — short of ${min}, but the session before ` +
         `was ${gap} days earlier. Treating that as a layoff, not a stall: repeat ${formatKg(weight)}.`
-      : `Last time (${when}) ${did} — short of ${min}. Repeat ${formatKg(weight)} before deloading.`,
+      : `Last time (${when}) ${did} — short of ${min}. Repeat ${formatKg(weight)} before ${backwards}.`,
   }
 }
 
@@ -199,6 +286,12 @@ export function suggestNext(
 export function repeatOf(
   setsThisSession: WorkoutSet[],
   lastSession: SessionPerformance | undefined,
+  /**
+   * Required rather than defaulted. A default would be silently wrong at every
+   * call site that forgot it, which is the exact failure this flag exists to
+   * prevent - the pre-fill would follow an assisted lift's easiest set.
+   */
+  assistance: boolean,
 ): { weight_kg: number; reps: number } | null {
   const previousInSession = setsThisSession
     .filter(isWorkingSet)
@@ -206,7 +299,7 @@ export function repeatOf(
   if (previousInSession) {
     return { weight_kg: previousInSession.weight_kg, reps: previousInSession.reps }
   }
-  const top = lastSession ? topSets(lastSession) : null
+  const top = lastSession ? topSets(lastSession, assistance) : null
   if (top && top.sets[0]) return { weight_kg: top.weight, reps: top.sets[0].reps }
   return null
 }

@@ -1,7 +1,7 @@
 import { db } from '../db/db'
 import { alive, newRow, putRow } from '../db/mutate'
 import { scheduleFlush } from '../db/sync'
-import type { Workout } from '../db/types'
+import type { Workout, WorkoutSet } from '../db/types'
 import { setsForWorkout } from './queries'
 
 /**
@@ -50,13 +50,17 @@ export async function sessionExerciseIds(workout: Workout): Promise<string[]> {
  */
 export async function createWorkout(
   date: string,
-  opts: { routineDayId?: string | null; exerciseIds?: string[] } = {},
+  opts: { routineDayId?: string | null; exerciseIds?: string[]; name?: string | null } = {},
 ): Promise<Workout> {
   const created = await putRow(
     'workouts',
     newRow({
       date,
       routine_day_id: opts.routineDayId ?? null,
+      // Repeating a session carries its name across: "Pull" repeated is still
+      // Pull, and retyping it every time is exactly the friction that would
+      // stop the names being there at all.
+      name: opts.name?.trim() || null,
       notes: null,
       started_at: new Date().toISOString(),
       finished_at: null,
@@ -87,4 +91,29 @@ export async function addExerciseToSession(workoutId: string, exerciseId: string
 export async function removeExerciseFromSession(workoutId: string, exerciseId: string) {
   const current = ((await db.meta.get(orderKey(workoutId)))?.value as string[]) ?? []
   await db.meta.put({ key: orderKey(workoutId), value: current.filter((x) => x !== exerciseId) })
+}
+
+
+/**
+ * Which card should be open when a session is first rendered.
+ *
+ * The exercise you most recently logged against, falling back to the first in
+ * the list. Reopening the app four lifts into a session and landing back on
+ * lift one would be exactly wrong, and "most recently written" is the only
+ * signal that survives a reload - nothing tracks what you were looking at.
+ *
+ * Editing an old set moves the open card to that exercise, which is not a bug:
+ * you edited it, so it is the one you are looking at.
+ */
+export function defaultActiveExercise(
+  inSessionIds: readonly string[],
+  sets: readonly WorkoutSet[],
+): string | null {
+  if (inSessionIds.length === 0) return null
+  let best: WorkoutSet | undefined
+  for (const s of sets) {
+    if (!inSessionIds.includes(s.exercise_id)) continue
+    if (!best || s.updated_at > best.updated_at) best = s
+  }
+  return best?.exercise_id ?? inSessionIds[0]!
 }

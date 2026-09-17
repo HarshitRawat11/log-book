@@ -5,24 +5,29 @@ import { Screen } from '../components/Screen'
 import { EmptyState } from '../components/EmptyState'
 import { SyncPill } from '../components/SyncPill'
 import { ExerciseCard } from '../training/ExerciseCard'
+import { ExercisePicker } from '../training/ExercisePicker'
+import { SessionName } from '../training/SessionName'
 import { SessionNotes } from '../training/SessionNotes'
 import { db } from '../db/db'
 import { alive, deleteRow } from '../db/mutate'
 import { scheduleFlush } from '../db/sync'
-import type { Exercise, RoutineDay } from '../db/types'
+import { assistedIds, type Exercise, type RoutineDay } from '../db/types'
 import {
   isWorkingSet,
   listAllExercises,
   listExercises,
+  notesForWorkout,
   recentSessionSummaries,
   setsForWorkout,
   tonnage,
   type SessionSummary,
 } from '../training/queries'
+import { sessionFocus } from '../training/focus'
 import { formatKg } from '../training/progression'
 import {
   addExerciseToSession,
   createWorkout,
+  defaultActiveExercise,
   removeExerciseFromSession,
   sessionExerciseIds,
   workoutsOnDate,
@@ -66,6 +71,13 @@ export function Train() {
   // Resolved from EVERY exercise, not the offerable ones: a session that
   // included a lift since archived must still show that lift and its sets.
   const everyExercise = useLiveQuery(listAllExercises, [], [])
+  // One read for the whole session rather than a live query per card, which
+  // would re-run all six on every set logged.
+  const notes = useLiveQuery(
+    async () => (workout ? await notesForWorkout(workout.id) : new Map()),
+    [workout?.id],
+    new Map(),
+  )
   const recent = useLiveQuery(
     () => recentSessionSummaries({ limit: 5, excludeDate: date }),
     [date, workout?.id],
@@ -80,6 +92,19 @@ export function Train() {
   const byId = new Map((everyExercise ?? []).map((e) => [e.id, e]))
   const inSession = (exerciseIds ?? []).map((id) => byId.get(id)).filter(Boolean) as Exercise[]
 
+  // Exactly one card is open. `activeId` is the explicit choice; the default is
+  // derived, so adding an exercise or logging a set moves it with nothing to
+  // keep in step. A stale id - the exercise was removed - falls back.
+  const [activeId, setActiveId] = useState<string | null>(null)
+  const active =
+    activeId && inSession.some((e) => e.id === activeId)
+      ? activeId
+      : defaultActiveExercise(inSession.map((e) => e.id), sets ?? [])
+
+  const routineDayName =
+    routineDays?.find((d) => d.id === workout?.routine_day_id)?.name ?? null
+  const focus = sessionFocus([workout?.name, routineDayName], inSession)
+
   const pretty = new Date(date).toLocaleDateString('en-GB', {
     weekday: 'long',
     day: 'numeric',
@@ -87,18 +112,24 @@ export function Train() {
   })
 
   async function startSession(opts: { day?: RoutineDay; repeat?: SessionSummary } = {}) {
-    // Repeating seeds the exercise list only - no sets are copied. It means
-    // "put the same lifts in front of me", not "pretend I already did them".
+    // Repeating seeds the exercise list and the name only - no sets are copied.
+    // It means "put the same lifts in front of me", not "pretend I already did
+    // them".
     const created = await createWorkout(date, {
       routineDayId: opts.day?.id ?? opts.repeat?.routine_day_id ?? null,
       exerciseIds: opts.repeat?.exercise_ids,
+      name: opts.repeat?.name ?? opts.day?.name ?? null,
     })
     setSelectedId(created.id)
+    setActiveId(null)
   }
 
   async function addExercise(id: string) {
     if (!workout) return
     await addExerciseToSession(workout.id, id)
+    // Open what was just added. Adding a lift and then having to tap it to
+    // start logging would be a step for nothing.
+    setActiveId(id)
     setPicking(false)
   }
 
@@ -110,6 +141,7 @@ export function Train() {
   }
 
   const working = (sets ?? []).filter(isWorkingSet)
+  const assisted = assistedIds(everyExercise ?? [])
 
   return (
     <Screen
@@ -175,6 +207,7 @@ export function Train() {
                                        text-left"
                           >
                             <span className="text-sm font-medium">
+                              {s.name ? `${s.name} · ` : ''}
                               {shortDate(s.date)}{' '}
                               <span className="font-normal text-text-dim">
                                 · {relativeAge(s.date)} · {s.set_count} sets
@@ -220,7 +253,10 @@ export function Train() {
               {todays!.map((w, i) => (
                 <button
                   key={w.id}
-                  onClick={() => setSelectedId(w.id)}
+                  onClick={() => {
+                    setSelectedId(w.id)
+                    setActiveId(null)
+                  }}
                   className={[
                     'min-h-9 rounded-full border px-3 text-sm font-medium',
                     w.id === workout.id
@@ -228,11 +264,13 @@ export function Train() {
                       : 'border-border bg-surface text-text-dim',
                   ].join(' ')}
                 >
-                  {i + 1}
+                  {w.name || i + 1}
                 </button>
               ))}
             </div>
           )}
+
+          <SessionName workout={workout} />
 
           {inSession.map((e) => (
             <ExerciseCard
@@ -240,6 +278,9 @@ export function Train() {
               exercise={e}
               workoutId={workout.id}
               sets={sets ?? []}
+              note={notes?.get(e.id)?.note ?? null}
+              active={e.id === active}
+              onActivate={() => setActiveId(e.id)}
               onRemove={() => void removeExercise(e.id)}
             />
           ))}
@@ -252,30 +293,12 @@ export function Train() {
           )}
 
           {picking ? (
-            <div className="rounded-2xl border border-border bg-surface p-2">
-              <div className="flex items-center justify-between px-2 py-1">
-                <span className="text-sm text-text-dim">Add exercise</span>
-                <button onClick={() => setPicking(false)} className="size-11 text-text-dim">
-                  ×
-                </button>
-              </div>
-              <ul className="max-h-80 overflow-y-auto">
-                {(allExercises ?? [])
-                  .filter((e) => !inSession.some((x) => x.id === e.id))
-                  .map((e) => (
-                    <li key={e.id}>
-                      <button
-                        onClick={() => void addExercise(e.id)}
-                        className="flex min-h-12 w-full items-center justify-between gap-2 px-2
-                                   text-left"
-                      >
-                        <span>{e.name}</span>
-                        <span className="text-xs text-text-dim">{e.muscle_group}</span>
-                      </button>
-                    </li>
-                  ))}
-              </ul>
-            </div>
+            <ExercisePicker
+              options={(allExercises ?? []).filter((e) => !inSession.some((x) => x.id === e.id))}
+              focus={focus}
+              onPick={(id) => void addExercise(id)}
+              onClose={() => setPicking(false)}
+            />
           ) : (
             <button
               onClick={() => setPicking(true)}
@@ -291,7 +314,7 @@ export function Train() {
           {working.length > 0 && (
             <p className="tabular px-1 pt-2 text-xs text-text-dim">
               {working.length} working set{working.length === 1 ? '' : 's'} ·{' '}
-              {formatKg(Math.round(tonnage(sets ?? [])))} tonnage
+              {formatKg(Math.round(tonnage(sets ?? [], assisted)))} tonnage
             </p>
           )}
 

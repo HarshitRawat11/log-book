@@ -68,7 +68,9 @@ function TooltipBox({
             <span className="text-text-dim">{p.name}</span>
             <span className="font-medium">
               {p.value}
-              {unit ?? ''}
+              {/* A non-breaking space, so "60 kg" never wraps in a tooltip
+                  narrower than the text it is holding. */}
+              {unit ? ` ${unit}` : ''}
             </span>
           </p>
         ))}

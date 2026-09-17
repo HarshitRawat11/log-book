@@ -51,6 +51,7 @@ export function History() {
     const w = await createWorkout(date, {
       routineDayId: repeat?.routine_day_id ?? null,
       exerciseIds: repeat?.exercise_ids,
+      name: repeat?.name ?? null,
     })
     navigate(`/history/${w.id}`)
   }
@@ -110,6 +111,7 @@ export function History() {
                                    text-left disabled:opacity-40"
                       >
                         <span className="text-sm font-medium">
+                          {s.name ? `${s.name} · ` : ''}
                           {shortDate(s.date)}{' '}
                           <span className="font-normal text-text-dim">
                             · {relativeAge(s.date)} · {s.set_count} sets
@@ -166,6 +168,7 @@ export function History() {
                 >
                   <span className="flex flex-wrap items-baseline gap-x-2">
                     <span className="font-semibold">
+                      {workout.name ? `${workout.name} · ` : ''}
                       {shortDate(workout.date)}
                       {workout.date === today && (
                         <span className="ml-2 rounded bg-accent/15 px-1.5 py-0.5 text-xs

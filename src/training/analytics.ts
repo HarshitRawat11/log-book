@@ -35,18 +35,48 @@ export function e1rmSeries(sessions: SessionPerformance[]): Point[] {
 }
 
 /**
+ * Least assistance used per session, for an assisted machine. LOWER IS BETTER.
+ *
+ * The replacement for the 1RM chart on those exercises, not an addition to it.
+ * Epley needs the load you moved; on an assisted pull-up that is your
+ * bodyweight minus the stack, and the stack alone is not it - feeding the
+ * counterweight to the formula produces a line that RISES as you get weaker.
+ *
+ * This plots the thing that actually improves, and does it with no formula at
+ * all: the lightest working set of each session, which is the hardest one.
+ */
+export function assistanceSeries(sessions: SessionPerformance[]): Point[] {
+  return sessions
+    .filter((s) => s.sets.length > 0)
+    .map((s) => ({
+      date: s.date,
+      value: Math.round(Math.min(...s.sets.map((set) => set.weight_kg)) * 10) / 10,
+    }))
+    .filter((p) => Number.isFinite(p.value))
+    .sort((a, b) => a.date.localeCompare(b.date))
+}
+
+/**
  * Session tonnage: sum of weight x reps across every non-warm-up set.
  *
  * Drops and myorep mini-sets are included here even though they do not count
  * as separate sets elsewhere - the reps happened, so the volume is real.
+ *
+ * ASSISTED exercises are excluded entirely. Their weight is what the machine
+ * contributed, so counting it would add tonnage for work you did not do, and
+ * would rise on the sessions where you needed the most help. There is no
+ * honest number to substitute - bodyweight minus assistance needs a bodyweight
+ * for that date, which may not exist - so the sets are left out and the note
+ * on the chart says so.
  */
 export function tonnageSeries(
   workouts: Array<{ id: string; date: string }>,
   sets: WorkoutSet[],
+  assisted: ReadonlySet<string> = new Set(),
 ): Point[] {
   const byWorkout = new Map<string, number>()
   for (const s of sets) {
-    if (s.is_warmup) continue
+    if (s.is_warmup || assisted.has(s.exercise_id)) continue
     byWorkout.set(s.workout_id, (byWorkout.get(s.workout_id) ?? 0) + s.weight_kg * s.reps)
   }
   return workouts

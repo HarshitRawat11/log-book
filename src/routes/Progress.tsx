@@ -7,8 +7,9 @@ import { NumberField } from '../components/NumberField'
 import { db } from '../db/db'
 import { alive, newRow, putRow } from '../db/mutate'
 import { scheduleFlush } from '../db/sync'
-import type { Bodyweight } from '../db/types'
+import { assistedIds, type Bodyweight } from '../db/types'
 import {
+  assistanceSeries,
   bodyweightSeries,
   e1rmSeries,
   tonnageSeries,
@@ -76,8 +77,20 @@ export function Progress() {
   const weights = useLiveQuery(async () => alive(await db.bodyweight.toArray()), [], [])
   const cardio = useLiveQuery(listSessions, [], [])
 
+  // The selected lift decides which strength chart is even meaningful. On an
+  // assisted machine Epley has nothing to work with - it needs the load you
+  // moved, and the stack is the load you did NOT move - so the chart becomes
+  // the assistance itself, where down is progress.
+  const assisted = useMemo(() => assistedIds(everyExercise ?? []), [everyExercise])
+  const selectedIsAssisted = assisted.has(selected)
+
   const e1rm = useMemo(() => e1rmSeries(sessions ?? []), [sessions])
-  const tonnage = useMemo(() => tonnageSeries(workouts ?? [], sets ?? []), [workouts, sets])
+  const assistLine = useMemo(() => assistanceSeries(sessions ?? []), [sessions])
+  const strengthLine = selectedIsAssisted ? assistLine : e1rm
+  const tonnage = useMemo(
+    () => tonnageSeries(workouts ?? [], sets ?? [], assisted),
+    [workouts, sets, assisted],
+  )
   const bw = useMemo(() => bodyweightSeries(weights ?? []), [weights])
 
   // Cap the stack at six groups plus Other. A ninth categorical hue is never
@@ -128,7 +141,7 @@ export function Progress() {
         ) : (
           <>
             <ChartCard
-              title="Estimated 1RM"
+              title={selectedIsAssisted ? 'Assistance used' : 'Estimated 1RM'}
               right={
                 <select
                   value={selected}
@@ -144,26 +157,46 @@ export function Progress() {
                 </select>
               }
               note={
-                <>
-                  Epley: weight × (1 + reps/30). An <strong>estimate</strong> — its accuracy
-                  degrades materially above roughly 10–12 reps, so treat a number from a set of
-                  fifteen with suspicion.
-                </>
+                selectedIsAssisted ? (
+                  <>
+                    The lightest working set of each session — <strong>down is progress</strong>,
+                    because the stack is helping you less. There is no estimated 1RM here on
+                    purpose: Epley needs the load you moved, and on an assisted machine that is
+                    your bodyweight minus this number, not the number itself.
+                  </>
+                ) : (
+                  <>
+                    Epley: weight × (1 + reps/30). An <strong>estimate</strong> — its accuracy
+                    degrades materially above roughly 10–12 reps, so treat a number from a set of
+                    fifteen with suspicion.
+                  </>
+                )
               }
-              empty={e1rm.length === 0 ? 'No working sets logged for this exercise yet.' : undefined}
+              empty={
+                strengthLine.length === 0
+                  ? 'No working sets logged for this exercise yet.'
+                  : undefined
+              }
             >
-              <TimeLine data={e1rm} unit="kg" />
-              {e1rm.length > 0 && (
+              <TimeLine data={strengthLine} unit="kg" />
+              {strengthLine.length > 0 && (
                 <p className="tabular mt-1 text-xs text-text-dim">
-                  Latest <span className="text-text">{e1rm[e1rm.length - 1]!.value}kg</span> ·{' '}
-                  {e1rm.length} session{e1rm.length === 1 ? '' : 's'}
+                  Latest{' '}
+                  <span className="text-text">
+                    {strengthLine[strengthLine.length - 1]!.value}&nbsp;kg
+                  </span>{' '}
+                  · {strengthLine.length} session{strengthLine.length === 1 ? '' : 's'}
                 </p>
               )}
             </ChartCard>
 
             <ChartCard
               title="Session tonnage"
-              note="Weight × reps across working sets. Warm-ups excluded."
+              note={
+                assisted.size > 0
+                  ? 'Weight × reps across working sets. Warm-ups excluded, and so are assisted machines — their weight is the machine’s contribution, not yours.'
+                  : 'Weight × reps across working sets. Warm-ups excluded.'
+              }
               empty={tonnage.length === 0 ? 'No working sets logged yet.' : undefined}
             >
               <TimeBars data={tonnage} unit="kg" />

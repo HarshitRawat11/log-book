@@ -1,6 +1,13 @@
 import { db } from '../db/db'
-import { alive } from '../db/mutate'
-import { isWorkingSet, type Exercise, type Workout, type WorkoutSet } from '../db/types'
+import { alive, newRow, patchRow, putRow } from '../db/mutate'
+import {
+  assistedIds,
+  isWorkingSet,
+  type Exercise,
+  type Workout,
+  type WorkoutExerciseNote,
+  type WorkoutSet,
+} from '../db/types'
 import type { SessionPerformance } from './progression'
 
 // Defined in db/types so analytics.ts can use it without pulling in Dexie,
@@ -101,6 +108,7 @@ export async function listWorkoutSummaries(): Promise<WorkoutSummary[]> {
   const workouts = alive(await db.workouts.toArray()).sort((a, b) =>
     a.date < b.date ? 1 : a.date > b.date ? -1 : 0,
   )
+  const assisted = await assistedExerciseIds()
 
   const out: WorkoutSummary[] = []
   for (const w of workouts) {
@@ -111,7 +119,7 @@ export async function listWorkoutSummaries(): Promise<WorkoutSummary[]> {
       workout: w,
       exercise_ids,
       working_sets: sets.filter(isWorkingSet).length,
-      tonnage_kg: tonnage(sets),
+      tonnage_kg: tonnage(sets, assisted),
     })
   }
   return out
@@ -120,6 +128,8 @@ export async function listWorkoutSummaries(): Promise<WorkoutSummary[]> {
 export type SessionSummary = {
   workout_id: string
   date: string
+  /** Carried through a repeat: "Pull" repeated is still Pull. */
+  name: string | null
   routine_day_id: string | null
   /** Exercises in the order they were first worked that day. */
   exercise_ids: string[]
@@ -156,6 +166,7 @@ export async function recentSessionSummaries(
     summaries.push({
       workout_id: w.id,
       date: w.date,
+      name: w.name ?? null,
       routine_day_id: w.routine_day_id,
       exercise_ids,
       set_count: sets.filter(isWorkingSet).length,
@@ -171,13 +182,72 @@ export async function recentSessionSummaries(
  * set COUNTS because they are continuations rather than separate sets, but the
  * reps were still performed and the load still moved, so they belong in the
  * tonnage total.
+ *
+ * @param assisted Exercises whose load counterweights the lifter. Their sets
+ *   are skipped: that weight is the machine's contribution, so including it
+ *   would credit you with work you did not do, and would credit you MORE on
+ *   the sessions where you needed the most help.
  */
-export function tonnage(sets: WorkoutSet[]): number {
-  return sets.filter((s) => !s.is_warmup).reduce((t, s) => t + s.weight_kg * s.reps, 0)
+export function tonnage(sets: WorkoutSet[], assisted: ReadonlySet<string> = new Set()): number {
+  return sets
+    .filter((s) => !s.is_warmup && !assisted.has(s.exercise_id))
+    .reduce((t, s) => t + s.weight_kg * s.reps, 0)
+}
+
+/** The assisted-exercise ids in the local library, for the tonnage filters. */
+export async function assistedExerciseIds(): Promise<Set<string>> {
+  return assistedIds(await db.exercises.toArray())
 }
 
 /** Next free set index for an exercise within a workout. */
 export function nextSetIndex(sets: WorkoutSet[], exerciseId: string): number {
   const mine = sets.filter((s) => s.exercise_id === exerciseId)
   return mine.length === 0 ? 0 : Math.max(...mine.map((s) => s.set_index)) + 1
+}
+
+
+/* ------------------------------------------------- per-exercise notes -- */
+
+/**
+ * Every per-exercise note in one session, keyed by exercise.
+ *
+ * One read per session rather than one per card: the logging screen renders
+ * five or six cards and a live query each would re-run all of them on every
+ * set logged.
+ */
+export async function notesForWorkout(workoutId: string): Promise<Map<string, WorkoutExerciseNote>> {
+  const rows = alive(await db.workout_exercise_notes.where('workout_id').equals(workoutId).toArray())
+  return new Map(rows.map((r) => [r.exercise_id, r]))
+}
+
+/**
+ * Write the note for one exercise in one session, creating the row if needed.
+ *
+ * Emptying a note clears its text rather than tombstoning the row, so typing
+ * into it again reuses the row. Tombstoning would work too, but it would leave
+ * a dead row behind every time a note was cleared, and the partial unique
+ * index exists precisely so that is never necessary.
+ */
+export async function saveExerciseNote(
+  workoutId: string,
+  exerciseId: string,
+  note: string,
+): Promise<void> {
+  const text = note.trim() || null
+  const existing = (
+    await db.workout_exercise_notes.where('[workout_id+exercise_id]').equals([workoutId, exerciseId]).toArray()
+  ).find((r) => !r.deleted_at)
+
+  if (existing) {
+    if (existing.note === text) return // nothing changed; do not queue a push
+    await patchRow<WorkoutExerciseNote>('workout_exercise_notes', existing.id, { note: text })
+    return
+  }
+  // Nothing typed and nothing stored - do not create an empty row.
+  if (!text) return
+
+  await putRow(
+    'workout_exercise_notes',
+    newRow({ workout_id: workoutId, exercise_id: exerciseId, note: text }),
+  )
 }

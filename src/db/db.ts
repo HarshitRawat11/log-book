@@ -14,6 +14,7 @@ import type {
   RoutineDay,
   RoutineDayExercise,
   Workout,
+  WorkoutExerciseNote,
   WorkoutSet,
 } from './types'
 
@@ -33,6 +34,7 @@ export class LogBookDB extends Dexie {
   routine_day_exercises!: EntityTable<RoutineDayExercise, 'id'>
   workouts!: EntityTable<Workout, 'id'>
   sets!: EntityTable<WorkoutSet, 'id'>
+  workout_exercise_notes!: EntityTable<WorkoutExerciseNote, 'id'>
   bodyweight!: EntityTable<Bodyweight, 'id'>
   foods!: EntityTable<Food, 'id'>
   recipes!: EntityTable<Recipe, 'id'>
@@ -72,6 +74,13 @@ export class LogBookDB extends Dexie {
     this.version(2).stores({
       cardio_presets: 'id, name',
       cardio_sessions: 'id, date',
+    })
+
+    // v3 adds per-exercise session notes. The compound index is the only read
+    // there is - "the note for this exercise in this session" - and the plain
+    // workout_id index backs rendering a whole session's worth at once.
+    this.version(3).stores({
+      workout_exercise_notes: 'id, workout_id, [workout_id+exercise_id]',
     })
   }
 }

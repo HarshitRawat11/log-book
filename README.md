@@ -40,6 +40,14 @@ npm run dev
 | `npm run icons` | Regenerate `public/icon-*.png` from `scripts/generate-icons.mjs` |
 | `npm run ifct` | Regenerate `src/data/ifct.json` from the IFCT 2017 source |
 
+### Verifying the UI without touching live data
+
+`npm run dev -- --mode sandbox` loads `.env.sandbox`, which points Supabase at a dead port.
+The app is offline-first, so every screen still renders from IndexedDB - which is the whole
+surface worth eyeballing - while no seeded test row can physically reach the real project.
+Vite loads `.env.[mode]` after `.env.local`, so the sandbox value wins. There is nothing
+secret in that file; the key is a syntactically valid throwaway.
+
 ## Security model
 
 **The Supabase anon key is public.** It ships inside the JS bundle and anyone can read it
@@ -154,6 +162,97 @@ last row logged. It took the highest `set_index` outright at first, so the set a
 to 20kg pre-filled at 20kg — but a drop is a continuation and the weight being worked at is
 still 36, so every set following a drop would have needed correcting by hand.
 
+## The session screen
+
+### One card is open at a time
+
+Every exercise card used to render its own weight/reps/Log block. Four lifts into a session
+that meant scrolling past three live forms to reach the one you were actually on, and the
+wrong one was always the one nearest your thumb.
+
+Exactly one card is now open. A closed card still shows its header, every set logged against
+it, and its note - that is the part you re-read between sets - and only the input block is
+put away. Both the header and a `+ Log another set` row reopen it.
+
+Which one is open is **derived, not stored**: the exercise you most recently logged against,
+falling back to the first in the list, with an explicit tap overriding it until the session
+changes. Reopening the app four lifts in and landing back on lift one would be exactly
+wrong, and "most recently written" is the only signal that survives a reload.
+
+### Sessions have names
+
+`workouts.name` is a label - "Pull", "Push B" - and it is null on most sessions by design.
+A date identifies a session and does not help you recognise it; the name is what you scan
+for in a list of thirty. Repeating a session carries the name across, because retyping it
+every time is exactly the friction that would stop the names being there at all.
+
+### The picker offers the plausible lifts first
+
+`training/focus.ts` reads the session name, then the routine day's name, then - failing
+both - the muscle groups already in the session, and the picker splits into "Fits this
+session" and "Everything else".
+
+It **orders, it never filters.** The day you want to do something off-plan is exactly the
+day a filter would be infuriating, so everything in the library is always one scroll away.
+And it does not split the list when the focus matches everything or nothing, because
+splitting a list into "all of it" and "none of it" is just a heading.
+
+The split vocabulary (`pull` = back, biceps, forearms, and so on) is a **naming
+convention, not exercise science** - nothing is inferred about what trains what. Matching
+is on word boundaries, so "Pullover day" is not a Pull day. Name beats contents
+deliberately: a Pull session containing one stray chest lift is still a Pull session.
+
+### Notes hang off the exercise, not just the day
+
+`workout_exercise_notes` is one row per (workout, exercise). "Left elbow complained on set
+3" belongs to the lift, and finding it next time means having it on the lift's card rather
+than buried in a paragraph about the day.
+
+`workouts.notes` stays, for the things that are true of the whole session - slept badly,
+short on time, gym was heaving. Two fields rather than one because they answer different
+questions, and the session note is the one that collapses to a slim pill.
+
+Its own table because there is nowhere else to put it: which exercises are in a session
+lives in the local-only `meta` table and never syncs, so there is no membership row to hang
+a column off. Clearing a note **empties its text rather than tombstoning the row**, so
+typing into it again reuses the row; the unique index is partial (`where deleted_at is
+null`) so a tombstoned note never blocks a replacement.
+
+## Assisted machines run the load axis backwards
+
+On an assisted pull-up or dip machine the stack counterweights you, so **more weight is less
+work**. `exercises.load_is_assistance` inverts every comparison that touches load:
+
+| | normal | assisted |
+|---|---|---|
+| the top set of a session | heaviest | **lightest** |
+| progression at the top of the range | `+ increment` | **`- increment`**, floored at `min_weight_kg` |
+| deload after two sessions below range | `x 0.9`, rounded **down** | **`x 1.1`, rounded up** |
+| pre-fill from last session | heaviest set | **lightest set** |
+| counts towards tonnage | yes | **no** |
+| estimated 1RM | Epley | **none - see below** |
+
+A flag rather than a negative `load_increment_kg`: the direction is only one of the things
+that invert, and every other row in that table would still have needed a special case.
+
+**Tonnage excludes them entirely.** That weight is the machine's contribution, so counting
+it would credit you with work you did not do - and credit you *more* on the sessions where
+you needed the most help, so the chart would rise as the training went backwards.
+
+**There is no estimated 1RM.** Epley needs the load you moved; on an assisted pull-up that
+is your bodyweight minus the stack, and the stack alone is not it. Fed the stack, the
+formula produces a line that rises as you get weaker, which is the one shape a progress
+chart must never have. Deriving it properly would mean a bodyweight reading for that date,
+which may not exist. So the chart becomes **assistance used** - the lightest working set of
+each session, where down is progress - which needs no formula at all.
+
+The reps rules are untouched. Reps mean the same thing either way.
+
+`min_weight_kg` keeps working as the floor and means the right thing on its own terms: the
+least assistance the stack offers. There is deliberately **no ceiling column**, so a deload
+can in principle propose more assistance than the machine has plates. That is a practical
+problem, not a data one.
+
 ## Cardio: the interval timer
 
 Built around one constraint: **no screen contact between start and end.** Hands are wrapped
@@ -261,6 +360,14 @@ HyperOS is more aggressive than stock Android, and no correct code fixes a devic
 
 Kilograms and grams throughout. No unit switcher.
 
+A number and its unit are separated by a **non-breaking** space: `20 kg`, not `20kg` and
+not `20 kg` with an ordinary space. The space is the readable form; the non-breaking part
+matters because these land mid-sentence in progression text, and "deload 60 kg to 55 kg"
+wrapping between the 60 and the kg on a 390px screen reads as a typo rather than as
+wrapping. `formatKg` is the one place that decides, and it uses an explicit `\u00A0`
+escape rather than a literal character - an invisible byte in source is a trap for
+whoever edits it next.
+
 ## Food data
 
 Two providers behind one interface (`src/food/provider.ts`), so swapping either
@@ -306,6 +413,9 @@ rule throughout: **removing something from the library never rewrites what it wa
   below"*, with the sets sitting in the database the whole time.
 - **Logged entries are never affected by either**, because `food_log` carries its own macro
   snapshot.
+- **Deleting a session tombstones its per-exercise notes with it.** The Postgres cascade
+  would handle that server-side, but the local store and the outbox would not know, so the
+  notes would linger on the device - the same trap the sets already had.
 
 Archiving means stop offering it today. It cannot mean rewrite last month.
 
@@ -322,8 +432,11 @@ brief specifies:
 - **Estimated 1RM** per exercise — Epley, `weight × (1 + reps/30)`, taking the
   best set of each session. Labelled an estimate in the UI, with the caveat that
   accuracy degrades above ~10–12 reps. A single rep returns the weight itself
-  rather than the formula's inflated 1.033×.
-- **Session tonnage** — `Σ (weight × reps)` across working sets, warm-ups excluded.
+  rather than the formula's inflated 1.033×. On an **assisted machine** this is
+  replaced by *Assistance used*, for the reason above: there is no honest 1RM to
+  compute from the counterweight alone.
+- **Session tonnage** — `Σ (weight × reps)` across working sets, warm-ups excluded,
+  and assisted machines excluded with them.
 - **Weekly working sets** per muscle group, by ISO week. Called *working* sets,
   not "hard" sets: in the literature a hard set means one taken near failure, and
   since RIR is optional here that cannot be filtered on honestly.
@@ -472,3 +585,15 @@ is typed in by hand, for the reasons under data provenance above.
 - [ ] **step 4** — a real 30-minute session on the phone. **Not yet run.** Until it is, the
       timer is unproven where it matters: cue accuracy over thirty unattended minutes, total
       drift under two seconds, and surviving a backgrounding mid-session.
+
+### Since v1
+
+Requested refinements, applied together and gated on migration `0004`:
+
+- [x] the redundant `edit` label on exercise and set rows, removed
+- [x] sessions can be named, and the name follows a repeat
+- [x] the exercise picker offers the session's likely lifts first
+- [x] one exercise card open at a time
+- [x] a space between every number and its unit
+- [x] assisted machines, where taking weight off is progression
+- [x] notes per exercise within a session, alongside the session note

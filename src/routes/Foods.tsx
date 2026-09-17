@@ -109,7 +109,7 @@ export function Foods() {
                       <span className="tabular block text-xs text-text-dim">
                         {r.kcal_100g === null
                           ? 'needs a cooked weight'
-                          : `${Math.round(r.kcal_100g)} kcal/100g · yields ${Math.round(r.cooked_yield_g)}g`}
+                          : `${Math.round(r.kcal_100g)} kcal/100g · yields ${Math.round(r.cooked_yield_g)} g`}
                       </span>
                     </span>
                     {r.is_favourite && <span className="text-xs text-accent">★</span>}

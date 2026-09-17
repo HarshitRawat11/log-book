@@ -4,8 +4,9 @@ import { setTypeOf, type Exercise, type SetType, type WorkoutSet } from '../db/t
 import { deleteRow, newRow, patchRow, putRow } from '../db/mutate'
 import { scheduleFlush } from '../db/sync'
 import { NumberField } from '../components/NumberField'
+import { NoteField } from './NoteField'
 import { formatKg, repeatOf, suggestNext } from './progression'
-import { nextSetIndex, recentSessions } from './queries'
+import { nextSetIndex, recentSessions, saveExerciseNote } from './queries'
 import { relativeAge, shortDate } from '../lib/dates'
 
 /**
@@ -70,22 +71,37 @@ function setLabel(rows: WorkoutSet[], i: number): string {
 }
 
 /**
- * One exercise inside today's session.
+ * One exercise inside a session.
  *
  * No modals anywhere in this flow (brief 7.1). Editing a set happens in place,
  * because the alternative is a dialog you have to dismiss while holding a
  * dumbbell.
+ *
+ * Exactly one card in a session is OPEN at a time. With every card showing its
+ * own weight/reps/Log block, four exercises in you are scrolling past three
+ * live forms to reach the one you are actually on, and the wrong one is always
+ * the one nearest your thumb. A closed card still shows its header and every
+ * set logged against it - that is the part you re-read between sets - and only
+ * the input block is put away.
  */
 export function ExerciseCard({
   exercise,
   workoutId,
   sets,
+  note,
+  active,
+  onActivate,
   onRemove,
   showSuggestion = true,
 }: {
   exercise: Exercise
   workoutId: string
   sets: WorkoutSet[]
+  /** This exercise's note in this session, already loaded by the parent. */
+  note: string | null
+  /** Whether this is the open card. Exactly one card per session is. */
+  active: boolean
+  onActivate: () => void
   onRemove: () => void
   /**
    * Off when reviewing a past session. "Next time do 62.5kg" is noise when you
@@ -94,6 +110,11 @@ export function ExerciseCard({
    */
   showSuggestion?: boolean
 }) {
+  // The load counterweights the lifter, so every comparison runs backwards.
+  // Held in one constant because it changes wording in four places and getting
+  // one of them wrong is how "less weight is progress" turns into a lie.
+  const assisted = exercise.load_is_assistance
+
   const mine = useMemo(
     () => sets.filter((s) => s.exercise_id === exercise.id).sort((a, b) => a.set_index - b.set_index),
     [sets, exercise.id],
@@ -130,10 +151,10 @@ export function ExerciseCard({
   // which is what lets "log a set" be one tap. The progression suggestion stays
   // opt-in and pre-fills nothing until tapped (brief 7.2).
   useEffect(() => {
-    const r = repeatOf(mine, lastSession)
+    const r = repeatOf(mine, lastSession, assisted)
     setWeight(r ? String(r.weight_kg) : '')
     setReps(r ? String(r.reps) : '')
-  }, [mine, lastSession])
+  }, [mine, lastSession, assisted])
 
   const canLog = weight !== '' && reps !== '' && Number(reps) > 0
 
@@ -166,10 +187,23 @@ export function ExerciseCard({
     scheduleFlush()
   }
 
+  // "Last time" quotes the HARDEST set, which on an assisted machine is the
+  // lightest one. Quoting the heaviest would report the moment the machine
+  // helped you most and call it your best.
+  const lastLoad = lastSession
+    ? assisted
+      ? Math.min(...lastSession.sets.map((s) => s.weight_kg))
+      : Math.max(...lastSession.sets.map((s) => s.weight_kg))
+    : null
+
   return (
     <section className="rounded-2xl border border-border bg-surface">
       <header className="flex items-start justify-between gap-3 px-4 pt-3">
-        <div className="min-w-0">
+        <button
+          onClick={onActivate}
+          aria-expanded={active}
+          className="min-w-0 flex-1 text-left"
+        >
           <h2 className="truncate font-semibold">{exercise.name}</h2>
           <p className="mt-0.5 text-xs text-text-dim">
             {exercise.target_rep_min}–{exercise.target_rep_max} reps
@@ -178,8 +212,7 @@ export function ExerciseCard({
                 {' · last '}
                 {shortDate(lastSession.date)} ({relativeAge(lastSession.date)}){': '}
                 <span className="tabular text-text">
-                  {lastSession.sets.map((s) => s.reps).join('/')} @{' '}
-                  {formatKg(Math.max(...lastSession.sets.map((s) => s.weight_kg)))}
+                  {lastSession.sets.map((s) => s.reps).join('/')} @ {formatKg(lastLoad!)}
                 </span>
               </>
             ) : (
@@ -189,11 +222,19 @@ export function ExerciseCard({
           {/* The setup numbers, at the top of the card, because the moment they
               are useful is standing in front of the machine before set one. */}
           {exercise.machine_setup && (
-            <p className="mt-1 inline-block rounded bg-surface-2 px-1.5 py-0.5 text-xs text-text-dim">
+            <span className="mt-1 inline-block rounded bg-surface-2 px-1.5 py-0.5 text-xs text-text-dim">
               {exercise.machine_setup}
-            </p>
+            </span>
           )}
-        </div>
+          {/* Stated on the card, not just in the library. Every number below
+              means the opposite of what it normally does, and the one place
+              that has to be unambiguous is where you are typing them in. */}
+          {assisted && (
+            <span className="mt-1 ml-1 inline-block rounded bg-accent/10 px-1.5 py-0.5 text-xs text-accent">
+              assisted · less is progress
+            </span>
+          )}
+        </button>
         <button
           onClick={onRemove}
           aria-label={`Remove ${exercise.name} from this session`}
@@ -204,7 +245,7 @@ export function ExerciseCard({
       </header>
 
       {/* Progression suggestion. Pre-fills nothing until tapped. */}
-      {suggestion && (
+      {active && suggestion && (
         <div className="px-4 pt-3">
           <div className="flex flex-wrap items-center gap-2">
             <button
@@ -236,7 +277,8 @@ export function ExerciseCard({
         </div>
       )}
 
-      {/* Logged sets */}
+      {/* Logged sets. Shown open or closed - between sets, "how many have I
+          done" is the question, and putting it behind a tap would be perverse. */}
       {mine.length > 0 && (
         <ol className="mt-3 divide-y divide-border border-y border-border">
           {mine.map((s, i) => (
@@ -245,6 +287,7 @@ export function ExerciseCard({
                 <EditSetRow
                   set={s}
                   increment={exercise.load_increment_kg}
+                  assisted={assisted}
                   onDone={() => setEditing(null)}
                   onSave={(patch) => updateSet(s.id, patch)}
                   onDelete={() => {
@@ -255,6 +298,7 @@ export function ExerciseCard({
               ) : (
                 <button
                   onClick={() => setEditing(s.id)}
+                  aria-label={`Edit set: ${formatKg(s.weight_kg)} for ${s.reps} reps`}
                   className="flex min-h-12 w-full items-center gap-3 px-4 text-left"
                 >
                   {/* The number column counts working sets and nothing else, so
@@ -271,9 +315,6 @@ export function ExerciseCard({
                       {KINDS.find((k) => k.kind === toKind(s))!.label.toLowerCase()}
                     </span>
                   )}
-                  <span aria-hidden="true" className="text-xs text-text-dim">
-                    edit
-                  </span>
                 </button>
               )}
             </li>
@@ -281,61 +322,101 @@ export function ExerciseCard({
         </ol>
       )}
 
-      {/* Log a set. Values are pre-filled, so this is one tap.
-          Log sits on its own full-width row rather than beside the fields: at
-          390px, two steppered inputs plus a button left the weight input about
-          56px wide, which truncated "62.5" to "6". It is also a bigger target
-          and lands in the lower third, where the thumb already is. */}
-      <div className="flex flex-col gap-2 px-4 py-3">
-        <div className="flex items-end gap-3">
-          <NumberField
-            label="Weight (kg)"
-            value={weight}
-            onChange={setWeight}
-            step={exercise.load_increment_kg || 1}
-          />
-          <NumberField label="Reps" value={reps} onChange={setReps} step={1} min={1} />
-        </div>
-        <button
-          onClick={() => void logSet()}
-          disabled={!canLog}
-          className="min-h-14 w-full rounded-lg bg-accent text-lg font-semibold text-accent-text
-                     disabled:opacity-40"
-        >
-          Log set
-        </button>
-      </div>
+      {active ? (
+        <>
+          {/* Log a set. Values are pre-filled, so this is one tap.
+              Log sits on its own full-width row rather than beside the fields:
+              at 390px, two steppered inputs plus a button left the weight input
+              about 56px wide, which truncated "62.5" to "6". It is also a
+              bigger target and lands in the lower third, where the thumb is. */}
+          <div className="flex flex-col gap-2 px-4 py-3">
+            <div className="flex items-end gap-3">
+              <NumberField
+                label={assisted ? 'Assistance (kg)' : 'Weight (kg)'}
+                value={weight}
+                onChange={setWeight}
+                step={exercise.load_increment_kg || 1}
+              />
+              <NumberField label="Reps" value={reps} onChange={setReps} step={1} min={1} />
+            </div>
+            <button
+              onClick={() => void logSet()}
+              disabled={!canLog}
+              className="min-h-14 w-full rounded-lg bg-accent text-lg font-semibold text-accent-text
+                         disabled:opacity-40"
+            >
+              Log set
+            </button>
+          </div>
 
-      {/* One exclusive choice rather than a checkbox plus a dropdown: the
-          combinations those would allow are the ones the database rejects. */}
-      <div className="px-4 pb-3">
-        <div role="group" aria-label="Set type" className="grid grid-cols-4 gap-1">
-          {KINDS.map((k) => {
-            const disabled = k.continuation && !canContinue
-            return (
-              <button
-                key={k.kind}
-                onClick={() => setKind(k.kind)}
-                disabled={disabled}
-                aria-pressed={kind === k.kind}
-                title={disabled ? 'Log a set first — this one attaches to it' : k.hint}
-                className={[
-                  'min-h-11 rounded-lg border text-xs font-medium',
-                  kind === k.kind
-                    ? 'border-accent bg-accent/10 text-accent'
-                    : 'border-border bg-surface-2 text-text-dim',
-                  disabled ? 'opacity-30' : '',
-                ].join(' ')}
-              >
-                {k.label}
-              </button>
-            )
-          })}
-        </div>
-        <p className="mt-1.5 text-xs leading-relaxed text-text-dim">
-          {KINDS.find((k) => k.kind === kind)!.hint}
-        </p>
-      </div>
+          {/* One exclusive choice rather than a checkbox plus a dropdown: the
+              combinations those would allow are the ones the database rejects. */}
+          <div className="px-4 pb-3">
+            <div role="group" aria-label="Set type" className="grid grid-cols-4 gap-1">
+              {KINDS.map((k) => {
+                const disabled = k.continuation && !canContinue
+                return (
+                  <button
+                    key={k.kind}
+                    onClick={() => setKind(k.kind)}
+                    disabled={disabled}
+                    aria-pressed={kind === k.kind}
+                    title={disabled ? 'Log a set first — this one attaches to it' : k.hint}
+                    className={[
+                      'min-h-11 rounded-lg border text-xs font-medium',
+                      kind === k.kind
+                        ? 'border-accent bg-accent/10 text-accent'
+                        : 'border-border bg-surface-2 text-text-dim',
+                      disabled ? 'opacity-30' : '',
+                    ].join(' ')}
+                  >
+                    {k.label}
+                  </button>
+                )
+              })}
+            </div>
+            <p className="mt-1.5 text-xs leading-relaxed text-text-dim">
+              {KINDS.find((k) => k.kind === kind)!.hint}
+            </p>
+          </div>
+
+          {/* This exercise, this session. Not the session note: "left elbow on
+              set 3" belongs to the lift, and finding it next time means having
+              it on the lift's card rather than in a paragraph about the day. */}
+          <div className="px-4 pb-3">
+            <NoteField
+              id={`note-${workoutId}-${exercise.id}`}
+              label={`Note — ${exercise.name}`}
+              collapsedLabel="+ Note on this exercise"
+              placeholder="Form, pain, setup, anything worth knowing next time."
+              rows={2}
+              value={note}
+              subject={`${workoutId}:${exercise.id}`}
+              onSave={async (next) => {
+                await saveExerciseNote(workoutId, exercise.id, next)
+                scheduleFlush()
+              }}
+            />
+          </div>
+        </>
+      ) : (
+        <>
+          {/* A closed card keeps its note visible. It is two lines, and the
+              whole point of writing "seat was one notch low" was to read it
+              without hunting for it. */}
+          {note && (
+            <p className="border-t border-border px-4 py-2 text-xs leading-relaxed text-text-dim">
+              {note}
+            </p>
+          )}
+          <button
+            onClick={onActivate}
+            className="min-h-12 w-full border-t border-border text-sm font-medium text-text-dim"
+          >
+            {mine.length > 0 ? '+ Log another set' : '+ Log a set'}
+          </button>
+        </>
+      )}
     </section>
   )
 }
@@ -343,12 +424,14 @@ export function ExerciseCard({
 function EditSetRow({
   set,
   increment,
+  assisted,
   onSave,
   onDelete,
   onDone,
 }: {
   set: WorkoutSet
   increment: number
+  assisted: boolean
   onSave: (patch: Partial<WorkoutSet>) => Promise<void>
   onDelete: () => void
   onDone: () => void
@@ -360,7 +443,12 @@ function EditSetRow({
   return (
     <div className="flex flex-col gap-2 bg-surface-2 px-4 py-3">
       <div className="flex items-end gap-3">
-        <NumberField label="Weight (kg)" value={w} onChange={setW} step={increment || 1} />
+        <NumberField
+          label={assisted ? 'Assistance (kg)' : 'Weight (kg)'}
+          value={w}
+          onChange={setW}
+          step={increment || 1}
+        />
         <NumberField label="Reps" value={r} onChange={setR} step={1} min={1} />
       </div>
       {/* Editable here too - a set tagged wrong in the moment is otherwise

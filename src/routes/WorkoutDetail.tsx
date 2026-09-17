@@ -6,19 +6,28 @@ import { ConfirmDelete } from '../components/ConfirmDelete'
 import { EmptyState } from '../components/EmptyState'
 import { SyncPill } from '../components/SyncPill'
 import { ExerciseCard } from '../training/ExerciseCard'
+import { ExercisePicker } from '../training/ExercisePicker'
+import { SessionName } from '../training/SessionName'
 import { SessionNotes } from '../training/SessionNotes'
 import { db } from '../db/db'
-import { deleteRow } from '../db/mutate'
+import { alive, deleteRow } from '../db/mutate'
 import { scheduleFlush } from '../db/sync'
-import type { Exercise } from '../db/types'
+import { assistedIds, type Exercise } from '../db/types'
 import {
   isWorkingSet,
   listAllExercises,
   listExercises,
+  notesForWorkout,
   setsForWorkout,
   tonnage,
 } from '../training/queries'
-import { addExerciseToSession, removeExerciseFromSession, sessionExerciseIds } from '../training/session'
+import { sessionFocus } from '../training/focus'
+import {
+  addExerciseToSession,
+  defaultActiveExercise,
+  removeExerciseFromSession,
+  sessionExerciseIds,
+} from '../training/session'
 import { formatKg } from '../training/progression'
 import { relativeAge, shortDate } from '../lib/dates'
 
@@ -45,10 +54,22 @@ export function WorkoutDetail() {
   // Resolved from EVERY exercise, not the offerable ones: a session that
   // included a lift since archived must still show that lift and its sets.
   const everyExercise = useLiveQuery(listAllExercises, [], [])
+  const notes = useLiveQuery(() => notesForWorkout(workoutId), [workoutId], new Map())
+  const routineDays = useLiveQuery(async () => alive(await db.routine_days.toArray()), [], [])
 
   const byId = new Map((everyExercise ?? []).map((e) => [e.id, e]))
   const inSession = (exerciseIds ?? []).map((id) => byId.get(id)).filter(Boolean) as Exercise[]
   const working = (sets ?? []).filter(isWorkingSet)
+  const assisted = assistedIds(everyExercise ?? [])
+
+  const [activeId, setActiveId] = useState<string | null>(null)
+  const active =
+    activeId && inSession.some((e) => e.id === activeId)
+      ? activeId
+      : defaultActiveExercise(inSession.map((e) => e.id), sets ?? [])
+
+  const routineDayName = routineDays?.find((d) => d.id === workout?.routine_day_id)?.name ?? null
+  const focus = sessionFocus([workout?.name, routineDayName], inSession)
 
   if (workout === undefined) return <Screen title="Session">{null}</Screen>
   if (!workout || workout.deleted_at) {
@@ -70,6 +91,9 @@ export function WorkoutDetail() {
 
   return (
     <Screen
+      // The header stays the date, and the name lives in the pill below it -
+      // the same arrangement as Train. Putting the name up here as well read
+      // as a bug: the same four words twice inside 300px.
       title={shortDate(workout.date)}
       subtitle={`${relativeAge(workout.date)}${workout.source === 'import' ? ' · imported' : ''}`}
       actions={<SyncPill />}
@@ -83,12 +107,17 @@ export function WorkoutDetail() {
           ‹ All sessions
         </Link>
 
+        <SessionName workout={workout} />
+
         {inSession.map((e) => (
           <ExerciseCard
             key={e.id}
             exercise={e}
             workoutId={workout.id}
             sets={sets ?? []}
+            note={notes?.get(e.id)?.note ?? null}
+            active={e.id === active}
+            onActivate={() => setActiveId(e.id)}
             showSuggestion={false}
             onRemove={() => {
               if ((sets ?? []).some((s) => s.exercise_id === e.id)) return
@@ -105,32 +134,16 @@ export function WorkoutDetail() {
         )}
 
         {picking ? (
-          <div className="rounded-2xl border border-border bg-surface p-2">
-            <div className="flex items-center justify-between px-2 py-1">
-              <span className="text-sm text-text-dim">Add exercise</span>
-              <button onClick={() => setPicking(false)} className="size-11 text-text-dim">
-                ×
-              </button>
-            </div>
-            <ul className="max-h-80 overflow-y-auto">
-              {(allExercises ?? [])
-                .filter((e) => !inSession.some((x) => x.id === e.id))
-                .map((e) => (
-                  <li key={e.id}>
-                    <button
-                      onClick={async () => {
-                        await addExerciseToSession(workout.id, e.id)
-                        setPicking(false)
-                      }}
-                      className="flex min-h-12 w-full items-center justify-between gap-2 px-2 text-left"
-                    >
-                      <span>{e.name}</span>
-                      <span className="text-xs text-text-dim">{e.muscle_group}</span>
-                    </button>
-                  </li>
-                ))}
-            </ul>
-          </div>
+          <ExercisePicker
+            options={(allExercises ?? []).filter((e) => !inSession.some((x) => x.id === e.id))}
+            focus={focus}
+            onPick={async (id) => {
+              await addExerciseToSession(workout.id, id)
+              setActiveId(id)
+              setPicking(false)
+            }}
+            onClose={() => setPicking(false)}
+          />
         ) : (
           <button
             onClick={() => setPicking(true)}
@@ -144,7 +157,7 @@ export function WorkoutDetail() {
         {working.length > 0 && (
           <p className="tabular px-1 pt-2 text-xs text-text-dim">
             {working.length} working set{working.length === 1 ? '' : 's'} ·{' '}
-            {formatKg(Math.round(tonnage(sets ?? [])))} tonnage
+            {formatKg(Math.round(tonnage(sets ?? [], assisted)))} tonnage
           </p>
         )}
 
@@ -161,10 +174,11 @@ export function WorkoutDetail() {
             </>
           }
           onConfirm={async () => {
-            // Tombstone the sets too. The Postgres cascade would handle it
-            // server-side, but the local store and the outbox would not know,
-            // so the sets would linger on this device.
+            // Tombstone the sets and notes too. The Postgres cascade would
+            // handle it server-side, but the local store and the outbox would
+            // not know, so both would linger on this device.
             for (const s of sets ?? []) await deleteRow('sets', s.id)
+            for (const n of notes?.values() ?? []) await deleteRow('workout_exercise_notes', n.id)
             await deleteRow('workouts', workout.id)
             scheduleFlush()
             navigate('/history', { replace: true })
