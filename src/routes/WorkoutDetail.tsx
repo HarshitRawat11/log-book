@@ -7,6 +7,7 @@ import { EmptyState } from '../components/EmptyState'
 import { SyncPill } from '../components/SyncPill'
 import { ExerciseCard } from '../training/ExerciseCard'
 import { ExercisePicker } from '../training/ExercisePicker'
+import { ReorderList } from '../training/ReorderList'
 import { SessionName } from '../training/SessionName'
 import { SessionNotes } from '../training/SessionNotes'
 import { db } from '../db/db'
@@ -27,6 +28,7 @@ import {
   addExerciseToSession,
   defaultActiveExercise,
   removeExerciseFromSession,
+  reorderSessionExercises,
   sessionExerciseIds,
 } from '../training/session'
 import { formatKg } from '../training/progression'
@@ -69,13 +71,32 @@ export function WorkoutDetail() {
   const working = (sets ?? []).filter(isWorkingSet)
   const assisted = assistedIds(everyExercise ?? [])
 
-  const [activeId, setActiveId] = useState<string | null>(null)
+  // Tri-state, as on Train: undefined derives, null is "collapsed on purpose".
+  const [activeId, setActiveId] = useState<string | null | undefined>(undefined)
   const active =
-    activeId && inSession.some((e) => e.id === activeId)
-      ? activeId
-      : defaultActiveExercise(inSession.map((e) => e.id), sets ?? [])
+    activeId === undefined
+      ? defaultActiveExercise(inSession.map((e) => e.id), sets ?? [])
+      : activeId && inSession.some((e) => e.id === activeId)
+        ? activeId
+        : null
+
+  const [reordering, setReordering] = useState(false)
 
   const focus = sessionFocus(workout?.name, inSession)
+
+  /**
+   * Tombstones the sets with it; the card confirms and names the count first.
+   * This used to return silently whenever there were any, so the × read as
+   * broken on exactly the cards you would use it on.
+   */
+  async function removeExercise(id: string) {
+    if (!workout) return
+    for (const s of (sets ?? []).filter((x) => x.exercise_id === id)) {
+      await deleteRow('sets', s.id)
+    }
+    await removeExerciseFromSession(workout.id, id)
+    scheduleFlush()
+  }
 
   if (workout === undefined) return <Screen title="Session">{null}</Screen>
   if (!workout || workout.deleted_at) {
@@ -115,23 +136,46 @@ export function WorkoutDetail() {
 
         <SessionName workout={workout} />
 
-        {inSession.map((e) => (
-          <ExerciseCard
-            key={e.id}
-            exercise={e}
-            workoutId={workout.id}
-            sets={sets ?? []}
-            note={notes?.get(e.id)?.note ?? null}
-            lastNote={lastNotes?.get(e.id) ?? null}
-            active={e.id === active}
-            onActivate={() => setActiveId(e.id)}
-            showSuggestion={false}
-            onRemove={() => {
-              if ((sets ?? []).some((s) => s.exercise_id === e.id)) return
-              void removeExerciseFromSession(workout.id, e.id)
+        {reordering ? (
+          <ReorderList
+            items={inSession.map((e) => ({
+              id: e.id,
+              name: e.name,
+              sets: (sets ?? []).filter((x) => x.exercise_id === e.id).length,
+            }))}
+            onDone={async (ids) => {
+              await reorderSessionExercises(workout.id, ids)
+              setReordering(false)
             }}
+            onCancel={() => setReordering(false)}
           />
-        ))}
+        ) : (
+          inSession.map((e) => (
+            <ExerciseCard
+              key={e.id}
+              exercise={e}
+              workoutId={workout.id}
+              sets={sets ?? []}
+              note={notes?.get(e.id)?.note ?? null}
+              lastNote={lastNotes?.get(e.id) ?? null}
+              active={e.id === active}
+              onActivate={() => setActiveId(e.id)}
+              onCollapse={() => setActiveId(null)}
+              showSuggestion={false}
+              onRemove={() => void removeExercise(e.id)}
+            />
+          ))
+        )}
+
+        {!reordering && inSession.length > 1 && (
+          <button
+            onClick={() => setReordering(true)}
+            className="min-h-11 w-fit rounded-full border border-border bg-surface-2 px-3
+                       text-sm font-medium text-text-dim"
+          >
+            ≡ Reorder
+          </button>
+        )}
 
         {inSession.length === 0 && (
           <EmptyState
@@ -140,7 +184,7 @@ export function WorkoutDetail() {
           />
         )}
 
-        {picking ? (
+        {reordering ? null : picking ? (
           <ExercisePicker
             options={(allExercises ?? []).filter((e) => !inSession.some((x) => x.id === e.id))}
             focus={focus}

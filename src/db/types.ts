@@ -119,12 +119,33 @@ export type Workout = SyncedRow & {
  *
  * `dropset` and `myorep` are CONTINUATIONS of the set logged immediately
  * before them, not sets in their own right. Modelling them that way is what
- * makes counting unambiguous without a grouping id - a working set is simply a
- * `normal` row - and it is why `isWorkingSet` in queries.ts is the one place
- * that decides.
+ * makes counting unambiguous without a grouping id, and it is why
+ * `isWorkingSet` below is the one place that decides.
+ *
+ * `myorep_match` is NOT one of those, despite the name sitting next to
+ * `myorep`. The two are different shapes:
+ *
+ *   myorep        an activation set, then mini-sets off the SAME set a few
+ *                 breaths apart. Continuations.
+ *   myorep_match  a full set at the same weight, taken to the same rep count
+ *                 as the first set, resting inside the set as much as it takes
+ *                 to get there. Three matched sets of 15kg x 8 is three
+ *                 working sets, not one.
+ *
+ * Counting a match as a continuation would report three sets of work as one
+ * and quietly drop two thirds of it off the weekly volume chart.
  */
-export const SET_TYPES = ['normal', 'dropset', 'myorep'] as const
+export const SET_TYPES = ['normal', 'dropset', 'myorep', 'myorep_match'] as const
 export type SetType = (typeof SET_TYPES)[number]
+
+/**
+ * The types that belong to the set logged before them.
+ *
+ * Listed rather than inferred, so adding a fifth type is a deliberate decision
+ * about which side of the line it falls on rather than something that silently
+ * defaults.
+ */
+export const CONTINUATION_SET_TYPES: readonly SetType[] = ['dropset', 'myorep']
 
 export type WorkoutSet = SyncedRow & {
   workout_id: string
@@ -159,11 +180,15 @@ export const setTypeOf = (s: Pick<WorkoutSet, 'set_type'>): SetType => s.set_typ
  * - the reps were genuinely performed - which is why tonnage() filters on
  * warm-ups alone and not on this.
  *
+ * A myorep MATCH is not a continuation and does count, for the reason set out
+ * on SET_TYPES: it is a whole set that happens to be chasing the first set's
+ * rep count.
+ *
  * Lives here beside the row types rather than in queries.ts so that
  * analytics.ts can stay free of Dexie and keep testing without a database.
  */
 export const isWorkingSet = (s: Pick<WorkoutSet, 'is_warmup' | 'set_type'>): boolean =>
-  !s.is_warmup && setTypeOf(s) === 'normal'
+  !s.is_warmup && !CONTINUATION_SET_TYPES.includes(setTypeOf(s))
 
 /**
  * One note against one exercise within one session.

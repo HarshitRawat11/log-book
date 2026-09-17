@@ -269,7 +269,7 @@ function EditorForm({
             className={inputCls}
           />
         </Field>
-        <Field label="Lightest loadable (kg)">
+        <Field label={draft.load_is_assistance ? 'Least assistance (kg)' : 'Lightest loadable (kg)'}>
           <input
             inputMode="decimal"
             value={draft.min_weight_kg}
@@ -279,7 +279,7 @@ function EditorForm({
         </Field>
       </div>
 
-      <Field label="Machine setting (optional)">
+      <Field label="Machine setting (seat, pin)">
         <input
           value={draft.machine_setup}
           onChange={(e) => set('machine_setup', e.target.value)}
@@ -287,37 +287,25 @@ function EditorForm({
           className={inputCls}
         />
       </Field>
-      <p className="-mt-3 text-xs leading-relaxed text-text-dim">
-        Seat, pin or notch numbers — whatever makes the machine repeatable. Shown on the logging
-        screen. Keep it out of the name: rename an exercise when the seat moves and it becomes a
-        second exercise, which breaks its progression and its 1RM chart.
-      </p>
-      <p className="-mt-2 text-xs text-text-dim">
-        Lightest loadable is the empty bar, or the lightest pin on a machine. A deload will never
-        suggest less than this.
-        {draft.load_is_assistance && ' On an assisted machine it is the least help the stack offers — progression stops there.'}
-      </p>
-
       {/* A toggle rather than a negative increment. The direction is only one
-          of the things that invert, and the rest - which set counts as the top
-          one, whether the weight belongs in tonnage, whether a 1RM means
-          anything - would all still have needed a flag. */}
-      <label className="flex items-start gap-3 rounded-xl border border-border bg-surface p-3">
+          of the things that invert - which set counts as the top one, whether
+          the weight belongs in tonnage, whether a 1RM means anything - and all
+          of those would still have needed a flag.
+
+          The reasoning used to be three paragraphs on screen. It is in the
+          README and in the code, which is where it belongs: this is a form you
+          edit while standing up, not a document. */}
+      <label className="flex items-center gap-3 rounded-xl border border-border bg-surface p-3">
         <input
           type="checkbox"
           checked={draft.load_is_assistance}
           onChange={(e) => set('load_is_assistance', e.target.checked)}
-          className="mt-0.5 size-5 shrink-0 accent-[var(--accent)]"
+          className="size-5 shrink-0 accent-[var(--accent)]"
         />
         <span className="min-w-0">
           <span className="block text-sm font-medium">The machine assists me</span>
-          <span className="mt-0.5 block text-xs leading-relaxed text-text-dim">
-            Assisted pull-up or dip: the stack counterweights you, so{' '}
-            <strong>less weight is harder</strong>. Progression takes weight off, a deload puts it
-            back, and the hardest set of a session is the lightest one. The weight is the
-            machine's work rather than yours, so it is left out of tonnage, and the estimated 1RM
-            chart is replaced by an assistance chart — Epley needs the load you moved, and that
-            is your bodyweight minus this number.
+          <span className="mt-0.5 block text-xs text-text-dim">
+            Less weight is harder. Assisted pull-up or dip.
           </span>
         </span>
       </label>

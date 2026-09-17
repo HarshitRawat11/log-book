@@ -1,7 +1,7 @@
 import { readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { SYNC_TABLES, pkOf } from './types'
+import { SET_TYPES, SYNC_TABLES, pkOf } from './types'
 
 /**
  * The code's idea of the schema, checked against the migrations.
@@ -70,6 +70,23 @@ describe('migrations parse', () => {
     expect(TABLES.get('exercises')).toContain('machine_setup')
     expect(TABLES.get('exercises')).toContain('load_is_assistance')
     expect(TABLES.get('workouts')).toContain('name')
+  })
+
+  /**
+   * The CHECK is the only thing standing between a typo'd set_type and a row
+   * Postgres will reject on push, hours later, into the outbox's retry backoff.
+   */
+  it('allows exactly the four set types the code knows about', () => {
+    const sql = readdirSync(DIR)
+      .filter((f) => f.endsWith('.sql'))
+      .sort()
+      .map((f) => readFileSync(join(DIR, f), 'utf8'))
+      .join('\n')
+    // The LAST definition wins - 0005 redefines what 0002 created.
+    const checks = [...sql.matchAll(/set_type in \(([^)]*)\)/g)]
+    const latest = checks[checks.length - 1]![1]!
+    const allowed = [...latest.matchAll(/'(\w+)'/g)].map((m) => m[1]!).sort()
+    expect(allowed).toEqual([...SET_TYPES].sort())
   })
 })
 

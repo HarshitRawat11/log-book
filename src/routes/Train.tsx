@@ -7,11 +7,12 @@ import { SyncPill } from '../components/SyncPill'
 import { ExerciseCard } from '../training/ExerciseCard'
 import { ExercisePicker } from '../training/ExercisePicker'
 import { RestBar } from '../training/RestBar'
+import { ReorderList } from '../training/ReorderList'
 import { SessionName } from '../training/SessionName'
 import { SessionNotes } from '../training/SessionNotes'
-import { deleteRow } from '../db/mutate'
+import { deleteRow, patchRow } from '../db/mutate'
 import { scheduleFlush } from '../db/sync'
-import { assistedIds, type Exercise } from '../db/types'
+import { assistedIds, type Exercise, type Workout } from '../db/types'
 import {
   isWorkingSet,
   listAllExercises,
@@ -31,6 +32,7 @@ import {
   defaultActiveExercise,
   getDefaultRest,
   removeExerciseFromSession,
+  reorderSessionExercises,
   sessionExerciseIds,
   workoutsOnDate,
 } from '../training/session'
@@ -96,14 +98,25 @@ export function Train() {
   const byId = new Map((everyExercise ?? []).map((e) => [e.id, e]))
   const inSession = (exerciseIds ?? []).map((id) => byId.get(id)).filter(Boolean) as Exercise[]
 
-  // Exactly one card is open. `activeId` is the explicit choice; the default is
-  // derived, so adding an exercise or logging a set moves it with nothing to
-  // keep in step. A stale id - the exercise was removed - falls back.
-  const [activeId, setActiveId] = useState<string | null>(null)
+  /**
+   * Which card is open, in three states rather than two:
+   *
+   *   undefined  no choice made - derive it (the last lift logged against)
+   *   null       everything collapsed, chosen deliberately
+   *   string     that card
+   *
+   * The null state is what the × on the log block sets. Without it, collapsing
+   * a card would fall straight back to the derived default and reopen it.
+   */
+  const [activeId, setActiveId] = useState<string | null | undefined>(undefined)
   const active =
-    activeId && inSession.some((e) => e.id === activeId)
-      ? activeId
-      : defaultActiveExercise(inSession.map((e) => e.id), sets ?? [])
+    activeId === undefined
+      ? defaultActiveExercise(inSession.map((e) => e.id), sets ?? [])
+      : activeId && inSession.some((e) => e.id === activeId)
+        ? activeId
+        : null
+
+  const [reordering, setReordering] = useState(false)
 
   const focus = sessionFocus(workout?.name, inSession)
 
@@ -122,7 +135,25 @@ export function Train() {
       name: opts.repeat?.name ?? null,
     })
     setSelectedId(created.id)
-    setActiveId(null)
+    setActiveId(undefined)
+  }
+
+  /**
+   * Pull a previous session's lifts into THIS one.
+   *
+   * The exercise list only - no sets are copied. Pre-logged sets are
+   * indistinguishable from performed ones the moment they are written, and a
+   * session you forgot to correct becomes a permanent lie in the history the
+   * progression engine reads from.
+   */
+  async function copyInto(summary: SessionSummary) {
+    if (!workout) return
+    for (const id of summary.exercise_ids) await addExerciseToSession(workout.id, id)
+    if (!workout.name && summary.name) {
+      await patchRow<Workout>('workouts', workout.id, { name: summary.name })
+      scheduleFlush()
+    }
+    setActiveId(summary.exercise_ids[0] ?? undefined)
   }
 
   async function addExercise(id: string) {
@@ -134,11 +165,22 @@ export function Train() {
     setPicking(false)
   }
 
+  /**
+   * Remove an exercise from the session, tombstoning its sets with it.
+   *
+   * This used to return silently whenever the exercise had any sets, which
+   * meant the × did nothing on precisely the cards you would want to use it
+   * on, with no message - it simply read as broken. The card is derived FROM
+   * the sets, so keeping them and dropping the card is not a state that
+   * exists; the card asks for confirmation and names the count first.
+   */
   async function removeExercise(id: string) {
     if (!workout) return
-    // Logged sets must be deleted individually, never silently with the card.
-    if ((sets ?? []).some((s) => s.exercise_id === id)) return
+    for (const s of (sets ?? []).filter((x) => x.exercise_id === id)) {
+      await deleteRow('sets', s.id)
+    }
     await removeExerciseFromSession(workout.id, id)
+    scheduleFlush()
   }
 
   const working = (sets ?? []).filter(isWorkingSet)
@@ -256,16 +298,22 @@ export function Train() {
                   key={w.id}
                   onClick={() => {
                     setSelectedId(w.id)
-                    setActiveId(null)
+                    setActiveId(undefined)
                   }}
                   className={[
-                    'min-h-9 rounded-full border px-3 text-sm font-medium',
+                    // 44px, not 36: these carry session NAMES now rather than
+                    // a digit, so they are read and tapped rather than glanced
+                    // at, and 36 was under the minimum target anyway.
+                    'min-h-11 rounded-full border px-3 text-sm font-medium',
                     w.id === workout.id
                       ? 'border-accent bg-accent/10 text-accent'
                       : 'border-border bg-surface text-text-dim',
                   ].join(' ')}
                 >
-                  {w.name || i + 1}
+                  {/* The index stays even once there is a name. Two Pull
+                      sessions in a day are common and identical pills are
+                      worse than bare numbers were. */}
+                  {w.name ? `${i + 1} · ${w.name}` : i + 1}
                 </button>
               ))}
             </div>
@@ -273,29 +321,97 @@ export function Train() {
 
           <SessionName workout={workout} />
 
-          {inSession.map((e) => (
-            <ExerciseCard
-              key={e.id}
-              exercise={e}
-              workoutId={workout.id}
-              sets={sets ?? []}
-              note={notes?.get(e.id)?.note ?? null}
-              lastNote={lastNotes?.get(e.id) ?? null}
-              onSetLogged={onSetLogged}
-              active={e.id === active}
-              onActivate={() => setActiveId(e.id)}
-              onRemove={() => void removeExercise(e.id)}
+          {reordering ? (
+            <ReorderList
+              items={inSession.map((e) => ({
+                id: e.id,
+                name: e.name,
+                sets: (sets ?? []).filter((x) => x.exercise_id === e.id).length,
+              }))}
+              onDone={async (ids) => {
+                await reorderSessionExercises(workout.id, ids)
+                setReordering(false)
+              }}
+              onCancel={() => setReordering(false)}
             />
-          ))}
-
-          {inSession.length === 0 && (
-            <EmptyState
-              title="Session started"
-              body="Add the first exercise and its inputs will be pre-filled from last time, so logging a set is one tap."
-            />
+          ) : (
+            inSession.map((e) => (
+              <ExerciseCard
+                key={e.id}
+                exercise={e}
+                workoutId={workout.id}
+                sets={sets ?? []}
+                note={notes?.get(e.id)?.note ?? null}
+                lastNote={lastNotes?.get(e.id) ?? null}
+                onSetLogged={onSetLogged}
+                active={e.id === active}
+                onActivate={() => setActiveId(e.id)}
+                onCollapse={() => setActiveId(null)}
+                onRemove={() => void removeExercise(e.id)}
+              />
+            ))
           )}
 
-          {picking ? (
+          {/* Two lifts is the point at which an order exists to be wrong. */}
+          {!reordering && inSession.length > 1 && (
+            <button
+              onClick={() => setReordering(true)}
+              className="min-h-11 w-fit rounded-full border border-border bg-surface-2 px-3
+                         text-sm font-medium text-text-dim"
+            >
+              ≡ Reorder
+            </button>
+          )}
+
+          {inSession.length === 0 && (
+            <>
+              <EmptyState
+                title="Session started"
+                body="Add the first exercise and its inputs will be pre-filled from last time, so logging a set is one tap."
+              />
+
+              {/* The session exists but is empty, which is the moment copying a
+                  previous one is worth most. Lifts only - see copyInto. */}
+              {(recent ?? []).length > 0 && (
+                <div>
+                  <p className="mb-2 px-1 text-xs text-text-dim">
+                    or copy a previous session — its lifts, nothing pre-logged
+                  </p>
+                  <ul className="divide-y divide-border overflow-hidden rounded-2xl border
+                                 border-border bg-surface">
+                    {recent!.map((sum) => {
+                      const names = sum.exercise_ids.map((id) => byId.get(id)?.name).filter(Boolean)
+                      const shown = names.slice(0, 3).join(', ')
+                      const extra = names.length > 3 ? `, +${names.length - 3}` : ''
+                      return (
+                        <li key={sum.workout_id}>
+                          <button
+                            onClick={() => void copyInto(sum)}
+                            className="flex min-h-14 w-full flex-col items-start gap-0.5 px-4 py-2
+                                       text-left"
+                          >
+                            <span className="text-sm font-medium">
+                              {sum.name ? `${sum.name} · ` : ''}
+                              {shortDate(sum.date)}{' '}
+                              <span className="font-normal text-text-dim">
+                                · {relativeAge(sum.date)} · {sum.set_count} sets
+                              </span>
+                            </span>
+                            <span className="line-clamp-1 text-xs text-text-dim">
+                              {shown || 'no exercises'}
+                              {extra}
+                            </span>
+                          </button>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                </div>
+              )}
+            </>
+          )}
+
+          {reordering ? null : picking ? (
             <ExercisePicker
               options={(allExercises ?? []).filter((e) => !inSession.some((x) => x.id === e.id))}
               focus={focus}

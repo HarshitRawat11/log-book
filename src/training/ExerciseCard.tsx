@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { setTypeOf, type Exercise, type SetType, type WorkoutSet } from '../db/types'
+import {
+  isWorkingSet,
+  setTypeOf,
+  type Exercise,
+  type SetType,
+  type WorkoutSet,
+} from '../db/types'
 import { deleteRow, newRow, patchRow, putRow } from '../db/mutate'
 import { scheduleFlush } from '../db/sync'
 import { NumberField } from '../components/NumberField'
@@ -15,32 +21,54 @@ import { relativeAge, shortDate } from '../lib/dates'
  * are exactly the ones the database rejects - a warm-up drop set is not a
  * thing. `kind` maps onto (is_warmup, set_type).
  */
-type SetKind = 'working' | 'warmup' | 'dropset' | 'myorep'
+type SetKind = 'working' | 'warmup' | 'dropset' | 'myorep' | 'myorep_match'
 
-const KINDS: Array<{ kind: SetKind; label: string; hint: string; continuation: boolean }> = [
+type KindSpec = {
+  kind: SetKind
+  label: string
+  /** The badge on a logged row, where there is room for one word. */
+  short: string
+  hint: string
+  continuation: boolean
+}
+
+const KINDS: KindSpec[] = [
   {
     kind: 'working',
     label: 'Working',
+    short: 'working',
     hint: 'A set in its own right. Counts everywhere.',
     continuation: false,
   },
   {
     kind: 'warmup',
     label: 'Warm-up',
+    short: 'warm-up',
     hint: 'Excluded from tonnage, volume and progression.',
     continuation: false,
   },
   {
     kind: 'dropset',
     label: 'Drop',
+    short: 'drop',
     hint: 'Part of the set above. Adds tonnage, but not another working set.',
     continuation: true,
   },
   {
     kind: 'myorep',
     label: 'Myorep',
-    hint: 'A mini-set off the one above. Adds tonnage, but not another working set.',
+    short: 'myorep',
+    hint: 'A mini-set off the one above, a few breaths apart. Adds tonnage, but not another working set.',
     continuation: true,
+  },
+  {
+    // A whole set, which is what separates it from the myorep above and
+    // why it needed its own type rather than a flag on that one.
+    kind: 'myorep_match',
+    label: 'Myo match',
+    short: 'match',
+    hint: 'A full set matching the first set\u2019s weight and reps, resting inside the set to get there. Counts as its own working set.',
+    continuation: false,
   },
 ]
 
@@ -52,22 +80,25 @@ function toKind(s: Pick<WorkoutSet, 'is_warmup' | 'set_type'>): SetKind {
 
 const fromKind = (k: SetKind): { is_warmup: boolean; set_type: SetType } => ({
   is_warmup: k === 'warmup',
-  set_type: k === 'dropset' || k === 'myorep' ? k : 'normal',
+  set_type: k === 'working' || k === 'warmup' ? 'normal' : k,
 })
 
 /**
  * The marker in the leftmost column of a logged set.
  *
- * Only working sets are numbered, and they are numbered by their position
- * among working sets rather than by row, so the last number in the list always
- * equals the session's working-set total. A continuation gets an arrow, a
- * warm-up a dot.
+ * Working sets are numbered by their position among working sets rather than
+ * by row, so the last number in the list always equals the session's
+ * working-set total. A continuation gets an arrow, a warm-up a dot.
+ *
+ * A myorep match is numbered like any other working set, because that is what
+ * it is. Read through `isWorkingSet` rather than re-listing the types here:
+ * two copies of that rule is how the column and the total stop agreeing.
  */
 function setLabel(rows: WorkoutSet[], i: number): string {
-  const kind = toKind(rows[i]!)
-  if (kind === 'dropset' || kind === 'myorep') return '↳'
-  if (kind === 'warmup') return '·'
-  return String(rows.slice(0, i + 1).filter((r) => toKind(r) === 'working').length)
+  const row = rows[i]!
+  if (row.is_warmup) return '·'
+  if (!isWorkingSet(row)) return '↳'
+  return String(rows.slice(0, i + 1).filter(isWorkingSet).length)
 }
 
 /**
@@ -77,12 +108,13 @@ function setLabel(rows: WorkoutSet[], i: number): string {
  * because the alternative is a dialog you have to dismiss while holding a
  * dumbbell.
  *
- * Exactly one card in a session is OPEN at a time. With every card showing its
- * own weight/reps/Log block, four exercises in you are scrolling past three
- * live forms to reach the one you are actually on, and the wrong one is always
- * the one nearest your thumb. A closed card still shows its header and every
- * set logged against it - that is the part you re-read between sets - and only
- * the input block is put away.
+ * At most one card in a session is OPEN at a time, and it is legitimate for
+ * none to be. With every card showing its own weight/reps/Log block, four
+ * exercises in you are scrolling past three live forms to reach the one you
+ * are actually on, and the wrong one is always the one nearest your thumb. A
+ * closed card still shows its header, every set logged against it and its
+ * note - that is the part you re-read between sets - and only the input block
+ * is put away.
  */
 export function ExerciseCard({
   exercise,
@@ -92,6 +124,7 @@ export function ExerciseCard({
   lastNote,
   active,
   onActivate,
+  onCollapse,
   onRemove,
   onSetLogged,
   showSuggestion = true,
@@ -107,9 +140,16 @@ export function ExerciseCard({
    * before the first set, not afterwards.
    */
   lastNote: { note: string; date: string } | null
-  /** Whether this is the open card. Exactly one card per session is. */
+  /** Whether this is the open card. At most one card per session is. */
   active: boolean
   onActivate: () => void
+  /** Put the input block away without opening another card. */
+  onCollapse: () => void
+  /**
+   * Remove this exercise from the session, tombstoning its sets with it. The
+   * card owns the confirmation, because it is the thing that knows how many
+   * sets are about to go.
+   */
   onRemove: () => void
   /**
    * Fired after a set is written, so the screen can start the rest timer.
@@ -151,6 +191,7 @@ export function ExerciseCard({
   const [kind, setKind] = useState<SetKind>('working')
   const [editing, setEditing] = useState<string | null>(null)
   const [showWhy, setShowWhy] = useState(false)
+  const [confirmRemove, setConfirmRemove] = useState(false)
 
   // A drop or a myorep hangs off the set before it, so neither means anything
   // as the first row of an exercise. If the list is emptied while one is
@@ -160,39 +201,50 @@ export function ExerciseCard({
     if (!canContinue && (kind === 'dropset' || kind === 'myorep')) setKind('working')
   }, [canContinue, kind])
 
+  /** The set a myorep match is chasing: this session's first working set. */
+  const activationSet = useMemo(() => mine.filter(isWorkingSet)[0], [mine])
+
   /**
    * Pre-fill with a REPEAT of what was actually done - the previous set in this
    * session, else last session's top set. This is a record of fact, not advice,
    * which is what lets "log a set" be one tap. The progression suggestion stays
    * opt-in and pre-fills nothing until tapped (brief 7.2).
    *
-   * Warm-ups are their own question. The effect used to ignore `kind`, so
-   * tapping Warm-up left the WORKING weight sitting in the field and logging
-   * without looking recorded a warm-up at your top set. It is excluded from
-   * everything that counts, so the damage was cosmetic - but wrong by default
-   * is still wrong.
+   * Two kinds read differently:
    *
-   * A warm-up repeats this session's last warm-up, and otherwise clears, so the
-   * number is typed deliberately. There is no last-session fallback on purpose:
-   * `recentSessions` filters to working sets, so last week's warm-ups are not
-   * loaded, and inventing one from the working weight is the bug again.
+   *  - A WARM-UP repeats this session's last warm-up and otherwise clears. The
+   *    effect used to ignore the selector, so tapping Warm-up left the working
+   *    weight in the field and logging without looking recorded a warm-up at
+   *    your top set. There is deliberately no last-session fallback:
+   *    `recentSessions` filters to working sets, so last week's warm-ups are
+   *    not loaded, and inventing one from the working weight is the bug again.
    *
-   * The dependency is `warmup`, not `kind`. Drop and myorep genuinely do repeat
+   *  - A MYOREP MATCH pre-fills from this session's FIRST working set, because
+   *    matching that set's weight and reps is the literal definition of the
+   *    thing. Taking it from the previous set instead would defeat the point
+   *    the moment one match came up short.
+   *
+   * The dependency is `fill`, not `kind`: drop and myorep genuinely do repeat
    * the working weight - you drop FROM it - and keying on `kind` would reset a
    * number you had just typed every time you tapped between those two.
    */
-  const warmup = kind === 'warmup'
+  const fill = kind === 'warmup' ? 'warmup' : kind === 'myorep_match' ? 'match' : 'working'
   useEffect(() => {
-    if (warmup) {
+    if (fill === 'warmup') {
       const last = mine.filter((s) => s.is_warmup).sort((a, b) => b.set_index - a.set_index)[0]
       setWeight(last ? String(last.weight_kg) : '')
       setReps(last ? String(last.reps) : '')
       return
     }
+    if (fill === 'match' && activationSet) {
+      setWeight(String(activationSet.weight_kg))
+      setReps(String(activationSet.reps))
+      return
+    }
     const r = repeatOf(mine, lastSession, assisted)
     setWeight(r ? String(r.weight_kg) : '')
     setReps(r ? String(r.reps) : '')
-  }, [mine, lastSession, assisted, warmup])
+  }, [mine, lastSession, assisted, fill, activationSet])
 
   const canLog = weight !== '' && reps !== '' && Number(reps) > 0
 
@@ -215,7 +267,7 @@ export function ExerciseCard({
     scheduleFlush()
     // Called from inside the tap, which is what unlocks audio: a context
     // created outside a user gesture stays suspended and silent.
-    onSetLogged?.({ warmup, exerciseName: exercise.name })
+    onSetLogged?.({ warmup: kind === 'warmup', exerciseName: exercise.name })
   }
 
   async function updateSet(id: string, patch: Partial<WorkoutSet>) {
@@ -236,6 +288,48 @@ export function ExerciseCard({
       ? Math.min(...lastSession.sets.map((s) => s.weight_kg))
       : Math.max(...lastSession.sets.map((s) => s.weight_kg))
     : null
+
+  /**
+   * The × in the header.
+   *
+   * It used to call a handler that silently returned whenever the exercise had
+   * any logged sets - so on the one card you would actually want to remove, it
+   * did nothing at all and read as broken. The card is derived FROM the sets,
+   * so there is no version of this that drops the card and keeps them. The
+   * honest options are to say what will be lost or to refuse and explain why;
+   * this says what will be lost.
+   */
+  if (confirmRemove) {
+    return (
+      <section className="rounded-2xl border border-danger/40 bg-danger/10 p-4">
+        <p className="text-sm leading-relaxed">
+          Remove <strong>{exercise.name}</strong> from this session? Its{' '}
+          <strong>
+            {mine.length} logged set{mine.length === 1 ? '' : 's'}
+          </strong>{' '}
+          {mine.length === 1 ? 'goes' : 'go'} with it, on every device. What this lift did in
+          other sessions is untouched.
+        </p>
+        <div className="mt-3 flex gap-2">
+          <button
+            onClick={() => {
+              setConfirmRemove(false)
+              onRemove()
+            }}
+            className="min-h-11 flex-1 rounded-lg bg-danger px-3 text-sm font-semibold text-white"
+          >
+            Remove
+          </button>
+          <button
+            onClick={() => setConfirmRemove(false)}
+            className="min-h-11 rounded-lg border border-border px-3 text-sm"
+          >
+            Cancel
+          </button>
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section className="rounded-2xl border border-border bg-surface">
@@ -277,7 +371,7 @@ export function ExerciseCard({
           )}
         </button>
         <button
-          onClick={onRemove}
+          onClick={() => (mine.length > 0 ? setConfirmRemove(true) : onRemove())}
           aria-label={`Remove ${exercise.name} from this session`}
           className="-mr-1 -mt-1 size-11 shrink-0 text-lg text-text-dim"
         >
@@ -365,7 +459,7 @@ export function ExerciseCard({
                   </span>
                   {toKind(s) !== 'working' && (
                     <span className="rounded bg-surface-2 px-1.5 py-0.5 text-xs text-text-dim">
-                      {KINDS.find((k) => k.kind === toKind(s))!.label.toLowerCase()}
+                      {KINDS.find((k) => k.kind === toKind(s))!.short}
                     </span>
                   )}
                 </button>
@@ -391,6 +485,17 @@ export function ExerciseCard({
                 step={exercise.load_increment_kg || 1}
               />
               <NumberField label="Reps" value={reps} onChange={setReps} step={1} min={1} />
+              {/* Put the whole block away without opening another card. It is
+                  the tallest thing on the screen, and most of a session is
+                  spent reading what you already did rather than typing. */}
+              <button
+                onClick={onCollapse}
+                aria-label="Hide the log-set controls"
+                className="mb-0.5 size-11 shrink-0 rounded-lg border border-border text-lg
+                           text-text-dim"
+              >
+                ×
+              </button>
             </div>
             <button
               onClick={() => void logSet()}
@@ -403,9 +508,11 @@ export function ExerciseCard({
           </div>
 
           {/* One exclusive choice rather than a checkbox plus a dropdown: the
-              combinations those would allow are the ones the database rejects. */}
+              combinations those would allow are the ones the database rejects.
+              Three columns rather than five - at 375px, five cells leave about
+              62px each and "Warm-up" does not fit in that. */}
           <div className="px-4 pb-3">
-            <div role="group" aria-label="Set type" className="grid grid-cols-4 gap-1">
+            <div role="group" aria-label="Set type" className="grid grid-cols-3 gap-1">
               {KINDS.map((k) => {
                 const disabled = k.continuation && !canContinue
                 return (
@@ -506,7 +613,7 @@ function EditSetRow({
       </div>
       {/* Editable here too - a set tagged wrong in the moment is otherwise
           only fixable by deleting and re-logging it. */}
-      <div role="group" aria-label="Set type" className="grid grid-cols-4 gap-1">
+      <div role="group" aria-label="Set type" className="grid grid-cols-3 gap-1">
         {KINDS.map((x) => (
           <button
             key={x.kind}

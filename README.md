@@ -145,8 +145,20 @@ which is what lets counting work without a grouping id. The single definition li
 | | counted as a set | tonnage |
 |---|---|---|
 | `normal` | yes | yes |
+| `myorep_match` | **yes** | yes |
 | `dropset`, `myorep` | **no** | **yes** |
 | warm-up | no | no |
+
+**`myorep_match` is not a variant of `myorep`**, despite sitting next to it in the list. The
+two are different shapes. A *myorep* is an activation set followed by mini-sets off the same
+set, a few breaths apart — continuations. A *myorep match* is a full set at the same weight
+taken to the same rep count as the first set, resting inside the set as much as it takes to
+get there. Three matched sets of 15 kg × 8 is **three** working sets, and filing it beside
+`myorep` would report it as one and quietly drop two thirds of that lift's weekly volume.
+
+It pre-fills from the session's **first working set**, not the previous one, because
+matching that set is the literal definition of the thing — taking it from the previous set
+would defeat the point the moment one match came up short.
 
 So a top set with three drops is one working set on the weekly chart, but all four rows'
 weight × reps land in tonnage — the reps were genuinely performed. Drops and myoreps are
@@ -178,6 +190,36 @@ Which one is open is **derived, not stored**: the exercise you most recently log
 falling back to the first in the list, with an explicit tap overriding it until the session
 changes. Reopening the app four lifts in and landing back on lift one would be exactly
 wrong, and "most recently written" is the only signal that survives a reload.
+
+### Reordering
+
+Drag handles live in a separate **mode**, not on the cards. A card is three to six hundred
+pixels tall, so dragging one means a long travel past everything else on a scrolling page,
+fighting the scroll the whole way; in reorder mode the lifts collapse to fixed-height rows,
+which makes the travel short and the index arithmetic exact.
+
+Pointer Events rather than HTML5 drag-and-drop, because `dragstart` does not fire from touch
+on Android Chrome at all — the native API would have produced a feature that worked only on
+the desktop it was written on.
+
+Two bugs were found building it, both of which looked like "drag does nothing":
+
+- The list re-seeded itself from its `items` prop on every parent render. `items` is a fresh
+  array each time, so a live-query tick undid the drag within milliseconds of making it.
+  Now keyed on the membership signature, and never while a row is in the air.
+- The reorder ran inside a `setState` updater that read a ref the line below was about to
+  mutate. React runs an updater during the next render, by which point the ref had moved, so
+  the splice removed and reinserted at the same index.
+
+### The log block collapses
+
+The × beside the reps field puts the whole input block away without opening another card.
+Most of a session is spent reading what you already did rather than typing, and the form is
+the tallest thing on the screen.
+
+That needs the open-card state to be **three-valued**, not two: `undefined` derives the
+default, `null` means collapsed on purpose, a string names the card. With a plain nullable
+id, collapsing fell straight back to the derived default and reopened the card.
 
 ### Sessions have names
 
@@ -272,6 +314,13 @@ to working sets, so last week's warm-ups are not loaded, and inventing one from 
 weight is the bug again. The effect keys on `warmup`, not on `kind` - drop and myorep
 genuinely do repeat the working weight, since you drop *from* it, and keying on `kind` would
 reset a number you had just typed every time you tapped between those two.
+
+### Copying a previous session
+
+An empty session offers to copy a recent one: its lifts and its name, **no sets**. Pre-logged
+sets are indistinguishable from performed ones the moment they are written, and a session you
+forgot to correct becomes a permanent lie in the history the progression engine reads from.
+That is the same reason "repeat" on the no-session screen copies lifts only.
 
 ## Assisted machines run the load axis backwards
 
@@ -473,6 +522,12 @@ rule throughout: **removing something from the library never rewrites what it wa
   notes would linger on the device - the same trap the sets already had.
 
 Archiving means stop offering it today. It cannot mean rewrite last month.
+
+**Removing an exercise from a session takes its sets with it.** The handler used to return
+silently whenever there were any, so the × did nothing at all on precisely the cards you
+would want to use it on and simply read as broken. The card is derived *from* the sets, so
+"drop the card, keep the sets" is not a state that exists — the honest options were to say
+what will be lost or to refuse and explain why. It says what will be lost, with the count.
 
 Every destructive action goes through `ConfirmDelete`, which states what is actually lost —
 ingredient counts, set counts — and what is not. Foods, recipes and exercises deleted on a
@@ -676,6 +731,15 @@ Requested refinements, applied together and gated on migration `0004`:
 - [x] a space between every number and its unit
 - [x] assisted machines, where taking weight off is progression
 - [x] notes per exercise within a session, alongside the session note
+
+A second pass on 18 Sep 2026, gated on migration `0005`:
+
+- [x] drag to reorder the exercises in a session
+- [x] the exercise editor's three explanatory paragraphs, cut to one line
+- [x] `myorep_match` as its own set type, counted as a working set
+- [x] the log block collapses, so it stops blocking the screen
+- [x] the × on an exercise works instead of silently doing nothing
+- [x] copy a previous session into an empty one
 
 A follow-up pass on 18 Sep 2026, needing no migration:
 

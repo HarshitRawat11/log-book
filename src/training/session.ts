@@ -80,6 +80,18 @@ export async function addExerciseToSession(workoutId: string, exerciseId: string
   await db.meta.put({ key: orderKey(workoutId), value: [...current, exerciseId] })
 }
 
+/**
+ * Write the whole order, making it authoritative.
+ *
+ * sessionExerciseIds merges the stored order with the exercises that have sets,
+ * appending anything not already listed - so storing every id is what makes a
+ * drag stick. Storing only the ones that were moved would leave the rest to be
+ * appended in set order and the list would spring back.
+ */
+export async function reorderSessionExercises(workoutId: string, exerciseIds: string[]) {
+  await db.meta.put({ key: orderKey(workoutId), value: exerciseIds })
+}
+
 export async function removeExerciseFromSession(workoutId: string, exerciseId: string) {
   const current = ((await db.meta.get(orderKey(workoutId)))?.value as string[]) ?? []
   await db.meta.put({ key: orderKey(workoutId), value: current.filter((x) => x !== exerciseId) })

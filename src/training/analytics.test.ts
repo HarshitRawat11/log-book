@@ -83,6 +83,16 @@ describe('tonnageSeries', () => {
     expect(tonnageSeries(workouts, sets)).toEqual([{ date: '2026-09-01', value: 1200 }])
   })
 
+  it('includes myorep matches, which are whole sets', () => {
+    const workouts = [{ id: 'w1', date: '2026-09-01' }]
+    const sets = [
+      set({ workout_id: 'w1', weight_kg: 15, reps: 8 }),
+      set({ workout_id: 'w1', weight_kg: 15, reps: 8, set_type: 'myorep_match' }),
+      set({ workout_id: 'w1', weight_kg: 15, reps: 8, set_type: 'myorep_match' }),
+    ]
+    expect(tonnageSeries(workouts, sets)).toEqual([{ date: '2026-09-01', value: 360 }])
+  })
+
   it('omits sessions that were only warm-ups', () => {
     const workouts = [{ id: 'w1', date: '2026-09-01' }]
     const sets = [set({ workout_id: 'w1', is_warmup: true })]
@@ -241,6 +251,21 @@ describe('isWorkingSet', () => {
   it('does not count a drop or a myorep', () => {
     expect(isWorkingSet(set({ set_type: 'dropset' }))).toBe(false)
     expect(isWorkingSet(set({ set_type: 'myorep' }))).toBe(false)
+  })
+
+  /**
+   * The distinction the two names hide. A myorep is a mini-set hanging off the
+   * activation set; a myorep MATCH is a whole set at the same weight taken to
+   * the same rep count. Three matched sets of 15kg x 8 is three working sets,
+   * and counting it beside `myorep` would report it as one and quietly lose two
+   * thirds of the week's volume for that lift.
+   */
+  it('DOES count a myorep match, unlike a myorep', () => {
+    expect(isWorkingSet(set({ set_type: 'myorep_match' }))).toBe(true)
+  })
+
+  it('still refuses a warm-up whatever type it carries', () => {
+    expect(isWorkingSet(set({ is_warmup: true, set_type: 'myorep_match' }))).toBe(false)
   })
 
   it('treats a row written before the column existed as a working set', () => {
