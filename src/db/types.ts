@@ -296,13 +296,22 @@ export type CardioSession = SyncedRow & {
  * Flush order. Children must follow their parents or the first push of a new
  * workout fails on a foreign key: a `set` referencing a `workout` that does not
  * exist server-side yet. Order is load-bearing, not cosmetic.
+ *
+ * `routines`, `routine_days` and `routine_day_exercises` are deliberately
+ * ABSENT. They have existed since migration 0001 and no code path has ever
+ * written to one, so they can only ever be empty - while still costing a push
+ * scan and a pull request each, every sync. "Repeat a session" replaced the
+ * routine editor on purpose: a saved template is a second copy of a plan that
+ * goes stale the first time a lift is swapped, and what you actually did last
+ * Push day cannot go stale.
+ *
+ * The Postgres tables are left in place. Dropping them is destructive, they
+ * cost nothing sitting there, and the day a routine editor is wanted the schema
+ * is already right.
  */
 export const SYNC_TABLES = [
   'profile',
   'exercises',
-  'routines',
-  'routine_days',
-  'routine_day_exercises',
   'workouts',
   'sets',
   'workout_exercise_notes',

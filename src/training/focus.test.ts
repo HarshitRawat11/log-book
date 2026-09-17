@@ -50,19 +50,10 @@ describe('groupsFromName', () => {
 })
 
 describe('sessionFocus', () => {
-  it('prefers the session name over the routine day', () => {
-    const focus = sessionFocus(['Pull', 'Push day'], [])!
+  it('reads the session name', () => {
+    const focus = sessionFocus('Pull', [])!
     expect(focus.has('back')).toBe(true)
     expect(focus.has('chest')).toBe(false)
-  })
-
-  it('falls back to the routine day when the session is unnamed', () => {
-    expect([...sessionFocus([null, 'Legs'], [])!].sort()).toEqual([
-      'calves',
-      'glutes',
-      'hamstrings',
-      'quads',
-    ])
   })
 
   /**
@@ -70,7 +61,7 @@ describe('sessionFocus', () => {
    * to work: two back lifts in, the third suggestion should be a back lift.
    */
   it('falls back to what is already in the session', () => {
-    const focus = sessionFocus([null, null], [ex('Row', 'back'), ex('Curl', 'biceps')])!
+    const focus = sessionFocus(null, [ex('Row', 'back'), ex('Curl', 'biceps')])!
     expect([...focus].sort()).toEqual(['back', 'biceps'])
   })
 
@@ -80,12 +71,12 @@ describe('sessionFocus', () => {
    * rest of the session.
    */
   it('does not let one off-plan lift widen a named session', () => {
-    const focus = sessionFocus(['Pull'], [ex('Bench', 'chest')])!
+    const focus = sessionFocus('Pull', [ex('Bench', 'chest')])!
     expect(focus.has('chest')).toBe(false)
   })
 
   it('is null on an empty unnamed session, so the list stays alphabetical', () => {
-    expect(sessionFocus([null, null], [])).toBeNull()
+    expect(sessionFocus(null, [])).toBeNull()
   })
 })
 

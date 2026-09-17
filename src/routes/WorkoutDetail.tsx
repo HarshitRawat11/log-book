@@ -10,7 +10,7 @@ import { ExercisePicker } from '../training/ExercisePicker'
 import { SessionName } from '../training/SessionName'
 import { SessionNotes } from '../training/SessionNotes'
 import { db } from '../db/db'
-import { alive, deleteRow } from '../db/mutate'
+import { deleteRow } from '../db/mutate'
 import { scheduleFlush } from '../db/sync'
 import { assistedIds, type Exercise } from '../db/types'
 import {
@@ -18,6 +18,7 @@ import {
   listAllExercises,
   listExercises,
   notesForWorkout,
+  previousExerciseNotes,
   setsForWorkout,
   tonnage,
 } from '../training/queries'
@@ -55,7 +56,13 @@ export function WorkoutDetail() {
   // included a lift since archived must still show that lift and its sets.
   const everyExercise = useLiveQuery(listAllExercises, [], [])
   const notes = useLiveQuery(() => notesForWorkout(workoutId), [workoutId], new Map())
-  const routineDays = useLiveQuery(async () => alive(await db.routine_days.toArray()), [], [])
+  // Dated on or before this session, so opening one from six weeks ago shows
+  // what was true then rather than what has been written since.
+  const lastNotes = useLiveQuery(
+    async () => (workout ? await previousExerciseNotes(workout.id, workout.date) : new Map()),
+    [workout?.id, workout?.date],
+    new Map(),
+  )
 
   const byId = new Map((everyExercise ?? []).map((e) => [e.id, e]))
   const inSession = (exerciseIds ?? []).map((id) => byId.get(id)).filter(Boolean) as Exercise[]
@@ -68,8 +75,7 @@ export function WorkoutDetail() {
       ? activeId
       : defaultActiveExercise(inSession.map((e) => e.id), sets ?? [])
 
-  const routineDayName = routineDays?.find((d) => d.id === workout?.routine_day_id)?.name ?? null
-  const focus = sessionFocus([workout?.name, routineDayName], inSession)
+  const focus = sessionFocus(workout?.name, inSession)
 
   if (workout === undefined) return <Screen title="Session">{null}</Screen>
   if (!workout || workout.deleted_at) {
@@ -116,6 +122,7 @@ export function WorkoutDetail() {
             workoutId={workout.id}
             sets={sets ?? []}
             note={notes?.get(e.id)?.note ?? null}
+            lastNote={lastNotes?.get(e.id) ?? null}
             active={e.id === active}
             onActivate={() => setActiveId(e.id)}
             showSuggestion={false}

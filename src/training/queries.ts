@@ -130,7 +130,6 @@ export type SessionSummary = {
   date: string
   /** Carried through a repeat: "Pull" repeated is still Pull. */
   name: string | null
-  routine_day_id: string | null
   /** Exercises in the order they were first worked that day. */
   exercise_ids: string[]
   set_count: number
@@ -167,7 +166,6 @@ export async function recentSessionSummaries(
       workout_id: w.id,
       date: w.date,
       name: w.name ?? null,
-      routine_day_id: w.routine_day_id,
       exercise_ids,
       set_count: sets.filter(isWorkingSet).length,
     })
@@ -250,4 +248,45 @@ export async function saveExerciseNote(
     'workout_exercise_notes',
     newRow({ workout_id: workoutId, exercise_id: exerciseId, note: text }),
   )
+}
+
+/**
+ * The most recent note for each exercise from BEFORE this session.
+ *
+ * Without this the notes are write-only. "Shoulder felt tight on the second
+ * set, ease into it next time" is visible while it is being typed and then
+ * only if you deliberately reopen that session from History - and the one
+ * moment it is worth reading is standing at the machine a week later.
+ *
+ * One read for the whole screen rather than one per card, and dated rather
+ * than bare: a note from Tuesday and a note from March mean different things
+ * and only the date says which you are looking at.
+ *
+ * @param beforeDate The session's own date. Notes are taken from on or before
+ *   it, excluding this session itself, so opening a session from six weeks ago
+ *   shows what was true THEN rather than what has been written since.
+ */
+export async function previousExerciseNotes(
+  workoutId: string,
+  beforeDate: string,
+): Promise<Map<string, { note: string; date: string }>> {
+  const rows = alive(await db.workout_exercise_notes.toArray()).filter(
+    (r) => r.note && r.workout_id !== workoutId,
+  )
+  if (rows.length === 0) return new Map()
+
+  const ids = [...new Set(rows.map((r) => r.workout_id))]
+  const workouts = alive(
+    await db.workouts.bulkGet(ids).then((w) => w.filter(Boolean) as Workout[]),
+  )
+  const dateOf = new Map(workouts.map((w) => [w.id, w.date]))
+
+  const latest = new Map<string, { note: string; date: string }>()
+  for (const r of rows) {
+    const date = dateOf.get(r.workout_id)
+    if (!date || date > beforeDate) continue // tombstoned, or written later
+    const held = latest.get(r.exercise_id)
+    if (!held || date > held.date) latest.set(r.exercise_id, { note: r.note!, date })
+  }
+  return latest
 }

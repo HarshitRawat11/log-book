@@ -61,8 +61,11 @@ export function TabBar() {
               className={({ isActive }) =>
                 [
                   // 60px tall: comfortably past the 44px minimum tap target,
-                  // and this is the control used most while out of breath.
-                  'flex min-h-15 flex-col items-center justify-center gap-1 py-2 text-[11px]',
+                  // and this is the control used most while out of breath. The
+                  // height is a token because the rest-timer bar sits on top of
+                  // it and has to know how tall it is.
+                  'flex min-h-[var(--tabbar-h)] flex-col items-center justify-center gap-1 py-2',
+                  'text-[11px]',
                   isActive ? 'text-accent' : 'text-text-dim',
                 ].join(' ')
               }

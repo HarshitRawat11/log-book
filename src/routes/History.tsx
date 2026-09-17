@@ -49,7 +49,6 @@ export function History() {
 
   async function backfill(repeat?: SessionSummary) {
     const w = await createWorkout(date, {
-      routineDayId: repeat?.routine_day_id ?? null,
       exerciseIds: repeat?.exercise_ids,
       name: repeat?.name ?? null,
     })

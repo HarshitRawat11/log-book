@@ -89,9 +89,11 @@ export function ExerciseCard({
   workoutId,
   sets,
   note,
+  lastNote,
   active,
   onActivate,
   onRemove,
+  onSetLogged,
   showSuggestion = true,
 }: {
   exercise: Exercise
@@ -99,10 +101,22 @@ export function ExerciseCard({
   sets: WorkoutSet[]
   /** This exercise's note in this session, already loaded by the parent. */
   note: string | null
+  /**
+   * The note left against this exercise the LAST time it was trained, dated.
+   * The reason the notes are worth writing: it is read standing at the machine,
+   * before the first set, not afterwards.
+   */
+  lastNote: { note: string; date: string } | null
   /** Whether this is the open card. Exactly one card per session is. */
   active: boolean
   onActivate: () => void
   onRemove: () => void
+  /**
+   * Fired after a set is written, so the screen can start the rest timer.
+   * Absent when reviewing a past session - correcting a typo from nine days
+   * ago should not start a two-minute countdown.
+   */
+  onSetLogged?: (info: { warmup: boolean; exerciseName: string }) => void
   /**
    * Off when reviewing a past session. "Next time do 62.5kg" is noise when you
    * have opened a session from nine days ago to correct a typo, and worse than
@@ -146,15 +160,39 @@ export function ExerciseCard({
     if (!canContinue && (kind === 'dropset' || kind === 'myorep')) setKind('working')
   }, [canContinue, kind])
 
-  // Pre-fill with a REPEAT of what was actually done - the previous set in this
-  // session, else last session's top set. This is a record of fact, not advice,
-  // which is what lets "log a set" be one tap. The progression suggestion stays
-  // opt-in and pre-fills nothing until tapped (brief 7.2).
+  /**
+   * Pre-fill with a REPEAT of what was actually done - the previous set in this
+   * session, else last session's top set. This is a record of fact, not advice,
+   * which is what lets "log a set" be one tap. The progression suggestion stays
+   * opt-in and pre-fills nothing until tapped (brief 7.2).
+   *
+   * Warm-ups are their own question. The effect used to ignore `kind`, so
+   * tapping Warm-up left the WORKING weight sitting in the field and logging
+   * without looking recorded a warm-up at your top set. It is excluded from
+   * everything that counts, so the damage was cosmetic - but wrong by default
+   * is still wrong.
+   *
+   * A warm-up repeats this session's last warm-up, and otherwise clears, so the
+   * number is typed deliberately. There is no last-session fallback on purpose:
+   * `recentSessions` filters to working sets, so last week's warm-ups are not
+   * loaded, and inventing one from the working weight is the bug again.
+   *
+   * The dependency is `warmup`, not `kind`. Drop and myorep genuinely do repeat
+   * the working weight - you drop FROM it - and keying on `kind` would reset a
+   * number you had just typed every time you tapped between those two.
+   */
+  const warmup = kind === 'warmup'
   useEffect(() => {
+    if (warmup) {
+      const last = mine.filter((s) => s.is_warmup).sort((a, b) => b.set_index - a.set_index)[0]
+      setWeight(last ? String(last.weight_kg) : '')
+      setReps(last ? String(last.reps) : '')
+      return
+    }
     const r = repeatOf(mine, lastSession, assisted)
     setWeight(r ? String(r.weight_kg) : '')
     setReps(r ? String(r.reps) : '')
-  }, [mine, lastSession, assisted])
+  }, [mine, lastSession, assisted, warmup])
 
   const canLog = weight !== '' && reps !== '' && Number(reps) > 0
 
@@ -175,6 +213,9 @@ export function ExerciseCard({
       }),
     )
     scheduleFlush()
+    // Called from inside the tap, which is what unlocks audio: a context
+    // created outside a user gesture stays suspended and silent.
+    onSetLogged?.({ warmup, exerciseName: exercise.name })
   }
 
   async function updateSet(id: string, patch: Partial<WorkoutSet>) {
@@ -243,6 +284,18 @@ export function ExerciseCard({
           ×
         </button>
       </header>
+
+      {/* What you told yourself last time, before the first set rather than
+          after the last one. Shown whether the card is open or closed: it is
+          two lines, and putting it behind a tap would defeat the point. */}
+      {lastNote && (
+        <p className="mx-4 mt-2 rounded-lg border-l-2 border-accent/50 bg-surface-2 py-1.5 pl-2.5
+                      pr-2 text-xs leading-relaxed text-text-dim">
+          <span className="font-medium text-text">{shortDate(lastNote.date)}</span>
+          {' · '}
+          {lastNote.note}
+        </p>
+      )}
 
       {/* Progression suggestion. Pre-fills nothing until tapped. */}
       {active && suggestion && (

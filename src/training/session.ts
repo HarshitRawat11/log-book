@@ -18,24 +18,13 @@ import { setsForWorkout } from './queries'
 export const orderKey = (workoutId: string) => `session:${workoutId}:exercises`
 
 export async function sessionExerciseIds(workout: Workout): Promise<string[]> {
-  const [manual, sets, routineLinks] = await Promise.all([
+  const [manual, sets] = await Promise.all([
     db.meta.get(orderKey(workout.id)).then((m) => (m?.value as string[] | undefined) ?? []),
     setsForWorkout(workout.id),
-    workout.routine_day_id
-      ? db.routine_day_exercises
-          .where('routine_day_id')
-          .equals(workout.routine_day_id)
-          .toArray()
-          .then((r) => alive(r).sort((a, b) => a.position - b.position))
-      : Promise.resolve([]),
   ])
 
   const ordered: string[] = []
-  for (const id of [
-    ...routineLinks.map((r) => r.exercise_id),
-    ...manual,
-    ...sets.map((s) => s.exercise_id),
-  ]) {
+  for (const id of [...manual, ...sets.map((s) => s.exercise_id)]) {
     if (!ordered.includes(id)) ordered.push(id)
   }
   return ordered
@@ -50,13 +39,16 @@ export async function sessionExerciseIds(workout: Workout): Promise<string[]> {
  */
 export async function createWorkout(
   date: string,
-  opts: { routineDayId?: string | null; exerciseIds?: string[]; name?: string | null } = {},
+  opts: { exerciseIds?: string[]; name?: string | null } = {},
 ): Promise<Workout> {
   const created = await putRow(
     'workouts',
     newRow({
       date,
-      routine_day_id: opts.routineDayId ?? null,
+      // The column stays - dropping it needs a migration and it costs nothing -
+      // but nothing writes a value any more. The routine tables it pointed at
+      // were never writable; see the note on SYNC_TABLES.
+      routine_day_id: null,
       // Repeating a session carries its name across: "Pull" repeated is still
       // Pull, and retyping it every time is exactly the friction that would
       // stop the names being there at all.
@@ -116,4 +108,36 @@ export function defaultActiveExercise(
     if (!best || s.updated_at > best.updated_at) best = s
   }
   return best?.exercise_id ?? inSessionIds[0]!
+}
+
+
+/* ------------------------------------------------------------ rest timer -- */
+
+const REST_KEY = 'rest:defaultSeconds'
+
+/**
+ * How long a rest is, by default.
+ *
+ * Local-only `meta` rather than a synced column, for the same reason the
+ * per-session exercise order lives there: it is a preference about this device,
+ * and losing it costs one number retyped, never a set. A migration to sync a
+ * number you change twice a year is not a trade worth making.
+ *
+ * 120s is the starting point, not a hardcoded value - it is editable in
+ * Settings, because "set manually, not hardcoded" is the rule the cardio timer
+ * was built to and this is the same kind of number.
+ */
+export const DEFAULT_REST_SECONDS = 120
+
+export async function getDefaultRest(): Promise<number> {
+  const stored = (await db.meta.get(REST_KEY))?.value
+  return typeof stored === 'number' && stored > 0 ? stored : DEFAULT_REST_SECONDS
+}
+
+export async function setDefaultRest(seconds: number): Promise<void> {
+  // Floored at 15s and capped at 10 minutes: outside that it is not a rest
+  // between sets, and an accidental 0 would make the timer fire instantly
+  // forever.
+  const clamped = Math.min(600, Math.max(15, Math.round(seconds)))
+  await db.meta.put({ key: REST_KEY, value: clamped })
 }

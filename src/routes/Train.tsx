@@ -6,17 +6,18 @@ import { EmptyState } from '../components/EmptyState'
 import { SyncPill } from '../components/SyncPill'
 import { ExerciseCard } from '../training/ExerciseCard'
 import { ExercisePicker } from '../training/ExercisePicker'
+import { RestBar } from '../training/RestBar'
 import { SessionName } from '../training/SessionName'
 import { SessionNotes } from '../training/SessionNotes'
-import { db } from '../db/db'
-import { alive, deleteRow } from '../db/mutate'
+import { deleteRow } from '../db/mutate'
 import { scheduleFlush } from '../db/sync'
-import { assistedIds, type Exercise, type RoutineDay } from '../db/types'
+import { assistedIds, type Exercise } from '../db/types'
 import {
   isWorkingSet,
   listAllExercises,
   listExercises,
   notesForWorkout,
+  previousExerciseNotes,
   recentSessionSummaries,
   setsForWorkout,
   tonnage,
@@ -28,10 +29,12 @@ import {
   addExerciseToSession,
   createWorkout,
   defaultActiveExercise,
+  getDefaultRest,
   removeExerciseFromSession,
   sessionExerciseIds,
   workoutsOnDate,
 } from '../training/session'
+import { useRestTimer } from '../training/useRestTimer'
 import { relativeAge, shortDate, todayIso } from '../lib/dates'
 
 /**
@@ -78,17 +81,18 @@ export function Train() {
     [workout?.id],
     new Map(),
   )
+  // What was written against these lifts last time they were trained. One read
+  // for the screen, not one per card.
+  const lastNotes = useLiveQuery(
+    async () => (workout ? await previousExerciseNotes(workout.id, workout.date) : new Map()),
+    [workout?.id, workout?.date],
+    new Map(),
+  )
   const recent = useLiveQuery(
     () => recentSessionSummaries({ limit: 5, excludeDate: date }),
     [date, workout?.id],
     [],
   )
-  const routineDays = useLiveQuery(
-    async () => alive(await db.routine_days.toArray()).sort((a, b) => a.day_index - b.day_index),
-    [],
-    [],
-  )
-
   const byId = new Map((everyExercise ?? []).map((e) => [e.id, e]))
   const inSession = (exerciseIds ?? []).map((id) => byId.get(id)).filter(Boolean) as Exercise[]
 
@@ -101,9 +105,7 @@ export function Train() {
       ? activeId
       : defaultActiveExercise(inSession.map((e) => e.id), sets ?? [])
 
-  const routineDayName =
-    routineDays?.find((d) => d.id === workout?.routine_day_id)?.name ?? null
-  const focus = sessionFocus([workout?.name, routineDayName], inSession)
+  const focus = sessionFocus(workout?.name, inSession)
 
   const pretty = new Date(date).toLocaleDateString('en-GB', {
     weekday: 'long',
@@ -111,14 +113,13 @@ export function Train() {
     month: 'long',
   })
 
-  async function startSession(opts: { day?: RoutineDay; repeat?: SessionSummary } = {}) {
+  async function startSession(opts: { repeat?: SessionSummary } = {}) {
     // Repeating seeds the exercise list and the name only - no sets are copied.
     // It means "put the same lifts in front of me", not "pretend I already did
     // them".
     const created = await createWorkout(date, {
-      routineDayId: opts.day?.id ?? opts.repeat?.routine_day_id ?? null,
       exerciseIds: opts.repeat?.exercise_ids,
-      name: opts.repeat?.name ?? opts.day?.name ?? null,
+      name: opts.repeat?.name ?? null,
     })
     setSelectedId(created.id)
     setActiveId(null)
@@ -142,6 +143,23 @@ export function Train() {
 
   const working = (sets ?? []).filter(isWorkingSet)
   const assisted = assistedIds(everyExercise ?? [])
+
+  /**
+   * The rest between sets.
+   *
+   * Started from inside the tap that logs the set, which is what unlocks audio
+   * on Android. Warm-ups do not start one - two minutes after a warm-up is not
+   * a rest, it is a delay - and everything else does, including a drop. Logging
+   * again simply restarts it, which is correct: the rest begins after the last
+   * thing you actually did.
+   */
+  const rest = useRestTimer()
+  const restSeconds = useLiveQuery(getDefaultRest, [], null)
+
+  function onSetLogged({ warmup, exerciseName }: { warmup: boolean; exerciseName: string }) {
+    if (warmup || !restSeconds) return
+    rest.start(restSeconds, exerciseName)
+  }
 
   return (
     <Screen
@@ -225,23 +243,6 @@ export function Train() {
                 </div>
               )}
 
-              {(routineDays ?? []).length > 0 && (
-                <div>
-                  <p className="mb-2 px-1 text-xs text-text-dim">or start from a day</p>
-                  <div className="flex flex-wrap gap-2">
-                    {routineDays!.map((d) => (
-                      <button
-                        key={d.id}
-                        onClick={() => void startSession({ day: d })}
-                        className="min-h-11 rounded-full border border-border bg-surface px-4
-                                   text-sm font-medium"
-                      >
-                        {d.name}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
             </>
           )}
         </div>
@@ -279,6 +280,8 @@ export function Train() {
               workoutId={workout.id}
               sets={sets ?? []}
               note={notes?.get(e.id)?.note ?? null}
+              lastNote={lastNotes?.get(e.id) ?? null}
+              onSetLogged={onSetLogged}
               active={e.id === active}
               onActivate={() => setActiveId(e.id)}
               onRemove={() => void removeExercise(e.id)}
@@ -339,8 +342,14 @@ export function Train() {
           >
             Discard empty session
           </button>
+
+          {/* Room for the floating bar, so the last control is still reachable
+              while a rest is running. */}
+          {rest.remaining !== null && <div aria-hidden="true" className="h-16" />}
         </div>
       )}
+
+      <RestBar timer={rest} />
     </Screen>
   )
 }

@@ -218,6 +218,61 @@ a column off. Clearing a note **empties its text rather than tombstoning the row
 typing into it again reuses the row; the unique index is partial (`where deleted_at is
 null`) so a tombstoned note never blocks a replacement.
 
+**The note from last time is shown on the card, dated.** Without that the feature is
+write-only: *"shoulder felt tight on the second set, ease into it next time"* would be
+visible while it was being typed and then only if you deliberately reopened that session
+from History - and the one moment it is worth reading is standing at the machine a week
+later. `previousExerciseNotes` reads it for the whole screen in one query rather than one
+per card, and takes notes dated **on or before** the session being viewed, so opening one
+from six weeks ago shows what was true then rather than what has been written since.
+
+### Rest between sets
+
+Logging a set starts a countdown, shown in a bar floating above the tab bar: a warning cue
+ten seconds out and a bell at zero, both from `cardio/audio.ts` unchanged. Warm-ups do not
+start one - two minutes after a warm-up is a delay, not a rest - and everything else does,
+including a drop. Logging again simply restarts it, which is right: the rest begins after
+the last thing you actually did.
+
+Same split as the cardio timer, and it is the whole design. **The display counts down from
+`Date.now()` against an absolute end timestamp; the audio is handed to the AudioContext
+clock the moment the timer starts.** A throttled or frozen main thread can make the number
+on screen stutter. It cannot make the cue late, because the cue left the main thread before
+the freeze. Adjusting the rest cancels the queued oscillators and re-schedules both, rather
+than queueing a second set on top of the first.
+
+Deliberately much smaller than `cardio/useSession`:
+
+- **no rounds**, so no schedule to build and nothing to reconcile
+- **no persistence.** A rest timer that survived a reload would be resuming a rest you
+  stopped taking four hours ago. It dies with the page, on purpose.
+- **no wake lock.** This is ninety seconds with the phone in your hand, not thirty
+  unattended minutes with gloves on.
+
+It counts *down*, which is the opposite of the rule the cardio timer was built to. That
+rule exists because a round is read from across a room with gloves on, where the only
+question is how long is left in the abstract. Between sets the phone is in your hand and
+the question really is how long is left, so a countdown is right here and wrong there.
+
+The length is set in Settings, not hardcoded, and lives in local-only `meta` for the same
+reason the per-session exercise order does: it is a preference about this device, losing it
+costs one number retyped, and a migration to sync a number changed twice a year is not a
+trade worth making. Clamped to 15s-10min. The bar's ±30 changes only the rest in flight.
+
+### Warm-ups pre-fill from warm-ups
+
+The pre-fill effect ignored the set-type selector, so tapping *Warm-up* left the working
+weight sitting in the field and logging without looking recorded a warm-up at your top set.
+It is excluded from everything that counts, so the damage was cosmetic - but wrong by
+default is still wrong.
+
+A warm-up now repeats this session's last warm-up and otherwise clears, so the number is
+typed deliberately. There is no last-session fallback on purpose: `recentSessions` filters
+to working sets, so last week's warm-ups are not loaded, and inventing one from the working
+weight is the bug again. The effect keys on `warmup`, not on `kind` - drop and myorep
+genuinely do repeat the working weight, since you drop *from* it, and keying on `kind` would
+reset a number you had just typed every time you tapped between those two.
+
 ## Assisted machines run the load axis backwards
 
 On an assisted pull-up or dip machine the stack counterweights you, so **more weight is less
@@ -424,6 +479,25 @@ ingredient counts, set counts — and what is not. Foods, recipes and exercises 
 single tap until that existed; only sessions asked. Deleting an exercise points at archiving
 as the gentler option, since that keeps the 1RM chart.
 
+## Three tables that were never writable
+
+`routines`, `routine_days` and `routine_day_exercises` have existed since migration `0001`
+and **no code path has ever written to one.** They could only ever be empty, while still
+costing a push scan and a pull request each on every sync, and the *"or start from a day"*
+block on Train was guarding an array that was always empty.
+
+That is not an oversight so much as a decision that was made and then not swept up after:
+"repeat a session" replaced the routine editor on purpose (see above - a saved template is a
+second copy of a plan that goes stale the first time a lift is swapped). The tables were
+left behind from before that call.
+
+They are out of `SYNC_TABLES`, and the dead UI is gone with them. `workouts.routine_day_id`
+stays as a column but nothing writes a value to it any more.
+
+**The Postgres tables are deliberately still there.** Dropping them is destructive, they
+cost nothing sitting in the database, and if a routine editor is ever wanted the schema is
+already the right shape.
+
 ## Charts
 
 Four views, each answering one question. Formulas are exactly the three the
@@ -442,7 +516,11 @@ brief specifies:
   since RIR is optional here that cannot be filtered on honestly.
 - **Bodyweight** with a 7-day moving average, computed over a 7-day *window*
   rather than the last 7 readings — so a gap in weighing widens the window
-  instead of silently averaging across three weeks.
+  instead of silently averaging across three weeks. The card says **when** you
+  last weighed once it is more than a day ago: weighing is manual and easy to
+  forget, a stale number reads exactly like a current one, and both the trend
+  and the BMR calculator quietly rest on it. Past a week it says so outright,
+  because the 7-day average stops meaning anything once the window is empty.
 
 Series colours are fixed validated slots (`--series-1..7` in `index.css`),
 assigned by slot and never cycled. They pass lightness-band, chroma, adjacent-pair
@@ -598,6 +676,14 @@ Requested refinements, applied together and gated on migration `0004`:
 - [x] a space between every number and its unit
 - [x] assisted machines, where taking weight off is progression
 - [x] notes per exercise within a session, alongside the session note
+
+A follow-up pass on 18 Sep 2026, needing no migration:
+
+- [x] last session's note shown on the card, which is what makes notes worth writing
+- [x] a rest timer between sets, reusing the cardio cue engine
+- [x] warm-ups pre-fill from warm-ups, not from the working weight
+- [x] the bodyweight card says how stale it is
+- [x] three never-writable routine tables out of the sync loop
 
 Migration `0004` applied and **deployed as `848fc6e`** on 17 Sep 2026. Verified live before
 and after: the new table and both new columns exist, a signed-out read of all fifteen synced

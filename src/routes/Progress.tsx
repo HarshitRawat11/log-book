@@ -27,7 +27,7 @@ import {
 import { listAllExercises, listExercises, recentSessions } from '../training/queries'
 import { listSessions } from '../cardio/queries'
 import { weeklyCardio } from '../cardio/analytics'
-import { todayIso } from '../lib/dates'
+import { daysBetween, todayIso } from '../lib/dates'
 
 /**
  * Progress.
@@ -301,6 +301,10 @@ function BodyweightCard({ series }: { series: ReturnType<typeof bodyweightSeries
   const [kg, setKg] = useState('')
   const today = todayIso()
   const latest = series[series.length - 1]
+  // Null when weighed today or yesterday: a nag that is always on screen stops
+  // being read at all, so it only speaks up once there is something to say.
+  const sinceLast = latest ? daysBetween(latest.date, today) : null
+  const staleDays = sinceLast !== null && sinceLast >= 2 ? sinceLast : null
 
   async function save() {
     const weight = Number(kg)
@@ -369,6 +373,17 @@ function BodyweightCard({ series }: { series: ReturnType<typeof bodyweightSeries
               kg {latest!.ma7 ? '7-day avg' : 'latest'}
             </span>
           </p>
+          {/* Say when, not just how much. Weighing is manual and easy to forget,
+              and a stale number reads exactly like a current one - the trend
+              line and the BMR calculator both quietly rest on this. A week is
+              the threshold because the 7-day average stops meaning anything
+              once the window has no readings in it. */}
+          {staleDays !== null && (
+            <p className="mb-2 text-xs text-text-dim">
+              Last weighed {staleDays === 0 ? 'today' : `${staleDays} days ago`}
+              {staleDays >= 7 && ' — the 7-day average is running on old readings'}
+            </p>
+          )}
           <BodyweightChart data={series} />
           <Legend
             items={[

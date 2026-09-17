@@ -11,9 +11,9 @@ import { MUSCLE_GROUPS, type Exercise, type MuscleGroup } from '../db/types'
  *
  * Two sources of truth, in order:
  *
- *   1. The session's NAME, or its routine day's name. "Pull" means back and
- *      biceps. This is a naming convention, not exercise science - it is the
- *      split as stated, nothing is inferred about what trains what.
+ *   1. The session's NAME. "Pull" means back and biceps. This is a naming
+ *      convention, not exercise science - it is the split as stated, nothing is
+ *      inferred about what trains what.
  *   2. Failing a name, THE EXERCISES ALREADY IN THE SESSION. Two back lifts in
  *      and the third suggestion should be a back lift. Needs no setup and no
  *      naming discipline, which is why it is the fallback rather than an
@@ -42,7 +42,7 @@ const SPLIT_WORDS: Record<string, readonly MuscleGroup[]> = {
 }
 
 /**
- * Groups named by a session or routine-day label, or null if it names none.
+ * Groups named by a session label, or null if it names none.
  *
  * Scans for every keyword and unions the matches, so "Push / Shoulders" picks
  * up both. Matching is on word boundaries: "Backend day" is not a back day,
@@ -62,18 +62,18 @@ export function groupsFromName(name: string | null | undefined): Set<MuscleGroup
 /**
  * The muscle groups this session is about.
  *
- * @param names       Session name first, then the routine day's - the first
- *                    that names any group wins.
- * @param inSession   Exercises already added, used only when no name does.
+ * @param name       The session's own name, if it has one.
+ * @param inSession  Exercises already added, used only when the name says
+ *                   nothing - so a Pull session holding one stray chest lift is
+ *                   still a Pull session.
  */
 export function sessionFocus(
-  names: Array<string | null | undefined>,
+  name: string | null | undefined,
   inSession: ReadonlyArray<Pick<Exercise, 'muscle_group'>>,
 ): Set<MuscleGroup> | null {
-  for (const n of names) {
-    const fromName = groupsFromName(n)
-    if (fromName) return fromName
-  }
+  const fromName = groupsFromName(name)
+  if (fromName) return fromName
+
   const fromContents = new Set(inSession.map((e) => e.muscle_group))
   return fromContents.size > 0 ? fromContents : null
 }

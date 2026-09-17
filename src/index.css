@@ -24,6 +24,11 @@
   --ok: #3ddc97;
   color-scheme: dark;
 
+  /* The tab bar's height, declared once. The rest-timer bar floats directly
+     above it and has to know where "above it" is; hardcoding 60px in two
+     files is how one of them ends up wrong. */
+  --tabbar-h: 3.75rem;
+
   /* Chart series, in fixed slot order - assigned by slot, never cycled.
      Validated against the dark card surface (#141a22): lightness band, chroma
      floor, adjacent-pair CVD separation, normal-vision floor and 3:1 contrast
