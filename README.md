@@ -520,10 +520,11 @@ prints the ID.
 
 ### If `--prod` returns `JSONHTTPError: Forbidden`
 
-Seen on 14 Sep 2026, after several successful deploys the same day. The account is fine —
-still signed in, site `state: current`, no stuck deploy, nothing over its limit — and a
-**draft deploy of the identical directory succeeds**. Only the production publish is
-refused, so it is something server-side rather than anything in this repo.
+First seen 14 Sep 2026, after several successful deploys the same day; **again on 17 Sep**,
+so treat it as the normal path rather than a one-off. The account is fine — still signed in,
+site `state: current`, no stuck deploy, nothing over its limit — and a **draft deploy of the
+identical directory succeeds**. Only the production publish is refused, so it is something
+server-side rather than anything in this repo.
 
 Deploy as a draft, verify it, then promote that deploy id:
 
@@ -597,3 +598,10 @@ Requested refinements, applied together and gated on migration `0004`:
 - [x] a space between every number and its unit
 - [x] assisted machines, where taking weight off is progression
 - [x] notes per exercise within a session, alongside the session note
+
+Migration `0004` applied and **deployed as `848fc6e`** on 17 Sep 2026. Verified live before
+and after: the new table and both new columns exist, a signed-out read of all fifteen synced
+tables returns zero rows, and a signed-out insert into `workout_exercise_notes` is refused
+with `42501`. Control probes ran alongside — a column that does not exist returns `42703`
+and a table that does not exist returns `PGRST205` — so the empty results mean the policy is
+working, not that the request quietly missed.
