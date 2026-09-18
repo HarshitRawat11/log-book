@@ -553,6 +553,34 @@ stays as a column but nothing writes a value to it any more.
 cost nothing sitting in the database, and if a routine editor is ever wanted the schema is
 already the right shape.
 
+## Exercise names are unique, ignoring case
+
+`exercises_user_name_uq` is `unique (user_id, lower(name)) where deleted_at is null`, and the
+editor now refuses a clash up front rather than letting the server discover it.
+
+It did not, and the failure was almost perfectly hidden. "Cable Bicep Curls" was created
+alongside "Cable bicep curls" on 16 Sep; the push was refused 52 times over two days, and the
+only symptom anywhere in the UI was **"1 stuck"** in the corner. Worse, pushes batch per
+table, so that one row was holding every other exercise edit behind it.
+
+Two things about the index are load-bearing, and both are pinned in `schema.test.ts`:
+
+- **`lower(name)`** — so the editor has to compare case-insensitively, and on a trimmed value.
+- **`where deleted_at is null`** — partial, so a tombstoned name frees up again. That is also
+  what let the stuck row be cleared by simply deleting the duplicate: the tombstone no longer
+  participates in the index, so it pushed on the first attempt. A total index would have left
+  it unpushable forever and needed the outbox edited by hand.
+
+Archived still counts as taken. Archiving hides a lift from the picker; it does not release
+its name.
+
+### What "stuck" means, if you see it again
+
+The pill counts outbox entries with `attempts >= 5`. Nothing is lost — the write succeeded
+locally and the push retries on a backoff capped at five minutes, indefinitely. **Settings →
+Diagnostics** prints each entry with its table, attempt count and the real Postgres error,
+listing payload *field names* only and never the values.
+
 ## Charts
 
 Four views, each answering one question. Formulas are exactly the three the

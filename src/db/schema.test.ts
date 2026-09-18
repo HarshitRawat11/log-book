@@ -122,3 +122,31 @@ describe('columns every synced table carries', () => {
     }
   })
 })
+
+/**
+ * The uniqueness rule the exercise editor has to mirror.
+ *
+ * A real failure: "Cable Bicep Curls" was created alongside "Cable bicep
+ * curls", the server refused it 52 times over two days, and the only symptom
+ * was "1 stuck" in the corner of the screen. The client now refuses the clash
+ * up front - this pins the rule it is refusing against, so a change to the
+ * index that the editor does not follow shows up here.
+ */
+describe('exercise names are unique case-insensitively, among live rows', () => {
+  const sql = readdirSync(DIR)
+    .filter((f) => f.endsWith('.sql'))
+    .sort()
+    .map((f) => readFileSync(join(DIR, f), 'utf8'))
+    .join('\n')
+
+  it('has the index, on lower(name)', () => {
+    expect(sql).toMatch(/create unique index exercises_user_name_uq[\s\S]*?lower\(name\)/)
+  })
+
+  it('is PARTIAL, so a tombstoned name can be reused', () => {
+    // Load-bearing: it is what lets deleting a duplicate clear a stuck push.
+    // A total index would have left that row unpushable forever.
+    const idx = sql.match(/create unique index exercises_user_name_uq[\s\S]*?;/)![0]
+    expect(idx).toMatch(/where deleted_at is null/)
+  })
+})

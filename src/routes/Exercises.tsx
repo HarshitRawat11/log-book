@@ -48,6 +48,27 @@ function toDraft(e: Exercise): Draft {
   }
 }
 
+/**
+ * Names that are already taken, lower-cased.
+ *
+ * Mirrors the server's `exercises_user_name_uq`, which is
+ * `unique (user_id, lower(name)) where deleted_at is null` - so archived still
+ * counts and tombstoned does not.
+ *
+ * Without this the app would happily create "Cable Bicep Curls" alongside
+ * "Cable bicep curls", and the only symptom was a push that failed forever:
+ * one real case sat at 52 attempts over two days, visible as nothing but "1
+ * stuck" in the corner. The outbox batches per table, so it also held up every
+ * other exercise edit behind it.
+ */
+function takenNames(exercises: Exercise[], excludingId: string | null): Set<string> {
+  return new Set(
+    exercises
+      .filter((e) => !e.deleted_at && e.id !== excludingId)
+      .map((e) => e.name.trim().toLowerCase()),
+  )
+}
+
 export function Exercises() {
   const exercises = useLiveQuery(() => listExercises(true), [], [])
   const [editing, setEditing] = useState<string | 'new' | null>(null)
@@ -79,6 +100,10 @@ export function Exercises() {
     }
     if (!fields.name) return
     if (fields.target_rep_max < fields.target_rep_min) return
+    // Belt and braces: the Save button is already disabled on a clash, but a
+    // write that the server will reject forever is worth refusing twice.
+    if (takenNames(exercises ?? [], editing === 'new' ? null : editing).has(fields.name.toLowerCase()))
+      return
 
     if (editing === 'new') {
       await putRow('exercises', newRow({ ...fields, archived: false }) as Exercise)
@@ -99,6 +124,7 @@ export function Exercises() {
         <EditorForm
           draft={draft}
           setDraft={setDraft}
+          taken={takenNames(exercises ?? [], editing === 'new' ? null : editing)}
           onSave={() => void save()}
           onCancel={() => setEditing(null)}
           onDelete={
@@ -186,18 +212,22 @@ const inputCls =
 function EditorForm({
   draft,
   setDraft,
+  taken,
   onSave,
   onCancel,
   onDelete,
 }: {
   draft: Draft
   setDraft: (d: Draft) => void
+  /** Lower-cased names already in use, excluding this exercise. */
+  taken: Set<string>
   onSave: () => void
   onCancel: () => void
   onDelete?: () => Promise<void>
 }) {
   const set = <K extends keyof Draft>(k: K, v: Draft[K]) => setDraft({ ...draft, [k]: v })
   const rangeBad = Number(draft.target_rep_max) < Number(draft.target_rep_min)
+  const nameTaken = taken.has(draft.name.trim().toLowerCase())
 
   return (
     <div className="flex flex-col gap-4 pb-4">
@@ -210,6 +240,11 @@ function EditorForm({
           className={inputCls}
         />
       </Field>
+      {nameTaken && (
+        <p className="-mt-3 text-xs text-danger">
+          Already used. Names ignore capitalisation, so this would clash.
+        </p>
+      )}
 
       <div className="grid grid-cols-2 gap-3">
         <Field label="Muscle group">
@@ -313,7 +348,7 @@ function EditorForm({
       <div className="flex gap-2">
         <button
           onClick={onSave}
-          disabled={!draft.name.trim() || rangeBad}
+          disabled={!draft.name.trim() || rangeBad || nameTaken}
           className="min-h-14 flex-1 rounded-xl bg-accent px-4 font-semibold text-accent-text
                      disabled:opacity-40"
         >
