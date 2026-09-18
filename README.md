@@ -810,6 +810,10 @@ A follow-up pass on 18 Sep 2026, needing no migration:
 - [x] warm-ups pre-fill from warm-ups, not from the working weight
 - [x] the bodyweight card says how stale it is
 - [x] three never-writable routine tables out of the sync loop
+- [x] duplicate exercise names refused, instead of jamming the outbox for two days
+- [x] the copy list offers every recent session with sets in it, not just one
+- [x] the log block cut from 343px to 257px
+- [x] the sync pill says what is stuck, not just how many
 
 Migration `0004` applied and **deployed as `848fc6e`** on 17 Sep 2026. Verified live before
 and after: the new table and both new columns exist, a signed-out read of all fifteen synced
