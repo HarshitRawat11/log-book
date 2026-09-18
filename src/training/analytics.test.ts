@@ -7,6 +7,7 @@ import {
   weeklyWorkingSets,
 } from './analytics'
 import {
+  groupSetsByWorkout,
   isWorkingSet,
   sessionSeconds,
   type Bodyweight,
@@ -372,5 +373,46 @@ describe('sessionSeconds', () => {
 
   it('refuses an unparseable timestamp rather than returning NaN', () => {
     expect(sessionSeconds({ started_at: 'not a date', finished_at: at(18) })).toBeNull()
+  })
+})
+
+/**
+ * The grouping that replaced one IndexedDB query per workout.
+ *
+ * The risk in that swap is silent: a grouped read that orders differently from
+ * the per-workout read it replaced would change the exercise order on every
+ * session summary, and nothing would throw. These pin the two properties the
+ * callers actually depend on.
+ */
+describe('groupSetsByWorkout', () => {
+  const s = (workout_id: string, set_index: number, exercise_id = 'e1') =>
+    set({ workout_id, set_index, exercise_id })
+
+  it('splits sets by their workout', () => {
+    const g = groupSetsByWorkout([s('w1', 0), s('w2', 0), s('w1', 1)])
+    expect([...g.keys()].sort()).toEqual(['w1', 'w2'])
+    expect(g.get('w1')).toHaveLength(2)
+    expect(g.get('w2')).toHaveLength(1)
+  })
+
+  /**
+   * Load-bearing: the exercise order on a session summary is read straight off
+   * this, so out-of-order sets would silently reorder the lifts in History.
+   */
+  it('orders each workout by set_index, whatever order they arrive in', () => {
+    const g = groupSetsByWorkout([
+      s('w1', 2, 'c'),
+      s('w1', 0, 'a'),
+      s('w1', 1, 'b'),
+    ])
+    expect(g.get('w1')!.map((x) => x.exercise_id)).toEqual(['a', 'b', 'c'])
+  })
+
+  it('has no entry for a workout with no sets, so callers default to empty', () => {
+    expect(groupSetsByWorkout([s('w1', 0)]).get('w2')).toBeUndefined()
+  })
+
+  it('handles an empty table', () => {
+    expect(groupSetsByWorkout([]).size).toBe(0)
   })
 })

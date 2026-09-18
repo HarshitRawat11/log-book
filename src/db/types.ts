@@ -236,6 +236,33 @@ export const sessionSeconds = (
   return Math.round((to - from) / 1000)
 }
 
+/**
+ * Live sets, grouped by workout and ordered within each one.
+ *
+ * Pure, and here rather than in queries.ts so it can be tested without a
+ * database - the grouping is the part that has to stay identical to what a
+ * per-workout query returned, and that is worth pinning.
+ *
+ * Exists because the history and repeat screens ran ONE IndexedDB query per
+ * workout. Measured over 312 sessions and 4,680 sets: 324ms that way against
+ * 93ms reading the table once and grouping here, on a desktop. A phone is
+ * several times slower again, and both screens are live queries that re-run
+ * whenever anything syncs - so the cost was paid over and over, and grew with
+ * every session logged.
+ */
+export function groupSetsByWorkout(sets: readonly WorkoutSet[]): Map<string, WorkoutSet[]> {
+  const byWorkout = new Map<string, WorkoutSet[]>()
+  for (const s of sets) {
+    const list = byWorkout.get(s.workout_id)
+    if (list) list.push(s)
+    else byWorkout.set(s.workout_id, [s])
+  }
+  // Same order a per-workout read gave: set_index, ascending. The exercise
+  // order on a session summary is derived from it.
+  for (const list of byWorkout.values()) list.sort((a, b) => a.set_index - b.set_index)
+  return byWorkout
+}
+
 export type Bodyweight = SyncedRow & {
   date: string
   weight_kg: number

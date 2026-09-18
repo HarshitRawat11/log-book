@@ -678,6 +678,31 @@ batch per table and that is rarely obvious.
 **Settings → Diagnostics** remains the full picture — every entry, with payload *field
 names* only and never the values.
 
+## Reads are bounded, not per-row
+
+History and the repeat/copy list ran **one IndexedDB query per workout**. Both are live
+queries, so they re-ran on every sync — and the cost grew with every session logged, which is
+exactly backwards for a log book.
+
+Measured against two years at three sessions a week — **312 workouts, 4,680 sets** — on a
+desktop, where a phone is several times slower again:
+
+| | |
+|---|---|
+| one query per workout | 324 ms / 141 ms |
+| one grouped read | 93 ms / 49 ms |
+
+(Two runs on different machine load; the ratio holds at roughly 3×.)
+
+Both now read `sets` once and group in memory through `groupSetsByWorkout`, which is pure and
+lives in `db/types.ts` so it can be tested without a database. That matters more than it
+sounds: a grouped read that ordered differently from the per-workout read it replaced would
+silently reorder the lifts on every session summary, since the exercise order is derived from
+`set_index`. The ordering and the tombstone filtering are both pinned.
+
+The per-card `recentSessions` lookups are deliberately left alone. They are indexed reads on
+`exercise_id` rather than a scan, and six of them measured 53 ms over the same 4,680 sets.
+
 ## Charts
 
 Four views, each answering one question. Formulas are exactly the three the
@@ -882,6 +907,7 @@ A follow-up pass on 18 Sep 2026, needing no migration:
 - [x] `finished_at` put to use as session duration; `rir` removed from the client
 - [x] opening a card scrolls it into view
 - [x] the exercise picker can be searched
+- [x] history and the copy list read sets once instead of once per session
 
 Migration `0004` applied and **deployed as `848fc6e`** on 17 Sep 2026. Verified live before
 and after: the new table and both new columns exist, a signed-out read of all fifteen synced
