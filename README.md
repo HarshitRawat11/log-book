@@ -597,12 +597,23 @@ Two things about the index are load-bearing, and both are pinned in `schema.test
 Archived still counts as taken. Archiving hides a lift from the picker; it does not release
 its name.
 
-### What "stuck" means, if you see it again
+### What "stuck" means, and where it says why
 
 The pill counts outbox entries with `attempts >= 5`. Nothing is lost — the write succeeded
-locally and the push retries on a backoff capped at five minutes, indefinitely. **Settings →
-Diagnostics** prints each entry with its table, attempt count and the real Postgres error,
-listing payload *field names* only and never the values.
+locally and the push retries on a backoff capped at five minutes, indefinitely.
+
+**Tapping a stuck pill opens the reason**: the table, the attempt count, and the Postgres
+error verbatim. Verbatim matters — the constraint name is the part that identifies the
+problem, and a friendlier paraphrase is exactly the part that would drop it.
+
+It did not always. For its first weeks the pill showed a count and nothing else, which is
+the one number that cannot be acted on: a duplicate-name rejection sat at 52 attempts for
+two days because the reason existed only in Diagnostics and nothing on screen pointed
+there. The panel also says that writes to the same table queue behind it, since pushes
+batch per table and that is rarely obvious.
+
+**Settings → Diagnostics** remains the full picture — every entry, with payload *field
+names* only and never the values.
 
 ## Charts
 

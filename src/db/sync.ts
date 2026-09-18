@@ -17,12 +17,30 @@ import { SYNC_TABLES, pkOf, type SyncTable } from './types'
  *    ambiguous timeout cannot duplicate a set.
  */
 
+/**
+ * What is wrong with the oldest stuck write.
+ *
+ * Carried on the status so the pill can SAY it. "1 stuck" on its own sent one
+ * real problem - a duplicate exercise name - unnoticed for two days, because
+ * the only place the reason existed was Settings -> Diagnostics, and nothing
+ * on screen suggested looking there.
+ */
+export type StuckDetail = {
+  table: SyncTable
+  attempts: number
+  /** Verbatim from Postgres. Guessing at a friendlier wording would lose the
+   *  constraint name, which is the part that identifies the problem. */
+  error: string | null
+}
+
 export type SyncStatus = {
   online: boolean
   pending: number
   flushing: boolean
   /** Ops that have failed repeatedly and need a human to look. */
   stuck: number
+  /** The oldest stuck op. Null when nothing is stuck. */
+  stuckDetail: StuckDetail | null
   lastError: string | null
   lastSyncedAt: number | null
 }
@@ -35,6 +53,7 @@ let status: SyncStatus = {
   pending: 0,
   flushing: false,
   stuck: 0,
+  stuckDetail: null,
   lastError: null,
   lastSyncedAt: null,
 }
@@ -56,9 +75,16 @@ export function getSyncStatus(): SyncStatus {
 
 async function refreshCounts() {
   const all = await db.outbox.toArray()
+  // Oldest first, so the detail names the one that has been failing longest
+  // rather than whichever happened to be queued last.
+  const stuckOps = all.filter((o) => o.attempts >= 5).sort((a, b) => a.seq! - b.seq!)
+  const first = stuckOps[0]
   emit({
     pending: all.length,
-    stuck: all.filter((o) => o.attempts >= 5).length,
+    stuck: stuckOps.length,
+    stuckDetail: first
+      ? { table: first.table, attempts: first.attempts, error: first.last_error }
+      : null,
   })
 }
 
