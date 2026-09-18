@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { Exercise, MuscleGroup } from '../db/types'
 import { rankForSession } from './focus'
 
@@ -7,10 +8,15 @@ import { rankForSession } from './focus'
  * Shared by today's session and the history editor so the ordering cannot
  * drift between the two.
  *
- * It orders, it never filters. The day you want to do something off-plan is
- * exactly the day a filter would be infuriating, so everything in the library
- * is always one scroll away - the plausible lifts are simply at the top
- * instead of wherever the alphabet put them.
+ * The RANKING orders, it never hides. The day you want to do something
+ * off-plan is exactly the day a hidden lift would be infuriating, so everything
+ * in the library is always one scroll away - the plausible ones are simply at
+ * the top instead of wherever the alphabet put them.
+ *
+ * Typing is a different matter: a search you asked for is not the app deciding
+ * what to withhold. While there is a query the ranked split collapses to one
+ * flat list, because the split exists to shorten scrolling and the query has
+ * already done that - two headings over three results is noise.
  */
 export function ExercisePicker({
   options,
@@ -24,7 +30,10 @@ export function ExercisePicker({
   onPick: (id: string) => void
   onClose: () => void
 }) {
-  const { relevant, rest } = rankForSession(options, focus)
+  const [query, setQuery] = useState('')
+  const q = query.trim().toLowerCase()
+  const matches = q ? options.filter((e) => e.name.toLowerCase().includes(q)) : options
+  const { relevant, rest } = q ? { relevant: [], rest: matches } : rankForSession(options, focus)
 
   return (
     <div className="rounded-2xl border border-border bg-surface p-2">
@@ -34,6 +43,17 @@ export function ExercisePicker({
           ×
         </button>
       </div>
+
+      {/* Deliberately not autofocused: on a phone that opens the keyboard over
+          the list you came here to read. */}
+      <input
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Search"
+        aria-label="Search exercises"
+        className="mb-1 min-h-11 w-full rounded-lg border border-border bg-surface-2 px-3
+                   text-base outline-none focus:border-accent"
+      />
       <ul className="max-h-80 overflow-y-auto">
         {relevant.length > 0 && (
           <>
@@ -53,6 +73,9 @@ export function ExercisePicker({
           <li className="px-2 py-3 text-sm text-text-dim">
             Every exercise in the library is already in this session.
           </li>
+        )}
+        {options.length > 0 && rest.length === 0 && relevant.length === 0 && (
+          <li className="px-2 py-3 text-sm text-text-dim">No exercise matches “{query.trim()}”.</li>
         )}
       </ul>
     </div>

@@ -211,6 +211,33 @@ Two bugs were found building it, both of which looked like "drag does nothing":
   mutate. React runs an updater during the next render, by which point the ref had moved, so
   the splice removed and reinserted at the same index.
 
+### Opening a card brings it into view
+
+The log block is the bottom half of a card, so opening the fourth or fifth lift put the
+fields below the fold — you tapped, then scrolled, every time. Opening one now scrolls it
+into view, by the minimum needed, and does nothing when the card is already visible.
+
+Three details, each of which was wrong on the first attempt:
+
+- **The tap arms it, not `active` changing.** Watching the prop meant carrying a "was it
+  already active" ref so the derived default card would not yank the page on every cold open.
+- **`useLayoutEffect`, not `requestAnimationFrame`.** The scroll must happen after layout,
+  because opening one card closes another and content *above* changes height in the same
+  commit. rAF looked right and was not: it does not fire at all on a hidden page, so the
+  scroll silently never happened under test.
+- **`auto`, not `smooth`.** Nothing else in this app animates — cards open, the picker
+  appears and the rest bar arrives instantly — so one 300ms pan would be the odd one out.
+
+### The picker can be searched
+
+Typing filters by name, and while there is a query the ranked split collapses to one flat
+list: the split exists to shorten scrolling, and the query has already done that. Two
+headings over three results is noise.
+
+The ranking still only orders and never hides. A search you asked for is a different thing
+from the app deciding what to withhold. The field is deliberately **not** autofocused — on a
+phone that opens the keyboard over the list you came to read.
+
 ### The log block collapses
 
 A chevron in the card header puts the whole input block away without opening another card.
@@ -853,6 +880,8 @@ A follow-up pass on 18 Sep 2026, needing no migration:
 - [x] the rest timer survives leaving the Train tab
 - [x] deleting a set can be undone
 - [x] `finished_at` put to use as session duration; `rir` removed from the client
+- [x] opening a card scrolls it into view
+- [x] the exercise picker can be searched
 
 Migration `0004` applied and **deployed as `848fc6e`** on 17 Sep 2026. Verified live before
 and after: the new table and both new columns exist, a signed-out read of all fifteen synced

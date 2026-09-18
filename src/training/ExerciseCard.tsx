@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import {
   isWorkingSet,
@@ -204,6 +204,44 @@ export function ExerciseCard({
    * A delete is a tombstone, so undoing is just clearing `deleted_at` - the
    * row never went anywhere, and the reversal replicates like any other write.
    */
+  /**
+   * Bring a card into view when you open it.
+   *
+   * The log block is the bottom half of the card, so opening the fourth or
+   * fifth lift put the fields below the fold: you tapped, then scrolled, every
+   * time. `block: 'nearest'` moves the minimum needed and does nothing when the
+   * card is already visible; `scroll-mt-20` on the section keeps it clear of
+   * the sticky header, which scrollIntoView knows nothing about.
+   *
+   * Three choices here, each of which was got wrong first:
+   *
+   *  - The TAP arms it, not `active` changing. Watching the prop meant carrying
+   *    a "was it already active" ref so the derived default card would not yank
+   *    the page on every cold open. A tap is unambiguous - it is the user
+   *    asking for this card, and nothing else can trigger it.
+   *  - useLayoutEffect, not requestAnimationFrame. The scroll has to happen
+   *    after layout, because opening one card closes another and content ABOVE
+   *    this one changes height in the same commit - but rAF does not fire at
+   *    all on a hidden page, so the scroll silently never happened there.
+   *    useLayoutEffect runs after the DOM is updated and before paint, always.
+   *  - `auto`, not `smooth`. Nothing else in this app animates: cards open, the
+   *    picker appears and the rest bar arrives instantly. A single 300ms pan
+   *    would be the odd one out, and mid-session the jump is the faster read.
+   */
+  const cardRef = useRef<HTMLElement>(null)
+  const armed = useRef(false)
+
+  function activate() {
+    armed.current = true
+    onActivate()
+  }
+
+  useLayoutEffect(() => {
+    if (!armed.current || !active) return
+    armed.current = false
+    cardRef.current?.scrollIntoView({ behavior: 'auto', block: 'nearest' })
+  }, [active])
+
   const [undoable, setUndoable] = useState<{ id: string; label: string } | null>(null)
   const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   useEffect(() => () => { if (undoTimer.current) clearTimeout(undoTimer.current) }, [])
@@ -362,10 +400,10 @@ export function ExerciseCard({
   }
 
   return (
-    <section className="rounded-2xl border border-border bg-surface">
+    <section ref={cardRef} className="scroll-mt-20 rounded-2xl border border-border bg-surface">
       <header className="flex items-start justify-between gap-3 px-4 pt-3">
         <button
-          onClick={onActivate}
+          onClick={activate}
           aria-expanded={active}
           className="min-w-0 flex-1 text-left"
         >
@@ -636,7 +674,7 @@ export function ExerciseCard({
             </p>
           )}
           <button
-            onClick={onActivate}
+            onClick={activate}
             className="min-h-12 w-full border-t border-border text-sm font-medium text-text-dim"
           >
             {mine.length > 0 ? '+ Log another set' : '+ Log a set'}
