@@ -144,18 +144,23 @@ export type SessionSummary = {
  * stale - it is the record itself.
  */
 export async function recentSessionSummaries(
-  opts: { limit?: number; excludeDate?: string } = {},
+  opts: { limit?: number; excludeDate?: string; excludeWorkoutId?: string } = {},
 ): Promise<SessionSummary[]> {
-  const { limit = 5, excludeDate } = opts
+  const { limit = 5, excludeDate, excludeWorkoutId } = opts
 
   const workouts = alive(await db.workouts.toArray())
-    .filter((w) => w.date !== excludeDate)
+    .filter((w) => w.date !== excludeDate && w.id !== excludeWorkoutId)
     .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))
-    .slice(0, limit)
-  if (workouts.length === 0) return []
 
   const summaries: SessionSummary[] = []
   for (const w of workouts) {
+    // Take the newest `limit` sessions that HAVE something in them.
+    //
+    // This used to slice to `limit` first and drop the empties afterwards, so
+    // abandoned sessions ate the slots: with a couple of empty ones at the top
+    // the list collapsed to a single option, which is not a choice. Counting
+    // after the filter is what makes it one.
+    if (summaries.length >= limit) break
     const sets = await setsForWorkout(w.id)
     if (sets.length === 0) continue // an abandoned session is not worth repeating
 

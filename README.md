@@ -213,9 +213,26 @@ Two bugs were found building it, both of which looked like "drag does nothing":
 
 ### The log block collapses
 
-The × beside the reps field puts the whole input block away without opening another card.
+A chevron in the card header puts the whole input block away without opening another card.
 Most of a session is spent reading what you already did rather than typing, and the form is
 the tallest thing on the screen.
+
+**That control started life as a × on the weight/reps row, and it broke the row.** Two
+steppered fields plus a 44px button left the weight box at 25px, clipping "40" — the same
+failure the layout comment in `ExerciseCard` was written about, reintroduced by ignoring it.
+Three things fixed it and are worth keeping together:
+
+- the collapse control moved to the header, off the row entirely
+- the stepper buttons went from 44px wide to 40 (still 48 tall), handing 16px back
+- `NumberField` gained `grow`, because weight and reps are not the same size of number:
+  weight holds "137.5", reps holds "12". Split evenly, weight clips.
+
+Measured at 375px: weight 78px and reps 44px, which fit 137.5 and 20 respectively.
+
+The block itself went from **343px to 257px** — a quarter of its height, on a 812px screen —
+by dropping the per-type explanation paragraph (it is a `title` on each button, and the table
+above has it), putting the five set types on one row instead of two, and making the note
+trigger a line of text rather than a full-width dashed box.
 
 That needs the open-card state to be **three-valued**, not two: `undefined` derives the
 default, `null` means collapsed on purpose, a string names the card. With a plain nullable
@@ -317,7 +334,13 @@ reset a number you had just typed every time you tapped between those two.
 
 ### Copying a previous session
 
-An empty session offers to copy a recent one: its lifts and its name, **no sets**. Pre-logged
+An empty session offers to copy a recent one: its lifts and its name, **no sets**.
+
+It offers the newest six sessions **that have something in them**. It used to take the newest
+six workouts and *then* drop the empty ones, so abandoned sessions ate the slots and the list
+routinely collapsed to a single option — which is not a choice. It also excludes only the
+current session rather than the whole day, so copying this morning's into this evening's
+works. Pre-logged
 sets are indistinguishable from performed ones the moment they are written, and a session you
 forgot to correct becomes a permanent lie in the history the progression engine reads from.
 That is the same reason "repeat" on the no-session screen copies lifts only.

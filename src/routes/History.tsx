@@ -113,7 +113,7 @@ export function History() {
                           {s.name ? `${s.name} · ` : ''}
                           {shortDate(s.date)}{' '}
                           <span className="font-normal text-text-dim">
-                            · {relativeAge(s.date)} · {s.set_count} sets
+                            · {relativeAge(s.date)} · {s.set_count} set{s.set_count === 1 ? '' : 's'}
                           </span>
                         </span>
                         <span className="line-clamp-1 text-xs text-text-dim">

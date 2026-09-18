@@ -21,6 +21,7 @@ export function NoteField({
   subject,
   rows = 3,
   openClassName,
+  collapsedClassName,
   onSave,
 }: {
   id: string
@@ -43,6 +44,12 @@ export function NoteField({
    * it.
    */
   openClassName?: string
+  /**
+   * Overrides the collapsed trigger's styling. The session note wants a
+   * full-width dashed box; a per-exercise note sitting under an already tall
+   * log block wants to be a line of text.
+   */
+  collapsedClassName?: string
   onSave: (next: string) => Promise<void>
 }) {
   const [text, setText] = useState(value ?? '')
@@ -105,8 +112,11 @@ export function NoteField({
     return (
       <button
         onClick={() => setOpen(true)}
-        className="min-h-11 w-full rounded-xl border border-dashed border-border text-sm
-                   font-medium text-text-dim"
+        className={
+          collapsedClassName ??
+          'min-h-11 w-full rounded-xl border border-dashed border-border text-sm ' +
+            'font-medium text-text-dim'
+        }
       >
         {collapsedLabel}
       </button>

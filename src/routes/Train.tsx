@@ -90,8 +90,11 @@ export function Train() {
     [workout?.id, workout?.date],
     new Map(),
   )
+  // Excludes THIS session, not the whole day. With two sessions in a day,
+  // copying the morning's into the evening's is the case you actually want,
+  // and excluding by date hid it.
   const recent = useLiveQuery(
-    () => recentSessionSummaries({ limit: 5, excludeDate: date }),
+    () => recentSessionSummaries({ limit: 6, excludeWorkoutId: workout?.id }),
     [date, workout?.id],
     [],
   )
@@ -270,7 +273,7 @@ export function Train() {
                               {s.name ? `${s.name} · ` : ''}
                               {shortDate(s.date)}{' '}
                               <span className="font-normal text-text-dim">
-                                · {relativeAge(s.date)} · {s.set_count} sets
+                                · {relativeAge(s.date)} · {s.set_count} set{s.set_count === 1 ? '' : 's'}
                               </span>
                             </span>
                             <span className="line-clamp-1 text-xs text-text-dim">
@@ -394,7 +397,7 @@ export function Train() {
                               {sum.name ? `${sum.name} · ` : ''}
                               {shortDate(sum.date)}{' '}
                               <span className="font-normal text-text-dim">
-                                · {relativeAge(sum.date)} · {sum.set_count} sets
+                                · {relativeAge(sum.date)} · {sum.set_count} set{sum.set_count === 1 ? '' : 's'}
                               </span>
                             </span>
                             <span className="line-clamp-1 text-xs text-text-dim">

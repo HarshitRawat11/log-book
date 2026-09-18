@@ -65,7 +65,7 @@ const KINDS: KindSpec[] = [
     // A whole set, which is what separates it from the myorep above and
     // why it needed its own type rather than a flag on that one.
     kind: 'myorep_match',
-    label: 'Myo match',
+    label: 'Match',
     short: 'match',
     hint: 'A full set matching the first set\u2019s weight and reps, resting inside the set to get there. Counts as its own working set.',
     continuation: false,
@@ -370,6 +370,35 @@ export function ExerciseCard({
             </span>
           )}
         </button>
+        {/* Collapse lives here, NOT on the weight/reps row.
+            Putting it there cost the inputs two thirds of their width - the
+            weight field measured 25px and clipped "40", which is the same
+            "62.5 truncated to 6" failure the layout comment below was written
+            about. A chevron beside the remove cross reads as an accordion and
+            takes no room from anything. */}
+        {active && (
+          <button
+            onClick={onCollapse}
+            aria-label="Hide the log-set controls"
+            className="-mt-1 flex size-11 shrink-0 items-center justify-center text-text-dim"
+          >
+            {/* Inline SVG rather than a glyph: U+2304 renders as a stray,
+                differently-baselined "v" next to the × and reads as a typo. */}
+            <svg
+              viewBox="0 0 24 24"
+              width="18"
+              height="18"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M6 9l6 6 6-6" />
+            </svg>
+          </button>
+        )}
         <button
           onClick={() => (mine.length > 0 ? setConfirmRemove(true) : onRemove())}
           aria-label={`Remove ${exercise.name} from this session`}
@@ -476,26 +505,18 @@ export function ExerciseCard({
               at 390px, two steppered inputs plus a button left the weight input
               about 56px wide, which truncated "62.5" to "6". It is also a
               bigger target and lands in the lower third, where the thumb is. */}
-          <div className="flex flex-col gap-2 px-4 py-3">
+          <div className="flex flex-col gap-2 px-4 pb-2 pt-3">
             <div className="flex items-end gap-3">
+              {/* Weight takes the larger share: it holds "137.5", reps holds
+                  "12". Split evenly the weight box clipped its own value. */}
               <NumberField
                 label={assisted ? 'Assistance (kg)' : 'Weight (kg)'}
                 value={weight}
                 onChange={setWeight}
                 step={exercise.load_increment_kg || 1}
+                grow={1.25}
               />
               <NumberField label="Reps" value={reps} onChange={setReps} step={1} min={1} />
-              {/* Put the whole block away without opening another card. It is
-                  the tallest thing on the screen, and most of a session is
-                  spent reading what you already did rather than typing. */}
-              <button
-                onClick={onCollapse}
-                aria-label="Hide the log-set controls"
-                className="mb-0.5 size-11 shrink-0 rounded-lg border border-border text-lg
-                           text-text-dim"
-              >
-                ×
-              </button>
             </div>
             <button
               onClick={() => void logSet()}
@@ -509,10 +530,15 @@ export function ExerciseCard({
 
           {/* One exclusive choice rather than a checkbox plus a dropdown: the
               combinations those would allow are the ones the database rejects.
-              Three columns rather than five - at 375px, five cells leave about
-              62px each and "Warm-up" does not fit in that. */}
-          <div className="px-4 pb-3">
-            <div role="group" aria-label="Set type" className="grid grid-cols-3 gap-1">
+
+              One row of five, not two of three. At 375px each cell is about
+              65px, which fits every label at text-xs - the earlier worry that
+              it would not was wrong, and it cost a whole 44px row on the
+              tallest block in the app. The per-type explanation that sat under
+              this is gone with it: it is a `title` on each button, and the
+              README has the table. */}
+          <div className="px-4 pb-2">
+            <div role="group" aria-label="Set type" className="grid grid-cols-5 gap-1">
               {KINDS.map((k) => {
                 const disabled = k.continuation && !canContinue
                 return (
@@ -523,7 +549,7 @@ export function ExerciseCard({
                     aria-pressed={kind === k.kind}
                     title={disabled ? 'Log a set first — this one attaches to it' : k.hint}
                     className={[
-                      'min-h-11 rounded-lg border text-xs font-medium',
+                      'min-h-11 rounded-lg border px-0.5 text-[11px] font-medium leading-tight',
                       kind === k.kind
                         ? 'border-accent bg-accent/10 text-accent'
                         : 'border-border bg-surface-2 text-text-dim',
@@ -535,19 +561,17 @@ export function ExerciseCard({
                 )
               })}
             </div>
-            <p className="mt-1.5 text-xs leading-relaxed text-text-dim">
-              {KINDS.find((k) => k.kind === kind)!.hint}
-            </p>
           </div>
 
           {/* This exercise, this session. Not the session note: "left elbow on
               set 3" belongs to the lift, and finding it next time means having
               it on the lift's card rather than in a paragraph about the day. */}
-          <div className="px-4 pb-3">
+          <div className="px-4 pb-2">
             <NoteField
               id={`note-${workoutId}-${exercise.id}`}
               label={`Note — ${exercise.name}`}
-              collapsedLabel="+ Note on this exercise"
+              collapsedLabel="+ Note"
+              collapsedClassName="min-h-11 text-sm font-medium text-text-dim"
               placeholder="Form, pain, setup, anything worth knowing next time."
               rows={2}
               value={note}
@@ -608,6 +632,7 @@ function EditSetRow({
           value={w}
           onChange={setW}
           step={increment || 1}
+          grow={1.25}
         />
         <NumberField label="Reps" value={r} onChange={setR} step={1} min={1} />
       </div>
