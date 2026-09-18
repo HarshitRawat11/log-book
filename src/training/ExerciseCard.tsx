@@ -402,10 +402,14 @@ export function ExerciseCard({
   return (
     <section ref={cardRef} className="scroll-mt-20 rounded-2xl border border-border bg-surface">
       <header className="flex items-start justify-between gap-3 px-4 pt-3">
+        {/* min-h-11 is a floor, not a height: the content is usually taller
+            than 44px once there is a machine setting or an assisted badge.
+            Without it, a bare title plus its meta line came to 42 - two short
+            of the minimum, on the control that opens the card. */}
         <button
           onClick={activate}
           aria-expanded={active}
-          className="min-w-0 flex-1 text-left"
+          className="min-h-11 min-w-0 flex-1 text-left"
         >
           <h2 className="truncate font-semibold">{exercise.name}</h2>
           <p className="mt-0.5 text-xs text-text-dim">
