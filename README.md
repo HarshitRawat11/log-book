@@ -300,6 +300,13 @@ on screen stutter. It cannot make the cue late, because the cue left the main th
 the freeze. Adjusting the rest cancels the queued oscillators and re-schedules both, rather
 than queueing a second set on top of the first.
 
+It lives in `RestProvider`, **above the router**, and the bar renders in the app shell so it
+is on every tab. That is not tidiness: with the hook inside the Train route, switching tabs
+unmounted it and the cleanup cancelled the scheduled cues, so the countdown silently ended.
+Measured at 1:52, tapping Food and coming back left no bar and no bell. Between sets you do
+look at Progress or a recipe, and a rest that stops when you do is worse than none, because
+you are waiting for a sound that is not coming.
+
 Deliberately much smaller than `cardio/useSession`:
 
 - **no rounds**, so no schedule to build and nothing to reconcile
@@ -551,6 +558,13 @@ silently whenever there were any, so the × did nothing at all on precisely the 
 would want to use it on and simply read as broken. The card is derived *from* the sets, so
 "drop the card, keep the sets" is not a state that exists — the honest options were to say
 what will be lost or to refuse and explain why. It says what will be lost, with the count.
+
+**Deleting a set offers it back instead of confirming.** It was the one destructive action
+with neither guard, sitting directly beside Cancel in the edit row. Undo rather than a
+dialog on purpose: a confirmation costs a tap every single time to protect against the once
+you mis-tap, whereas the offer costs nothing until it is needed. It lapses after eight
+seconds. A delete is a tombstone, so undoing is just clearing `deleted_at` — the row never
+went anywhere, and the reversal replicates like any other write.
 
 Every destructive action goes through `ConfirmDelete`, which states what is actually lost —
 ingredient counts, set counts — and what is not. Foods, recipes and exercises deleted on a
@@ -814,6 +828,8 @@ A follow-up pass on 18 Sep 2026, needing no migration:
 - [x] the copy list offers every recent session with sets in it, not just one
 - [x] the log block cut from 343px to 257px
 - [x] the sync pill says what is stuck, not just how many
+- [x] the rest timer survives leaving the Train tab
+- [x] deleting a set can be undone
 
 Migration `0004` applied and **deployed as `848fc6e`** on 17 Sep 2026. Verified live before
 and after: the new table and both new columns exist, a signed-out read of all fifteen synced

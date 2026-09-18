@@ -6,7 +6,6 @@ import { EmptyState } from '../components/EmptyState'
 import { SyncPill } from '../components/SyncPill'
 import { ExerciseCard } from '../training/ExerciseCard'
 import { ExercisePicker } from '../training/ExercisePicker'
-import { RestBar } from '../training/RestBar'
 import { ReorderList } from '../training/ReorderList'
 import { SessionName } from '../training/SessionName'
 import { SessionNotes } from '../training/SessionNotes'
@@ -36,7 +35,7 @@ import {
   sessionExerciseIds,
   workoutsOnDate,
 } from '../training/session'
-import { useRestTimer } from '../training/useRestTimer'
+import { useRest } from '../training/RestProvider'
 import { relativeAge, shortDate, todayIso } from '../lib/dates'
 
 /**
@@ -197,8 +196,12 @@ export function Train() {
    * a rest, it is a delay - and everything else does, including a drop. Logging
    * again simply restarts it, which is correct: the rest begins after the last
    * thing you actually did.
+   *
+   * The timer itself lives in RestProvider, above the router, so leaving this
+   * tab does not end it. The BAR is rendered by the app shell for the same
+   * reason; this screen only starts it and leaves room for it.
    */
-  const rest = useRestTimer()
+  const rest = useRest()
   const restSeconds = useLiveQuery(getDefaultRest, [], null)
 
   function onSetLogged({ warmup, exerciseName }: { warmup: boolean; exerciseName: string }) {
@@ -468,7 +471,6 @@ export function Train() {
         </div>
       )}
 
-      <RestBar timer={rest} />
     </Screen>
   )
 }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import {
   isWorkingSet,
@@ -192,6 +192,21 @@ export function ExerciseCard({
   const [editing, setEditing] = useState<string | null>(null)
   const [showWhy, setShowWhy] = useState(false)
   const [confirmRemove, setConfirmRemove] = useState(false)
+  /**
+   * The set just deleted, offered back for a few seconds.
+   *
+   * Delete sat next to Cancel in the edit row and fired immediately - the only
+   * destructive action in the app with neither a confirmation nor a way back.
+   * Undo rather than a confirmation on purpose: a dialog in the middle of a
+   * session costs a tap every time to guard against the once you mis-tap,
+   * whereas this costs nothing until you need it.
+   *
+   * A delete is a tombstone, so undoing is just clearing `deleted_at` - the
+   * row never went anywhere, and the reversal replicates like any other write.
+   */
+  const [undoable, setUndoable] = useState<{ id: string; label: string } | null>(null)
+  const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => () => { if (undoTimer.current) clearTimeout(undoTimer.current) }, [])
 
   // A drop or a myorep hangs off the set before it, so neither means anything
   // as the first row of an exercise. If the list is emptied while one is
@@ -276,8 +291,24 @@ export function ExerciseCard({
   }
 
   async function removeSet(id: string) {
+    const row = mine.find((s) => s.id === id)
     await deleteRow('sets', id)
     scheduleFlush()
+    if (!row) return
+
+    setUndoable({ id, label: `${formatKg(row.weight_kg)} × ${row.reps}` })
+    if (undoTimer.current) clearTimeout(undoTimer.current)
+    // Long enough to notice and reach, short enough that it is not still
+    // sitting there two sets later claiming something is undoable.
+    undoTimer.current = setTimeout(() => setUndoable(null), 8000)
+  }
+
+  async function undoRemove() {
+    if (!undoable) return
+    await patchRow<WorkoutSet>('sets', undoable.id, { deleted_at: null })
+    scheduleFlush()
+    if (undoTimer.current) clearTimeout(undoTimer.current)
+    setUndoable(null)
   }
 
   // "Last time" quotes the HARDEST set, which on an assisted machine is the
@@ -496,6 +527,18 @@ export function ExerciseCard({
             </li>
           ))}
         </ol>
+      )}
+
+      {undoable && (
+        <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-1.5">
+          <span className="tabular text-xs text-text-dim">Deleted {undoable.label}</span>
+          <button
+            onClick={() => void undoRemove()}
+            className="min-h-11 shrink-0 text-sm font-semibold text-accent"
+          >
+            Undo
+          </button>
+        </div>
       )}
 
       {active ? (

@@ -7,6 +7,8 @@ import { TabBar } from './components/TabBar'
 import { UpdatePrompt } from './components/UpdatePrompt'
 import { Train } from './routes/Train'
 import { CardioProvider } from './cardio/SessionProvider'
+import { RestProvider, useRest } from './training/RestProvider'
+import { RestBar } from './training/RestBar'
 import { isConfigured } from './lib/env'
 
 /**
@@ -57,6 +59,8 @@ function NotConfigured() {
 
 /** Tabbed shell. Only reachable with a session. */
 function AppShell() {
+  const rest = useRest()
+
   return (
     <div className="flex min-h-dvh flex-col">
       {/* The tab bar stays mounted while a route chunk arrives, so switching
@@ -67,6 +71,10 @@ function AppShell() {
       <Suspense fallback={<div className="flex-1 bg-bg" />}>
         <Outlet />
       </Suspense>
+      {/* Above the tab bar on EVERY tab, not just Train. Leaving the logging
+          screen mid-rest is normal - you check a recipe, or last week's
+          numbers - and the countdown has to come with you. */}
+      <RestBar timer={rest} />
       <TabBar />
     </div>
   )
@@ -154,7 +162,9 @@ export function App() {
             screen share one session - and one AudioContext. A second context
             created on the running screen would be born suspended. */}
         <CardioProvider>
-          <Router />
+          <RestProvider>
+            <Router />
+          </RestProvider>
         </CardioProvider>
       </BrowserRouter>
       <UpdatePrompt />
