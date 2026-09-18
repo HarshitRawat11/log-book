@@ -7,6 +7,7 @@ import { SyncPill } from '../components/SyncPill'
 import { ExerciseCard } from '../training/ExerciseCard'
 import { ExercisePicker } from '../training/ExercisePicker'
 import { ReorderList } from '../training/ReorderList'
+import { FinishSession } from '../training/FinishSession'
 import { SessionName } from '../training/SessionName'
 import { SessionNotes } from '../training/SessionNotes'
 import { deleteRow, patchRow } from '../db/mutate'
@@ -442,6 +443,10 @@ export function Train() {
               {formatKg(Math.round(tonnage(sets ?? [], assisted)))} tonnage
             </p>
           )}
+
+          {/* Closes the session and gives it a duration. Only once there is
+              something in it - see FinishSession. */}
+          <FinishSession workout={workout} hasSets={(sets ?? []).length > 0} />
 
           {working.length > 0 && (
             <button

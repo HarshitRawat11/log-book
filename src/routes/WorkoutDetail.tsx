@@ -8,6 +8,7 @@ import { SyncPill } from '../components/SyncPill'
 import { ExerciseCard } from '../training/ExerciseCard'
 import { ExercisePicker } from '../training/ExercisePicker'
 import { ReorderList } from '../training/ReorderList'
+import { FinishSession } from '../training/FinishSession'
 import { SessionName } from '../training/SessionName'
 import { SessionNotes } from '../training/SessionNotes'
 import { db } from '../db/db'
@@ -211,6 +212,8 @@ export function WorkoutDetail() {
             {formatKg(Math.round(tonnage(sets ?? [], assisted)))} tonnage
           </p>
         )}
+
+        <FinishSession workout={workout} hasSets={(sets ?? []).length > 0} />
 
         <div className="mb-4">
           <SessionNotes workout={workout} />

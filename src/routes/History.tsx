@@ -11,6 +11,8 @@ import {
   type SessionSummary,
 } from '../training/queries'
 import { formatKg } from '../training/progression'
+import { humanDuration } from '../cardio/schedule'
+import { sessionSeconds } from '../db/types'
 import { relativeAge, shortDate, todayIso } from '../lib/dates'
 import { createWorkout } from '../training/session'
 
@@ -193,6 +195,10 @@ export function History() {
                   <span className="tabular text-xs text-text-dim">
                     {working_sets} working set{working_sets === 1 ? '' : 's'}
                     {tonnage_kg > 0 && ` · ${formatKg(Math.round(tonnage_kg))} tonnage`}
+                    {(() => {
+                      const secs = sessionSeconds(workout)
+                      return secs === null ? '' : ` · ${humanDuration(secs)}`
+                    })()}
                   </span>
                 </Link>
               </li>

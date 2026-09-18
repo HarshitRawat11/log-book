@@ -571,6 +571,28 @@ ingredient counts, set counts — and what is not. Foods, recipes and exercises 
 single tap until that existed; only sessions asked. Deleting an exercise points at archiving
 as the gentler option, since that keeps the 1RM chart.
 
+## Two columns that were never written
+
+Same shape as the tables below, found the same way: `sets.rir` and
+`workouts.finished_at` had existed since migration `0001` and nothing had ever put a value in
+either. Every set claimed no RIR and every session claimed to still be running.
+
+**`finished_at` is now used.** "Finish session" stamps it, which is the only thing that gives
+a session a duration — `started_at` is set at creation, so it measures arriving to leaving
+rather than first set to last. That is the number the data actually supports, and it shows on
+the session and in History beside the tonnage. Reversible: finishing one lift early is normal,
+so Reopen clears it and re-finishing re-stamps.
+
+`sessionSeconds` returns null rather than a number when the finish lands before the start — a
+clock change, or a row edited by hand. A negative duration would render as "-38 min" and read
+as a bug in the app rather than in the data; nothing at all is honest.
+
+**`rir` is gone from the client.** It was written as null on every set ever logged and read
+only by the CSV export, which therefore carried an always-empty column. The Postgres column is
+deliberately left alone — dropping it is destructive DDL for no gain, it holds nothing, and
+rows pulled from the server may still carry it locally, which is harmless. One `ALTER` if it
+is ever wanted.
+
 ## Three tables that were never writable
 
 `routines`, `routine_days` and `routine_day_exercises` have existed since migration `0001`
@@ -830,6 +852,7 @@ A follow-up pass on 18 Sep 2026, needing no migration:
 - [x] the sync pill says what is stuck, not just how many
 - [x] the rest timer survives leaving the Train tab
 - [x] deleting a set can be undone
+- [x] `finished_at` put to use as session duration; `rir` removed from the client
 
 Migration `0004` applied and **deployed as `848fc6e`** on 17 Sep 2026. Verified live before
 and after: the new table and both new columns exist, a signed-out read of all fifteen synced

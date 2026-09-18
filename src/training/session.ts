@@ -1,5 +1,5 @@
 import { db } from '../db/db'
-import { alive, newRow, putRow } from '../db/mutate'
+import { alive, newRow, patchRow, putRow } from '../db/mutate'
 import { scheduleFlush } from '../db/sync'
 import type { Workout, WorkoutSet } from '../db/types'
 import { setsForWorkout } from './queries'
@@ -122,6 +122,28 @@ export function defaultActiveExercise(
   return best?.exercise_id ?? inSessionIds[0]!
 }
 
+
+/**
+ * Close a session, which is the only thing that gives it a duration.
+ *
+ * `finished_at` has existed since the initial schema and nothing had ever
+ * written to it - every session in the database claims to still be running.
+ * Pairing it with `started_at`, which is stamped at creation, is what turns
+ * "15 working sets" into "15 working sets in 52 minutes".
+ *
+ * Reversible on purpose. Finishing is a thing you do on the way out of the
+ * gym, so doing it one lift early is normal; reopening costs a tap and
+ * re-finishing re-stamps.
+ */
+export async function finishWorkout(workoutId: string) {
+  await patchRow<Workout>('workouts', workoutId, { finished_at: new Date().toISOString() })
+  scheduleFlush()
+}
+
+export async function reopenWorkout(workoutId: string) {
+  await patchRow<Workout>('workouts', workoutId, { finished_at: null })
+  scheduleFlush()
+}
 
 /* ------------------------------------------------------------ rest timer -- */
 

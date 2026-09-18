@@ -109,6 +109,10 @@ export type Workout = SyncedRow & {
   /** Free text about the whole day. Per-exercise notes are their own table. */
   notes: string | null
   started_at: string | null
+  /**
+   * Set by "Finish session", and the only thing that gives a session a
+   * duration. Null while it is still open, which is most of the time.
+   */
   finished_at: string | null
   source: 'app' | 'import'
   import_batch_id: string | null
@@ -153,8 +157,6 @@ export type WorkoutSet = SyncedRow & {
   set_index: number
   weight_kg: number
   reps: number
-  /** Reps in reserve, 0-5. Optional. */
-  rir: number | null
   is_warmup: boolean
   /**
    * Rows written before this column existed have no value at all locally, so
@@ -216,6 +218,23 @@ export type WorkoutExerciseNote = SyncedRow & {
 export const assistedIds = (
   exercises: ReadonlyArray<Pick<Exercise, 'id' | 'load_is_assistance'>>,
 ): Set<string> => new Set(exercises.filter((e) => e.load_is_assistance).map((e) => e.id))
+
+/**
+ * How long a session took, in seconds, or null while it is still open.
+ *
+ * Guarded against a finish that lands before its start - a clock change, or a
+ * row edited by hand - because a negative duration renders as nonsense rather
+ * than as an error, which is the worst way for it to fail.
+ */
+export const sessionSeconds = (
+  w: Pick<Workout, 'started_at' | 'finished_at'>,
+): number | null => {
+  if (!w.started_at || !w.finished_at) return null
+  const from = Date.parse(w.started_at)
+  const to = Date.parse(w.finished_at)
+  if (!Number.isFinite(from) || !Number.isFinite(to) || to <= from) return null
+  return Math.round((to - from) / 1000)
+}
 
 export type Bodyweight = SyncedRow & {
   date: string
@@ -316,6 +335,20 @@ export type CardioSession = SyncedRow & {
   notes: string | null
   rpe: number | null
 }
+
+/**
+/**
+ * `sets.rir` is deliberately ABSENT from WorkoutSet.
+ *
+ * It existed from the initial schema as an optional "reps in reserve" and was
+ * written as null on every set ever logged, read only by the CSV export, and
+ * never surfaced anywhere. That is a column the code believes in and the data
+ * never had - the same thing the routine tables were.
+ *
+ * The Postgres column is left alone: dropping it is destructive DDL for no
+ * gain, it holds nothing, and rows pulled from the server may still carry it
+ * locally, which is harmless. If it is ever wanted, it is one ALTER away.
+ */
 
 /**
  * Flush order. Children must follow their parents or the first push of a new

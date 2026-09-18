@@ -273,7 +273,6 @@ export function ExerciseCard({
         set_index: nextSetIndex(sets, exercise.id),
         weight_kg: Number(weight),
         reps: Number(reps),
-        rir: null,
         ...fromKind(kind),
         source: 'app' as const,
         import_batch_id: null,

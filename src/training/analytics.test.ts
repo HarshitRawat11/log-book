@@ -6,7 +6,13 @@ import {
   tonnageSeries,
   weeklyWorkingSets,
 } from './analytics'
-import { isWorkingSet, type Bodyweight, type Exercise, type WorkoutSet } from '../db/types'
+import {
+  isWorkingSet,
+  sessionSeconds,
+  type Bodyweight,
+  type Exercise,
+  type WorkoutSet,
+} from '../db/types'
 import type { SessionPerformance } from './progression'
 
 const set = (over: Partial<WorkoutSet>): WorkoutSet => ({
@@ -19,7 +25,6 @@ const set = (over: Partial<WorkoutSet>): WorkoutSet => ({
   set_index: 0,
   weight_kg: 60,
   reps: 10,
-  rir: null,
   is_warmup: false,
   set_type: 'normal',
   source: 'app',
@@ -328,5 +333,44 @@ describe('tonnageSeries with continuations', () => {
       set({ weight_kg: 20, reps: 10, set_index: 1, is_warmup: true }), // excluded
     ]
     expect(tonnageSeries(workouts, sets)[0]!.value).toBe(400)
+  })
+})
+
+/**
+ * Session duration.
+ *
+ * `finished_at` existed from the initial schema and nothing ever wrote to it,
+ * so every session in the database claimed to still be running. Now that
+ * "Finish session" sets it, the arithmetic is worth pinning - particularly the
+ * guards, because a negative or nonsense duration renders as text rather than
+ * as an error and would simply look wrong forever.
+ */
+describe('sessionSeconds', () => {
+  const at = (h: number, m = 0) => `2026-09-18T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00.000Z`
+
+  it('measures start to finish', () => {
+    expect(sessionSeconds({ started_at: at(17), finished_at: at(18, 12) })).toBe(72 * 60)
+  })
+
+  it('is null while the session is still open', () => {
+    expect(sessionSeconds({ started_at: at(17), finished_at: null })).toBeNull()
+  })
+
+  it('is null when there is no start to measure from', () => {
+    expect(sessionSeconds({ started_at: null, finished_at: at(18) })).toBeNull()
+  })
+
+  /**
+   * A clock change, or a row edited by hand. Returning a negative number would
+   * render as "-38 min" and look like a bug in the duration rather than in the
+   * data; null renders as nothing at all, which is honest.
+   */
+  it('refuses a finish that lands before its start', () => {
+    expect(sessionSeconds({ started_at: at(18), finished_at: at(17) })).toBeNull()
+    expect(sessionSeconds({ started_at: at(18), finished_at: at(18) })).toBeNull()
+  })
+
+  it('refuses an unparseable timestamp rather than returning NaN', () => {
+    expect(sessionSeconds({ started_at: 'not a date', finished_at: at(18) })).toBeNull()
   })
 })

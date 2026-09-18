@@ -73,7 +73,6 @@ export async function exportSetsCsv(): Promise<void> {
         set_index: s.set_index + 1,
         weight_kg: s.weight_kg,
         reps: s.reps,
-        rir: s.rir,
         is_warmup: s.is_warmup,
         // normal | dropset | myorep. A drop or myorep row is a continuation of
         // the set above it, so counting rows here overstates the set count -
