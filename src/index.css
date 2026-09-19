@@ -40,6 +40,40 @@
   --series-5: #d55181;
   --series-6: #008300;
   --series-7: #9085e9;
+
+  /* The cardio timer's full-screen states. Deliberately NOT the app palette:
+     that screen is read from two or three metres away and the background
+     colour itself carries the state, so it is full-bleed orange or navy
+     rather than a surface with an accent on it.
+
+     Not re-stepped for light mode either, and that is the point - the screen
+     looks the same whatever the phone is set to, because the colour IS the
+     signal. It is the one place the palette is bypassed, which is why the
+     values live here rather than in the component.
+
+     The pair was measured, not chosen by eye. Separation between the two
+     backgrounds, including through dichromacy simulation:
+
+       normal 4.94:1 · protanopia 4.31:1 · deuteranopia 6.08:1 · tritanopia 4.92:1
+
+     An earlier attempt (#d94f04 / #0a3d62) looked obviously different on
+     screen but measured 2.31:1 under protanopia. The gap is carried by
+     LIGHTNESS as much as hue, which is what makes it survive; a red/green
+     pair would not. Do not substitute without re-measuring.
+
+     Identity is never colour alone regardless: the word WORK or REST is on
+     the screen, at 6.27:1 and 13.7:1 against their own backgrounds. */
+  --cardio-round-bg: #ef6c00;
+  --cardio-round-fg: #1a0a00;
+  --cardio-round-sub: rgb(26 10 0 / 0.72);
+  --cardio-break-bg: #06283d;
+  --cardio-break-fg: #eaf4ff;
+  --cardio-break-sub: rgb(234 244 255 / 0.72);
+  --cardio-idle-bg: #0b0f14;
+  --cardio-idle-fg: #e8edf3;
+  --cardio-idle-sub: #97a3b3;
+  /* The progress track, shown over whichever background is live. */
+  --cardio-track: rgb(0 0 0 / 0.18);
 }
 
 @media (prefers-color-scheme: light) {

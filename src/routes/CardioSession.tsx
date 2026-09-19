@@ -9,16 +9,9 @@ import { mmss } from '../cardio/schedule'
  * Full-screen colour carries the state, so a glance says where you are without
  * reading anything. Orange for work, deep navy for rest.
  *
- * The pair was measured, not chosen by eye. Separation between the two
- * backgrounds, including through dichromacy simulation:
- *
- *   normal 4.94:1 · protanopia 4.31:1 · deuteranopia 6.08:1 · tritanopia 4.92:1
- *
- * A first attempt (#d94f04 / #0a3d62) looked obviously different on screen but
- * measured 2.31:1 under protanopia - the two states would have been close to
- * the same brightness for a red-blind reader glancing across a room. The gap is
- * carried by LIGHTNESS as much as hue, which is what makes it survive; a
- * red/green pair would not.
+ * The two backgrounds are a measured pair, not chosen by eye - the reasoning,
+ * the dichromacy numbers and the rejected first attempt are recorded beside the
+ * tokens in index.css, which is the only file raw colour lives in.
  *
  * Identity is never colour alone regardless: the word WORK or REST is on the
  * screen, at 6.27:1 and 13.7:1 against their own backgrounds.
@@ -27,9 +20,21 @@ import { mmss } from '../cardio/schedule'
  */
 
 const SKIN = {
-  round: { bg: '#ef6c00', fg: '#1a0a00', sub: 'rgba(26,10,0,.72)' },
-  break: { bg: '#06283d', fg: '#eaf4ff', sub: 'rgba(234,244,255,.72)' },
-  idle: { bg: '#0b0f14', fg: '#e8edf3', sub: '#97a3b3' },
+  round: {
+    bg: 'var(--cardio-round-bg)',
+    fg: 'var(--cardio-round-fg)',
+    sub: 'var(--cardio-round-sub)',
+  },
+  break: {
+    bg: 'var(--cardio-break-bg)',
+    fg: 'var(--cardio-break-fg)',
+    sub: 'var(--cardio-break-sub)',
+  },
+  idle: {
+    bg: 'var(--cardio-idle-bg)',
+    fg: 'var(--cardio-idle-fg)',
+    sub: 'var(--cardio-idle-sub)',
+  },
 } as const
 
 /** Ending must survive a knocked phone, so it is a deliberate sustained press. */
@@ -107,7 +112,7 @@ export function CardioSession() {
           <div
             aria-hidden="true"
             className="mt-6 h-2 w-full max-w-md overflow-hidden rounded-full"
-            style={{ background: 'rgba(0,0,0,.18)' }}
+            style={{ background: 'var(--cardio-track)' }}
           >
             <div
               className="h-full rounded-full"
