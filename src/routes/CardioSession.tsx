@@ -155,12 +155,15 @@ export function CardioSession() {
             className="relative min-h-16 w-full overflow-hidden rounded-2xl border border-danger/50
                        text-lg font-semibold text-danger"
           >
+            {/* scaleX rather than width, so the fill never touches layout.
+                The class is what exempts it from the reduced-motion rule in
+                index.css: this bar is the press itself, not decoration. */}
             <span
               aria-hidden="true"
-              className="absolute inset-y-0 left-0 bg-danger/25"
+              className="motion-hold-progress absolute inset-y-0 left-0 w-full origin-left bg-danger/25"
               style={{
-                width: holding ? '100%' : '0%',
-                transition: holding ? `width ${HOLD_MS}ms linear` : 'none',
+                transform: holding ? 'scaleX(1)' : 'scaleX(0)',
+                transition: holding ? `transform ${HOLD_MS}ms linear` : 'none',
               }}
             />
             <span className="relative">{holding ? 'Keep holding…' : 'Hold to end session'}</span>

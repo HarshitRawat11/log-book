@@ -412,7 +412,9 @@ export function ExerciseCard({
           className="min-h-11 min-w-0 flex-1 text-left"
         >
           <h2 className="truncate font-semibold">{exercise.name}</h2>
-          <p className="mt-0.5 text-xs text-text-dim">
+          {/* 16px, not 12: this is what you re-read between sets, so gate 7c
+              counts it as primary content rather than metadata. */}
+          <p className="mt-0.5 text-base text-text-dim">
             {exercise.target_rep_min}–{exercise.target_rep_max} reps
             {lastSession ? (
               <>
@@ -502,7 +504,7 @@ export function ExerciseCard({
                 setReps(String(suggestion.reps))
               }}
               className={[
-                'tabular min-h-11 rounded-full border px-3 text-sm font-medium',
+                'tabular min-h-11 rounded-full border px-3 text-base font-medium',
                 suggestion.stalling
                   ? 'border-danger/40 bg-danger/10 text-danger'
                   : 'border-accent/40 bg-accent/10 text-accent',
@@ -554,7 +556,10 @@ export function ExerciseCard({
                       continuation gets an arrow because it belongs to the set
                       above; a warm-up gets a dot, because numbering it would
                       claim it was set two of the day when it was not. */}
-                  <span className="tabular w-5 text-xs text-text-dim">{setLabel(mine, i)}</span>
+                  {/* w-6, not w-5: at 16px two tabular digits need 20px and the
+                      old column was exactly that, with nothing left for the
+                      arrow a continuation set gets. */}
+                  <span className="tabular w-6 text-base text-text-dim">{setLabel(mine, i)}</span>
                   <span className="tabular flex-1 font-medium">
                     {formatKg(s.weight_kg)} × {s.reps}
                   </span>

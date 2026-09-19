@@ -158,3 +158,29 @@ input[type='number']::-webkit-outer-spin-button {
 .tabular {
   font-variant-numeric: tabular-nums;
 }
+
+/* Reduced motion (quality gate 6c).
+
+   Everything that moves in this app is functional - a sync dot, two progress
+   fills, a drag - so nothing is removed, only stilled: transitions resolve at
+   once and the sync pulse runs a single cycle instead of looping forever.
+
+   One exception, below. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* The hold-to-end bar IS the two-second press, not decoration about it.
+     Stilling it would fill the bar instantly while the press still has two
+     seconds left to run - the one place where honouring the preference would
+     make the interface lie. */
+  .motion-hold-progress {
+    transition-duration: 2000ms !important;
+  }
+}

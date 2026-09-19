@@ -42,8 +42,11 @@ export function RestBar({ timer }: { timer: RestTimer }) {
             numbers keep the full width at 390px. */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-0.5 bg-accent/70 transition-[width]"
-          style={{ width: `${pct}%` }}
+          // scaleX rather than width: width is a layout property, so animating
+          // it puts the drain on the layout path every tick for no visual gain.
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-0.5 origin-left
+                     bg-accent/70 transition-transform"
+          style={{ transform: `scaleX(${pct / 100})` }}
         />
 
         <div className="min-w-0 flex-1 px-1">
