@@ -1,12 +1,16 @@
-# FINISH-LINE.md — v1.0 · LOCKED
+# FINISH-LINE.md — v1.1 · AMENDED, AWAITING RE-LOCK
 
 | | |
 |---|---|
-| **Version** | v1.0 |
-| **Locked** | 2026-09-19 |
+| **Version** | **v1.1** — quality gates added as v1 criteria under **UNFREEZE FOR QUALITY**, 2026-09-20 |
+| **Previously** | v1.0, locked 2026-09-19, tagged `v1.0` at `d956164` |
 | **Completion authority** | Harshit Rawat, sign-off alone (personal project) |
-| **Acceptance status** | **SIGNED OFF** |
-| **Freeze commit** | the commit tagged `v1.0` |
+| **Acceptance status** | **SIGNED OFF** on v1.0 scope; the added gate criteria are not yet satisfied |
+| **Re-LOCK** | **pending** — not permitted until QUALITY-GATES.md shows Stage 2 PASSED. The `v1.0` tag stays where it is until then |
+
+> **What the unfreeze authorised, and nothing more:** adding the approved quality gates as v1
+> criteria and bumping the version. Every other request remains EXTRA under the existing
+> freeze. Reopening anything else still requires the word **UNFREEZE**.
 
 > **This document is the only definition of what v1 is.** A criterion that is not
 > written here does not exist. Anything not written here is EXTRA — see
@@ -125,6 +129,25 @@ in `index.css`:
 **Design exclusions:** light mode is supported but not designed-for; no animation; no custom
 iconography beyond the five inline tab glyphs.
 
+### Quality gates (added v1.1)
+
+Methods and thresholds live in [QUALITY-GATES.md](QUALITY-GATES.md) and are **referenced, not
+restated** — that document is the single definition of how each is measured. Intent is in
+[INTENT-BRIEF.md](INTENT-BRIEF.md).
+
+| # | Criterion | Status at v1.1 |
+|---|---|---|
+| D5 | Quality Gate 2 — visual system coherence | **FAIL** — 7 type sizes (cap 6), 3 sizes with two line-heights, 5 radii (cap 3) |
+| D6 | Quality Gate 3 — hierarchy (squint, greyscale, thumbnail) | **FAIL** — 4 of 8 routes |
+| D7 | Quality Gate 6 — motion, adapted | **PASS** 2026-09-20 |
+| D8 | Quality Gate 7 — typography craft | **FAIL** — 7d line-height only |
+| D9 | Quality Gate 8 — five-second test | **NOT MEASURED** — Stage 2 |
+| D10 | Quality Gate 10 — accessibility floor | **PASS**, not adjustable |
+| — | Quality Gates 1, 4, 5 | **WAIVED** with written reasons. A waived gate is not a passed gate |
+
+**A failing gate is a DEFECT and its fix is in scope. A visual change that serves no gate is
+EXTRA.**
+
 ### 1d. Optimization
 
 Lighthouse is deliberately absent, and that is a decision rather than a gap: the app is behind
@@ -145,6 +168,7 @@ number better than these is EXTRA.
 | O9 | No secret in the bundle: no `service_role`, no sandbox credentials | `VERIFIED` met |
 | O10 | Every interactive control ≥ **44 × 44 px** | `VERIFIED` met 2026-09-19 — 0 controls under 44px across 8 routes × 2 widths, seeded and empty, plus 4 interactive states |
 | O11 | The app loads and renders with the network offline | **PARTIAL** — mechanism proven on desktop, not on the installed PWA. See G3 |
+| O12 | Motion performance bounds — no layout shift from motion (CLS ≤ 0.1) and animations on transform/opacity only. Method in QUALITY-GATES.md, Gate 6d/6e | `VERIFIED` met 2026-09-20 — CLS 0–0.0003; zero `width` animations remain |
 
 ---
 
@@ -164,6 +188,10 @@ production continues to serve `3d4524a` and the criterion stays satisfied withou
 
 Personal project. **v1 is complete on Harshit's sign-off alone.** No client, no third party,
 no acceptance checklist. Sign-off given 2026-09-19.
+
+**Added v1.1:** LOCK is not permitted until [QUALITY-GATES.md](QUALITY-GATES.md) shows
+**Stage 2 PASSED**. Gate 9 (behavioural) is exempt from this precondition and is verified
+post-launch.
 
 ---
 
@@ -191,6 +219,10 @@ are done; they are recorded as history, not as criteria.
 
 **Infrastructure** — no CI, no automated deploys, no error reporting, no analytics. Deploys
 are manual and local by deliberate choice.
+
+**Quality Gate 9, behavioural metrics (added v1.1)** — out of scope **for LOCK purposes**. It
+requires analytics and a 30-day live window, neither of which exists or is wanted here. It is
+a post-launch verification, not a v1 criterion, and it can never block a LOCK.
 
 ---
 
@@ -246,8 +278,25 @@ desktop Chrome with one origin unreachable while the machine still had a network
 mechanism is proven; the stated configuration is not. G3 stays open, and it is an
 owner-phone task alongside G1.
 
-**The gap is two items, both needing the phone.** Everything verifiable from this machine is
-done.
+**The v1.0 gap is two items, both needing the phone.** Everything verifiable from this machine
+is done.
+
+### Quality-gate defects (added v1.1)
+
+In scope by definition — a failing gate written here is a DEFECT. Fix identifiers match
+QUALITY-GATES.md.
+
+| # | Item | What makes it VERIFIED | Fix |
+|---|---|---|---|
+| G7 | **D5 / Gate 2** — 7 type sizes against a cap of 6, and 3 sizes carry two line-heights | one scale of ≤ 6 steps, one line-height each | F5 |
+| G8 | **D8 / Gate 7d** — body line-height outside 1.5–1.7 at 11, 12 and 14px | every body size in band | F5 |
+| G9 | **D5 / Gate 2g** — 5 distinct radii against a cap of 3 | ≤ 3 | F6 |
+| G10 | **D6 / Gate 3a, 3b** — 4 of 8 routes have no dominant interactive element | 8 of 8, or a written exception per screen | F8 |
+| G11 | **D6 / Gate 3c** — the h1 reads 4.8px at 20%, against a 5px floor | ≥ 5px, or waived as marginal | F7 |
+| G12 | **D9 / Gate 8** — the five-second test has not been run | recorded in QUALITY-GATES.md | Stage 2 |
+
+Closed 2026-09-20 by fix batch F1–F4: Gate 6 entirely (reduced motion, transform-only
+animation), Gate 7c (primary content at 16px) and Gate 7e (zero heading orphans).
 
 ---
 
@@ -267,6 +316,16 @@ CI, so the commit is the only durable marker of what "v1" pointed at.
 ---
 
 ## Changelog
+
+**v1.1 — 2026-09-20 — quality gates added as v1 criteria under UNFREEZE FOR QUALITY.**
+The approved gates in [QUALITY-GATES.md](QUALITY-GATES.md) are now criteria **D5–D10** under
+Design and **O12** under Optimization, referenced rather than restated. Gates 1, 4 and 5 are
+waived with written reasons; Gate 9 is out of scope for LOCK. Completion Authority gains a
+precondition: no LOCK until Stage 2 passes. The gap gains **G7–G12**. Fix batch F1–F4 was
+applied the same day and closed Gate 6, Gate 7c and Gate 7e.
+
+**This amendment reopened nothing else.** Everything outside the gates remains frozen at v1.0,
+and the `v1.0` tag has deliberately **not** been moved — it still marks what v1.0 pointed at.
 
 **Status update — 2026-09-19, after the lock.** No criterion changed; only our position
 against them. G2, G4, G5 and G6 closed, taking D1–D4 and O10 to met. G3 moved to PARTIAL:

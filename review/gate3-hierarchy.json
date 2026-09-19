@@ -1,0 +1,386 @@
+{
+  "/train": {
+    "squint": {
+      "dominantCell": {
+        "col": 2,
+        "r": 15,
+        "weight": 125.75515041322312,
+        "cx": 77.5,
+        "cy": 480.5
+      },
+      "dominanceRatio": 1,
+      "elementUnder": {
+        "tag": "button",
+        "text": "Log set",
+        "cls": "min-h-14 w-full rounded-lg bg-accent text-lg font-semibold t"
+      }
+    },
+    "greyscaleTop4": [
+      {
+        "text": "Log set",
+        "area": 17304,
+        "contrast": 0.346,
+        "weight": 5982.1
+      },
+      {
+        "text": "Finish session",
+        "area": 16464,
+        "contrast": 0.013,
+        "weight": 218.4
+      },
+      {
+        "text": "Pull",
+        "area": 15092,
+        "contrast": 0.005,
+        "weight": 81.5
+      },
+      {
+        "text": "History",
+        "area": 2886,
+        "contrast": 0.013,
+        "weight": 38.3
+      }
+    ],
+    "thumbnail": {
+      "largestTextPx": 24,
+      "at20pct": 4.8,
+      "text": "Train"
+    }
+  },
+  "/history": {
+    "squint": {
+      "dominantCell": {
+        "col": 1,
+        "r": 1,
+        "weight": 38.390748760330595,
+        "cx": 46.5,
+        "cy": 46.5
+      },
+      "dominanceRatio": 1.08,
+      "elementUnder": {
+        "tag": "header",
+        "text": "History\n\n2 sessions",
+        "cls": "sticky top-0 z-10 border-b border-border bg-bg/95 px-4 pb-3 "
+      }
+    },
+    "greyscaleTop4": [
+      {
+        "text": "Pull · 19 Septtoday\nBarb",
+        "area": 32242,
+        "contrast": 0.005,
+        "weight": 174
+      },
+      {
+        "text": "Pull · 15 Sept\n4 days ag",
+        "area": 32242,
+        "contrast": 0.005,
+        "weight": 174
+      },
+      {
+        "text": "+ Log a session on anoth",
+        "area": 16464,
+        "contrast": 0,
+        "weight": 0
+      },
+      {
+        "text": "Train",
+        "area": 4500,
+        "contrast": 0,
+        "weight": 0
+      }
+    ],
+    "thumbnail": {
+      "largestTextPx": 24,
+      "at20pct": 4.8,
+      "text": "History"
+    }
+  },
+  "/exercises": {
+    "squint": {
+      "dominantCell": {
+        "col": 2,
+        "r": 4,
+        "weight": 115.30080000000001,
+        "cx": 77.5,
+        "cy": 139.5
+      },
+      "dominanceRatio": 1,
+      "elementUnder": {
+        "tag": "button",
+        "text": "+ New exercise",
+        "cls": "min-h-14 w-full rounded-xl bg-accent px-4 font-semibold text"
+      }
+    },
+    "greyscaleTop4": [
+      {
+        "text": "+ New exercise",
+        "area": 19208,
+        "contrast": 0.346,
+        "weight": 6640.4
+      },
+      {
+        "text": "‹ Today's session",
+        "area": 5762,
+        "contrast": 0.013,
+        "weight": 76.4
+      },
+      {
+        "text": "Barbell Row\nback · barbe",
+        "area": 19096,
+        "contrast": 0,
+        "weight": 0
+      },
+      {
+        "text": "Train",
+        "area": 4500,
+        "contrast": 0,
+        "weight": 0
+      }
+    ],
+    "thumbnail": {
+      "largestTextPx": 24,
+      "at20pct": 4.8,
+      "text": "Exercises"
+    }
+  },
+  "/food": {
+    "squint": {
+      "dominantCell": {
+        "col": 1,
+        "r": 4,
+        "weight": 37.5283388429752,
+        "cx": 46.5,
+        "cy": 139.5
+      },
+      "dominanceRatio": 1.29,
+      "elementUnder": {
+        "tag": "span",
+        "text": "348",
+        "cls": "tabular text-2xl font-semibold"
+      }
+    },
+    "greyscaleTop4": [
+      {
+        "text": "Library",
+        "area": 2815,
+        "contrast": 0.013,
+        "weight": 37.3
+      },
+      {
+        "text": "Set daily targets in Set",
+        "area": 22638,
+        "contrast": 0,
+        "weight": 0
+      },
+      {
+        "text": "+ Add",
+        "area": 15216,
+        "contrast": 0,
+        "weight": 0
+      },
+      {
+        "text": "×",
+        "area": 1936,
+        "contrast": 0,
+        "weight": 0
+      }
+    ],
+    "thumbnail": {
+      "largestTextPx": 24,
+      "at20pct": 4.8,
+      "text": "Food"
+    }
+  },
+  "/foods": {
+    "squint": {
+      "dominantCell": {
+        "col": 2,
+        "r": 6,
+        "weight": 127.5009090909089,
+        "cx": 77.5,
+        "cy": 201.5
+      },
+      "dominanceRatio": 1,
+      "elementUnder": {
+        "tag": "button",
+        "text": "+ New recipe",
+        "cls": "min-h-14 w-full rounded-xl bg-accent font-semibold text-acce"
+      }
+    },
+    "greyscaleTop4": [
+      {
+        "text": "+ New recipe",
+        "area": 19208,
+        "contrast": 0.346,
+        "weight": 6640.4
+      },
+      {
+        "text": "Foods",
+        "area": 7370,
+        "contrast": 0.005,
+        "weight": 39.8
+      },
+      {
+        "text": "Today",
+        "area": 2562,
+        "contrast": 0.013,
+        "weight": 34
+      },
+      {
+        "text": "Recipes",
+        "area": 7370,
+        "contrast": 0,
+        "weight": 0
+      }
+    ],
+    "thumbnail": {
+      "largestTextPx": 24,
+      "at20pct": 4.8,
+      "text": "Library"
+    }
+  },
+  "/cardio": {
+    "squint": {
+      "dominantCell": {
+        "col": 2,
+        "r": 18,
+        "weight": 31.028920661157034,
+        "cx": 77.5,
+        "cy": 573.5
+      },
+      "dominanceRatio": 1.06,
+      "elementUnder": {
+        "tag": "p",
+        "text": "40 min",
+        "cls": "text-2xl font-semibold"
+      }
+    },
+    "greyscaleTop4": [
+      {
+        "text": "Start session",
+        "area": 21952,
+        "contrast": 0.346,
+        "weight": 7589
+      },
+      {
+        "text": "",
+        "area": 16464,
+        "contrast": 0.005,
+        "weight": 88.9
+      },
+      {
+        "text": "",
+        "area": 16464,
+        "contrast": 0.005,
+        "weight": 88.9
+      },
+      {
+        "text": "Test sound",
+        "area": 16464,
+        "contrast": 0.005,
+        "weight": 88.9
+      }
+    ],
+    "thumbnail": {
+      "largestTextPx": 24,
+      "at20pct": 4.8,
+      "text": "Cardio"
+    }
+  },
+  "/progress": {
+    "squint": {
+      "dominantCell": {
+        "col": 1,
+        "r": 6,
+        "weight": 33.73007933884296,
+        "cx": 46.5,
+        "cy": 201.5
+      },
+      "dominanceRatio": 1.2,
+      "elementUnder": {
+        "tag": "p",
+        "text": "78.1kg latest",
+        "cls": "tabular mb-1 text-2xl font-semibold"
+      }
+    },
+    "greyscaleTop4": [
+      {
+        "text": "Barbell Row",
+        "area": 4444,
+        "contrast": 0.013,
+        "weight": 58.9
+      },
+      {
+        "text": "+ Log",
+        "area": 2519,
+        "contrast": 0.013,
+        "weight": 33.4
+      },
+      {
+        "text": "Train",
+        "area": 4500,
+        "contrast": 0,
+        "weight": 0
+      },
+      {
+        "text": "Food",
+        "area": 4500,
+        "contrast": 0,
+        "weight": 0
+      }
+    ],
+    "thumbnail": {
+      "largestTextPx": 24,
+      "at20pct": 4.8,
+      "text": "Progress"
+    }
+  },
+  "/settings": {
+    "squint": {
+      "dominantCell": {
+        "col": 2,
+        "r": 1,
+        "weight": 30.684826446281015,
+        "cx": 77.5,
+        "cy": 46.5
+      },
+      "dominanceRatio": 1.42,
+      "elementUnder": {
+        "tag": "header",
+        "text": "Settings",
+        "cls": "sticky top-0 z-10 border-b border-border bg-bg/95 px-4 pb-3 "
+      }
+    },
+    "greyscaleTop4": [
+      {
+        "text": "Sync now",
+        "area": 16464,
+        "contrast": 0.005,
+        "weight": 88.9
+      },
+      {
+        "text": "Exercises\n›",
+        "area": 19096,
+        "contrast": 0,
+        "weight": 0
+      },
+      {
+        "text": "Workout history\n›",
+        "area": 19096,
+        "contrast": 0,
+        "weight": 0
+      },
+      {
+        "text": "Foods and recipes\n›",
+        "area": 19096,
+        "contrast": 0,
+        "weight": 0
+      }
+    ],
+    "thumbnail": {
+      "largestTextPx": 24,
+      "at20pct": 4.8,
+      "text": "Settings"
+    }
+  }
+}

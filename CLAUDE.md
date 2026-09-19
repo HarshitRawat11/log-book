@@ -1,8 +1,12 @@
 # CLAUDE.md — log-book
 
-v1 of this project was frozen on **2026-09-19**. The finish line is written in
+v1 of this project was frozen on **2026-09-19** and amended to **v1.1** on **2026-09-20** to
+add quality gates as v1 criteria. The finish line is written in
 [FINISH-LINE.md](FINISH-LINE.md) and that document is the only source of truth for what is in
 scope. Read it before acting on any request.
+
+It is **awaiting re-LOCK**: no LOCK until [QUALITY-GATES.md](QUALITY-GATES.md) shows Stage 2
+PASSED. The `v1.0` tag has not been moved.
 
 ---
 
@@ -26,6 +30,21 @@ Reopening scope is a deliberate act, not a drift. It requires the explicit word 
 
 ---
 
+## QUALITY GATES
+
+This project has approved quality gates in QUALITY-GATES.md and an intent brief in INTENT-BRIEF.md. The gates are v1 criteria of FINISH-LINE.md. A failing gate is a DEFECT and its fix is in scope. Any proposed visual change must name the gate it serves; a change that serves no gate is EXTRA under FINISH-LINE.md's rule. A change that would cause any gate to fail is refused unless the gate is waived in writing. The imagery policy, motion minimum, and accessibility floor in QUALITY-GATES.md are standing rules for this repository.
+
+**Two notes specific to this repo, because the gates were adapted in Phase B:**
+
+- The **imagery policy** resolves to *no content imagery*. Gate 5 is waived; `<img>` appears
+  nowhere in `src/`. Adding images is EXTRA.
+- The **motion minimum** is the adapted Gate 6, not the generic one: focus states, bounds on
+  the four existing functional animations, and `prefers-reduced-motion`. **No scroll reveals
+  and no hover states** — the device is a touch phone, and FINISH-LINE.md §1c locks "no
+  motion" as the system. Adding animation is EXTRA.
+
+---
+
 ## What is still in scope
 
 The gap in FINISH-LINE.md §5, and nothing else. As of 2026-09-19 that is **two items, both
@@ -36,7 +55,14 @@ needing the phone**:
 - **G3** — offline on the *installed* PWA. The mechanism is proven on desktop; the stated
   configuration is not.
 
-G2, G4, G5 and G6 are closed. When G1 and G3 land, v1 is done and every request is EXTRA.
+G2, G4, G5 and G6 are closed.
+
+**Plus the quality-gate defects G7–G12** (FINISH-LINE.md §5), all doable from this machine:
+type scale and line-heights (F5), radii (F6), the h1 thumbnail size (F7), a dominant
+interactive element on `/food` `/progress` `/settings` `/history` (F8), and the five-second
+test at Stage 2.
+
+When G1, G3 and G7–G12 land, v1 is done and every request is EXTRA.
 
 **Re-checking the 44px rule:** use the browser, not a grep. Enumerate
 `button, a, input, select, textarea` in the live DOM and read `getBoundingClientRect()`,

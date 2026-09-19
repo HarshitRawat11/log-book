@@ -1,0 +1,72 @@
+{
+  "f4": {
+    "count": 8,
+    "failing": 0,
+    "rows": [
+      {
+        "t": "Barbell Row",
+        "px": 16
+      },
+      {
+        "t": "10/10/9 @ 60 kg",
+        "px": 16
+      },
+      {
+        "t": "→ 60 kg × 10",
+        "px": 16
+      },
+      {
+        "t": "1",
+        "px": 16
+      },
+      {
+        "t": "62.5 kg × 8",
+        "px": 16
+      },
+      {
+        "t": "2",
+        "px": 16
+      },
+      {
+        "t": "[input] Weight (kg)",
+        "px": 20
+      },
+      {
+        "t": "[input] Reps",
+        "px": 20
+      }
+    ]
+  },
+  "regression": {
+    "anyOverflow": false,
+    "totalUnder44": 0,
+    "detail": []
+  },
+  "f3_orphans": {
+    "routesWithOrphans": 0,
+    "detail": []
+  },
+  "f1_reduce": {
+    "mediaMatches": true,
+    "pulse": {
+      "animation": "1e-05s",
+      "transition": "1e-05s",
+      "iter": "1"
+    },
+    "transitionEl": {
+      "animation": "1e-05s",
+      "transition": "1e-05s",
+      "iter": "1"
+    },
+    "holdException": {
+      "animation": "1e-05s",
+      "transition": "2s",
+      "iter": "1"
+    }
+  },
+  "f1_noPreference": {
+    "animation": "2s",
+    "iter": "infinite"
+  },
+  "f2_widthAnimations": []
+}

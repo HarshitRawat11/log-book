@@ -1,0 +1,285 @@
+{
+  "origin": "http://localhost:4173",
+  "routes": 10,
+  "elementsPerRoute": {
+    "/signin": 11,
+    "/train": 95,
+    "/history": 63,
+    "/history/w-mid": 110,
+    "/exercises": 54,
+    "/food": 96,
+    "/foods": 50,
+    "/cardio": 73,
+    "/progress": 251,
+    "/settings": 106
+  },
+  "fontFamilies": {
+    "system-ui": {
+      "count": 899,
+      "routes": 10
+    },
+    "-apple-system": {
+      "count": 10,
+      "routes": 10
+    }
+  },
+  "typeScale": {
+    "11px / 16.5px / 400": {
+      "count": 71,
+      "routes": 9
+    },
+    "12px / 16px / 400": {
+      "count": 39,
+      "routes": 8
+    },
+    "14px / 20px / 400": {
+      "count": 37,
+      "routes": 9
+    },
+    "14px / 20px / 500": {
+      "count": 26,
+      "routes": 7
+    },
+    "16px / 24px / 600": {
+      "count": 16,
+      "routes": 7
+    },
+    "16px / 24px / 400": {
+      "count": 13,
+      "routes": 5
+    },
+    "24px / 32px / 600": {
+      "count": 12,
+      "routes": 9
+    },
+    "14px / 20px / 600": {
+      "count": 12,
+      "routes": 3
+    },
+    "11px / 13.75px / 500": {
+      "count": 10,
+      "routes": 2
+    },
+    "16px / 24px / 500": {
+      "count": 9,
+      "routes": 5
+    },
+    "20px / 20px / 400": {
+      "count": 8,
+      "routes": 2
+    },
+    "18px / 28px / 600": {
+      "count": 5,
+      "routes": 5
+    },
+    "12px / 16px / 500": {
+      "count": 5,
+      "routes": 4
+    },
+    "18px / 28px / 400": {
+      "count": 5,
+      "routes": 3
+    },
+    "11px / 16.5px / 600": {
+      "count": 5,
+      "routes": 5
+    },
+    "12px / 19.5px / 400": {
+      "count": 5,
+      "routes": 3
+    },
+    "12px / 16px / 600": {
+      "count": 4,
+      "routes": 1
+    },
+    "30px / 36px / 600": {
+      "count": 1,
+      "routes": 1
+    },
+    "14px / 22.75px / 400": {
+      "count": 1,
+      "routes": 1
+    },
+    "12px / 19.5px / 700": {
+      "count": 1,
+      "routes": 1
+    }
+  },
+  "textColours": {
+    "rgb(151, 163, 179)": {
+      "count": 164,
+      "routes": 10
+    },
+    "rgb(232, 237, 243)": {
+      "count": 101,
+      "routes": 10
+    },
+    "rgb(78, 163, 255)": {
+      "count": 12,
+      "routes": 8
+    },
+    "rgb(4, 18, 31)": {
+      "count": 6,
+      "routes": 6
+    },
+    "rgb(255, 107, 107)": {
+      "count": 2,
+      "routes": 2
+    }
+  },
+  "backgrounds": {
+    "rgb(20, 26, 34)": {
+      "count": 53,
+      "routes": 10
+    },
+    "rgb(29, 37, 47)": {
+      "count": 26,
+      "routes": 6
+    },
+    "rgb(11, 15, 20)": {
+      "count": 10,
+      "routes": 10
+    },
+    "oklab(0.166533 -0.00336538 -0.0118904 / 0.95)": {
+      "count": 9,
+      "routes": 9
+    },
+    "oklab(0.215489 -0.00449046 -0.0176746 / 0.95)": {
+      "count": 9,
+      "routes": 9
+    },
+    "rgb(78, 163, 255)": {
+      "count": 6,
+      "routes": 6
+    },
+    "oklab(0.705067 -0.047462 -0.151071 / 0.1)": {
+      "count": 6,
+      "routes": 4
+    },
+    "rgb(57, 135, 229)": {
+      "count": 2,
+      "routes": 1
+    },
+    "oklab(0.705067 -0.047462 -0.151071 / 0.15)": {
+      "count": 1,
+      "routes": 1
+    },
+    "rgb(151, 163, 179)": {
+      "count": 1,
+      "routes": 1
+    },
+    "rgb(217, 89, 38)": {
+      "count": 1,
+      "routes": 1
+    }
+  },
+  "borderColours": {
+    "rgb(42, 52, 65)": {
+      "count": 125,
+      "routes": 10
+    },
+    "oklab(0.705067 -0.047462 -0.151071 / 0.4)": {
+      "count": 3,
+      "routes": 2
+    },
+    "rgb(78, 163, 255)": {
+      "count": 3,
+      "routes": 3
+    }
+  },
+  "radii": {
+    "8px": {
+      "count": 38,
+      "routes": 6
+    },
+    "12px": {
+      "count": 27,
+      "routes": 8
+    },
+    "16px": {
+      "count": 27,
+      "routes": 9
+    },
+    "3.35544e+07px": {
+      "count": 17,
+      "routes": 7
+    },
+    "4px": {
+      "count": 1,
+      "routes": 1
+    }
+  },
+  "paddings": {
+    "16px": {
+      "count": 91,
+      "routes": 10
+    },
+    "12px": {
+      "count": 51,
+      "routes": 9
+    },
+    "8px": {
+      "count": 50,
+      "routes": 9
+    },
+    "4px": {
+      "count": 18,
+      "routes": 4
+    },
+    "2px": {
+      "count": 11,
+      "routes": 3
+    },
+    "14px": {
+      "count": 9,
+      "routes": 9
+    },
+    "48px": {
+      "count": 2,
+      "routes": 2
+    },
+    "24px": {
+      "count": 2,
+      "routes": 2
+    },
+    "6px": {
+      "count": 2,
+      "routes": 2
+    }
+  },
+  "gaps": {
+    "4px": {
+      "count": 60,
+      "routes": 9
+    },
+    "12px": {
+      "count": 30,
+      "routes": 9
+    },
+    "8px": {
+      "count": 20,
+      "routes": 8
+    },
+    "16px": {
+      "count": 10,
+      "routes": 3
+    },
+    "6px": {
+      "count": 4,
+      "routes": 1
+    },
+    "normal 8px": {
+      "count": 3,
+      "routes": 1
+    },
+    "4px 12px": {
+      "count": 2,
+      "routes": 1
+    },
+    "32px": {
+      "count": 1,
+      "routes": 1
+    }
+  },
+  "consoleErrors": []
+}
