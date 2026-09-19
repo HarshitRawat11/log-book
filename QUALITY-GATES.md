@@ -1,7 +1,9 @@
-# QUALITY-GATES.md — v3 · STAGE 1 PASSED
+# QUALITY-GATES.md — v4 · STAGE 1 PASSED, NOTHING UNVERIFIED
 
 > **QUALITY STATUS: PROVISIONAL.** Stage 1 (self-review) passed 2026-09-20. Awaiting Stage 2.
-> Thresholds approved and final. Fixes **F1–F8 applied and verified**.
+> Thresholds approved and final. Fixes **F1–F8 applied and verified**, and the one item Stage 1
+> carried as `UNVERIFIED` is now measured. **No claim in this document rests on reasoning
+> alone.**
 > Intent is in [INTENT-BRIEF.md](INTENT-BRIEF.md). These gates are v1 criteria of
 > [FINISH-LINE.md](FINISH-LINE.md), amended to **v1.1** under **UNFREEZE FOR QUALITY**
 > (granted 2026-09-20). The document is **not re-LOCKed** — that waits for Stage 2.
@@ -21,7 +23,7 @@ reasons. Gate 9 is **not applicable** (personal project).
 | 3 Hierarchy | **PASS** ✔ was FAIL | **8 of 8** routes; greyscale weights 850–7,589 (were 37–174 on four of them); h1 **5.2px** at 20% | `review/gate3-hierarchy.json`, `review/squint-*.png` |
 | 6 Motion (adapted) | **PASS** ✔ was FAIL | all 5; reduced-motion honoured under emulation, zero `width` animations | `review/verify-f1-f4.json` |
 | 7 Typography craft | **PASS** ✔ was FAIL | 6.04:1 min contrast, 74-char measure, 8 of 8 primary elements ≥16px, every body size at **1.5** leading, 0 orphans | `review/craft-audit.json` |
-| 10 Accessibility floor | **PASS** | 6.04:1 minimum contrast, zero failures; focus ring confirmed; no images; 0.5 Hz max | `review/craft-audit.json` |
+| 10 Accessibility floor | **PASS** | 6.04:1 min contrast, zero failures; **110 of 110 tab stops show the focus ring**; no images; 0.5 Hz max | `review/craft-audit.json`, `review/focus-audit.json` |
 | 8 Five-second test | **NOT MEASURED** | Stage 2 by construction — its protocol is run by the reviewer, not by Claude Code | — |
 | 1 Intent · 4 Distinctiveness · 5 Imagery | **WAIVED** | not passed — see Waivers | — |
 | 9 Behavioural metrics | **N/A** | personal project | — |
@@ -42,6 +44,7 @@ added dependency.
 | Colour, type, spacing, radius per route | `review/style-audit.json` |
 | Contrast, type craft, motion | `review/craft-audit.json` |
 | Squint / greyscale / thumbnail | `review/gate3-hierarchy.json`, `review/squint-*.png` |
+| Keyboard tab order and focus rings | `review/focus-audit.json` |
 
 Routes measured: `/train` `/history` `/exercises` `/food` `/foods` `/cardio` `/progress`
 `/settings`, plus `/signin` and `/history/:id` for screenshots.
@@ -119,7 +122,7 @@ hover does not exist, and FINISH-LINE.md §1c locks "no motion" as the system.
 
 | # | Check | Threshold | Current | Status |
 |---|---|---|---|---|
-| 6a | Every interactive element has a visible focus state | all | Global `:focus-visible`, 2px accent, 2px offset ([index.css:145](src/index.css:145)); confirmed under keyboard Tab | **PASS** |
+| 6a | Every interactive element has a visible focus state | all | **110 of 110 tab stops** across 9 routes show the ring — `2px solid rgb(78, 163, 255)`, one style everywhere ([index.css:145](src/index.css:145)) | **PASS** |
 | 6b | No decorative motion added | 0 new animations | 0 at rest across all 8 tabbed routes | **PASS** |
 | 6c | `prefers-reduced-motion` respected | all 4 stop or resolve instantly | **PASS** — under emulated `reduce`: transitions 1e-05s, `animate-pulse` iteration count **1** (was infinite). With no preference it returns to 2s infinite, so the rule discriminates | **PASS** |
 | 6d | No layout shift from motion | CLS ≤ 0.1 | **0, 0, 0.0003** | **PASS** |
@@ -130,11 +133,19 @@ under `reduce`, verified at 2s while everything around it drops to 1e-05s. That 
 two-second press: stilling it would fill it instantly while the press still had two seconds
 to run — the one place where honouring the preference would make the interface lie.
 
-**Carried to Stage 1 — `UNVERIFIED`:** three inputs carry Tailwind's `outline-none` beside the
-global focus rule. Source order says the ring wins (Tailwind imported at
-[index.css:1](src/index.css:1), rule at line 145, equal specificity) and the ring was
-confirmed on a nav link and a button, but keyboard focus could not be landed on one of those
-inputs to prove it.
+**Settled 2026-09-20 — was `UNVERIFIED`.** Fields carrying Tailwind's `outline-none` sit
+beside the global focus rule, and source order said the ring should win. It does, and it is
+now measured rather than reasoned: the real tab order was walked on all nine routes with
+dispatched `Tab` key events — not `.focus()`, which does not engage `:focus-visible` — giving
+**110 tab stops, 11 of them carrying `outline-none`, and zero with no visible ring.** Exactly
+one ring style appears anywhere: `2px solid rgb(78, 163, 255)`.
+
+The earlier note said "three inputs". That was wrong: `outline-none` appears at **16** sites
+across inputs, selects and textareas. The figure was taken from memory rather than a grep.
+
+Scope of the walk: the tab order reachable from a fresh load of each route. It does not cover
+transient states such as the exercise picker or reorder mode, which are opened by activating a
+control rather than by tabbing.
 
 ## Gate 7 — Typography Craft · **PASS** (7c, 7d, 7e fixed 2026-09-20)
 
@@ -189,8 +200,8 @@ time**, and **the weight/reps inputs with Log set**. PASS if all three. Record a
 | # | Check | Threshold | Current | Status |
 |---|---|---|---|---|
 | 10a | WCAG AA contrast | 4.5:1 / 3:1 | **6.04:1 minimum, zero failures** | **PASS** |
-| 10b | Visible focus indicators | all focusable | Global ring, confirmed under keyboard Tab | **PASS** (see Gate 6 unverified item) |
-| 10c | Keyboard-navigable | all interactive | Tab traverses nav and session controls; **not exhaustively walked** | **PARTIAL** |
+| 10b | Visible focus indicators | all focusable | **110 of 110 tab stops**, including all 11 that carry `outline-none` | **PASS** |
+| 10c | Keyboard-navigable | all interactive | the tab order walked end to end on all 9 routes — **110 stops**, every one reachable by `Tab` alone | **PASS** ✔ was PARTIAL |
 | 10d | Alt text on every image | all | **No images exist.** No `<img>` in `src/`; 5 inline tab glyphs and 1 chevron, all beside text labels | **PASS** |
 | 10e | No motion flashing > 3 Hz | none | Fastest is `animate-pulse`, 2s cycle = **0.5 Hz** | **PASS** |
 | 10f | Touch targets ≥ 44 × 44px | all | Criterion **O10** in FINISH-LINE.md, met 2026-09-19. Referenced, not restated | **PASS** |
@@ -220,7 +231,7 @@ Every gate re-run from scratch against the production bundle after the final fix
 | 3 Hierarchy | **PASS** | `review/gate3-hierarchy.json`, `review/squint-*.png` |
 | 6 Motion (adapted) | **PASS** | `review/verify-f1-f4.json` |
 | 7 Typography craft | **PASS** | `review/craft-audit.json` |
-| 10 Accessibility floor | **PASS** | `review/craft-audit.json` |
+| 10 Accessibility floor | **PASS** | `review/craft-audit.json`, `review/focus-audit.json` |
 | 1, 4, 5 | **WAIVED** | reasons recorded under Waivers |
 | 8 Five-second test | **NOT MEASURED** | Stage 2 by construction — see below |
 | 9 Behavioural metrics | **N/A** | personal project |
@@ -259,6 +270,15 @@ there to look pleasant.
    tag moved.
 
 ## Changelog
+
+**v4 — 2026-09-20 — the last unverified item settled.** The focus ring on fields carrying
+`outline-none` was reasoned from CSS source order at Stage 1 but never proved. It is proved
+now: 110 tab stops walked with dispatched key events across 9 routes, 11 of them on
+`outline-none` fields, **zero missing a ring**. Gate 10c moves **PARTIAL → PASS** as a side
+effect, because walking the order end to end is exactly what that criterion asked for. The old
+note's "three inputs" figure was wrong — the utility appears at 16 sites — and the correction
+is recorded rather than quietly overwritten.
+
 
 **v3 — 2026-09-20 — FIX BATCH 2, STAGE 1 PASSED.** F5–F8 applied:
 

@@ -1,0 +1,74 @@
+{
+  "/signin": {
+    "stops": 2,
+    "withOutlineNoneClass": 1,
+    "missingRing": [],
+    "ringsSeen": [
+      "2px solid rgb(78, 163, 255)"
+    ]
+  },
+  "/train": {
+    "stops": 30,
+    "withOutlineNoneClass": 2,
+    "missingRing": [],
+    "ringsSeen": [
+      "2px solid rgb(78, 163, 255)"
+    ]
+  },
+  "/history": {
+    "stops": 8,
+    "withOutlineNoneClass": 0,
+    "missingRing": [],
+    "ringsSeen": [
+      "2px solid rgb(78, 163, 255)"
+    ]
+  },
+  "/exercises": {
+    "stops": 8,
+    "withOutlineNoneClass": 0,
+    "missingRing": [],
+    "ringsSeen": [
+      "2px solid rgb(78, 163, 255)"
+    ]
+  },
+  "/food": {
+    "stops": 4,
+    "withOutlineNoneClass": 0,
+    "missingRing": [],
+    "ringsSeen": [
+      "2px solid rgb(78, 163, 255)"
+    ]
+  },
+  "/foods": {
+    "stops": 9,
+    "withOutlineNoneClass": 0,
+    "missingRing": [],
+    "ringsSeen": [
+      "2px solid rgb(78, 163, 255)"
+    ]
+  },
+  "/cardio": {
+    "stops": 16,
+    "withOutlineNoneClass": 7,
+    "missingRing": [],
+    "ringsSeen": [
+      "2px solid rgb(78, 163, 255)"
+    ]
+  },
+  "/progress": {
+    "stops": 12,
+    "withOutlineNoneClass": 1,
+    "missingRing": [],
+    "ringsSeen": [
+      "2px solid rgb(78, 163, 255)"
+    ]
+  },
+  "/settings": {
+    "stops": 21,
+    "withOutlineNoneClass": 0,
+    "missingRing": [],
+    "ringsSeen": [
+      "2px solid rgb(78, 163, 255)"
+    ]
+  }
+}
