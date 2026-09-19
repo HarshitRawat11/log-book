@@ -116,8 +116,14 @@ in `index.css`:
   validated for lightness band, chroma, adjacent-pair CVD separation and contrast.
 - **Layout** — `Screen` shell (sticky header, scrolling body), `TabBar` of five, cards as
   `rounded-2xl border border-border bg-surface`.
-- **Motion** — none. Nothing in the app animates. **This is the system, not an omission**;
-  adding motion is EXTRA.
+- **Motion** — no *decorative* motion. **This is the system, not an omission**; adding
+  animation is EXTRA.
+
+  *Corrected 2026-09-20.* This previously read "none. Nothing in the app animates", which was
+  never true: four functional animations existed at lock time and are now enumerated in
+  QUALITY-GATES.md Gate 6 — a sync pulse, two progress fills and a drag. The rule is
+  unchanged and no scope moved; only the description was wrong, and it contradicted the gate
+  inventory added to this document below.
 
 | # | Criterion | Status |
 |---|---|---|
@@ -137,10 +143,10 @@ restated** — that document is the single definition of how each is measured. I
 
 | # | Criterion | Status at v1.1 |
 |---|---|---|
-| D5 | Quality Gate 2 — visual system coherence | **FAIL** — 7 type sizes (cap 6), 3 sizes with two line-heights, 5 radii (cap 3) |
-| D6 | Quality Gate 3 — hierarchy (squint, greyscale, thumbnail) | **FAIL** — 4 of 8 routes |
+| D5 | Quality Gate 2 — visual system coherence | **PASS** 2026-09-20 — 6 type steps, one line-height each, 3 radii |
+| D6 | Quality Gate 3 — hierarchy (squint, greyscale, thumbnail) | **PASS** 2026-09-20 — 8 of 8 routes |
 | D7 | Quality Gate 6 — motion, adapted | **PASS** 2026-09-20 |
-| D8 | Quality Gate 7 — typography craft | **FAIL** — 7d line-height only |
+| D8 | Quality Gate 7 — typography craft | **PASS** 2026-09-20 |
 | D9 | Quality Gate 8 — five-second test | **NOT MEASURED** — Stage 2 |
 | D10 | Quality Gate 10 — accessibility floor | **PASS**, not adjustable |
 | — | Quality Gates 1, 4, 5 | **WAIVED** with written reasons. A waived gate is not a passed gate |
@@ -286,17 +292,18 @@ is done.
 In scope by definition — a failing gate written here is a DEFECT. Fix identifiers match
 QUALITY-GATES.md.
 
-| # | Item | What makes it VERIFIED | Fix |
+| # | Item | Status | Fix |
 |---|---|---|---|
-| G7 | **D5 / Gate 2** — 7 type sizes against a cap of 6, and 3 sizes carry two line-heights | one scale of ≤ 6 steps, one line-height each | F5 |
-| G8 | **D8 / Gate 7d** — body line-height outside 1.5–1.7 at 11, 12 and 14px | every body size in band | F5 |
-| G9 | **D5 / Gate 2g** — 5 distinct radii against a cap of 3 | ≤ 3 | F6 |
-| G10 | **D6 / Gate 3a, 3b** — 4 of 8 routes have no dominant interactive element | 8 of 8, or a written exception per screen | F8 |
-| G11 | **D6 / Gate 3c** — the h1 reads 4.8px at 20%, against a 5px floor | ≥ 5px, or waived as marginal | F7 |
-| G12 | **D9 / Gate 8** — the five-second test has not been run | recorded in QUALITY-GATES.md | Stage 2 |
+| G7 | **D5 / Gate 2** — type scale over the cap, duplicate line-heights | **CLOSED** — 6 steps, one leading each | F5 |
+| G8 | **D8 / Gate 7d** — body line-height outside 1.5–1.7 | **CLOSED** — every body step at 1.5 | F5 |
+| G9 | **D5 / Gate 2g** — 5 distinct radii against a cap of 3 | **CLOSED** — 3 | F6 |
+| G10 | **D6 / Gate 3a, 3b** — 4 of 8 routes had no dominant interactive element | **CLOSED** — 8 of 8 | F8 |
+| G11 | **D6 / Gate 3c** — the h1 read 4.8px at 20% | **CLOSED** — 5.2px | F7 |
+| G12 | **D9 / Gate 8** — the five-second test | **OPEN** — Stage 2, run by the owner | — |
 
-Closed 2026-09-20 by fix batch F1–F4: Gate 6 entirely (reduced motion, transform-only
-animation), Gate 7c (primary content at 16px) and Gate 7e (zero heading orphans).
+Fix batch F1–F4 closed Gate 6 entirely, Gate 7c and Gate 7e on 2026-09-20; F5–F8 closed
+Gates 2, 3 and the rest of 7 the same day. **Stage 1 passed.** The only quality item left is
+G12, which cannot be run by me: its protocol is the owner's five-second test.
 
 ---
 
@@ -323,6 +330,10 @@ Design and **O12** under Optimization, referenced rather than restated. Gates 1,
 waived with written reasons; Gate 9 is out of scope for LOCK. Completion Authority gains a
 precondition: no LOCK until Stage 2 passes. The gap gains **G7–G12**. Fix batch F1–F4 was
 applied the same day and closed Gate 6, Gate 7c and Gate 7e.
+
+**Fix batches, 2026-09-20.** F1–F4 then F5–F8, all eight applied and re-measured; Stage 1
+of the three-stage judgement passed. Gates 2, 3, 6, 7 and 10 pass; 1, 4 and 5 are waived; 8
+awaits Stage 2; 9 is not applicable.
 
 **This amendment reopened nothing else.** Everything outside the gates remains frozen at v1.0,
 and the `v1.0` tag has deliberately **not** been moved — it still marks what v1.0 pointed at.

@@ -4,7 +4,7 @@
       "dominantCell": {
         "col": 2,
         "r": 15,
-        "weight": 125.75515041322312,
+        "weight": 120.33013884297547,
         "cx": 77.5,
         "cy": 480.5
       },
@@ -42,45 +42,45 @@
       }
     ],
     "thumbnail": {
-      "largestTextPx": 24,
-      "at20pct": 4.8,
+      "largestTextPx": 26,
+      "at20pct": 5.2,
       "text": "Train"
     }
   },
   "/history": {
     "squint": {
       "dominantCell": {
-        "col": 1,
-        "r": 1,
-        "weight": 38.390748760330595,
-        "cx": 46.5,
-        "cy": 46.5
+        "col": 10,
+        "r": 3,
+        "weight": 102.52816528925621,
+        "cx": 325.5,
+        "cy": 108.5
       },
-      "dominanceRatio": 1.08,
+      "dominanceRatio": 1,
       "elementUnder": {
-        "tag": "header",
-        "text": "History\n\n2 sessions",
-        "cls": "sticky top-0 z-10 border-b border-border bg-bg/95 px-4 pb-3 "
+        "tag": "button",
+        "text": "+ Log a session on another date",
+        "cls": "mb-4 min-h-12 w-full rounded-lg bg-accent font-semibold text"
       }
     },
     "greyscaleTop4": [
       {
-        "text": "Pull · 19 Septtoday\nBarb",
-        "area": 32242,
-        "contrast": 0.005,
-        "weight": 174
-      },
-      {
-        "text": "Pull · 15 Sept\n4 days ag",
-        "area": 32242,
-        "contrast": 0.005,
-        "weight": 174
-      },
-      {
         "text": "+ Log a session on anoth",
         "area": 16464,
-        "contrast": 0,
-        "weight": 0
+        "contrast": 0.346,
+        "weight": 5691.7
+      },
+      {
+        "text": "Pull · 20 Septtoday\nBarb",
+        "area": 33271,
+        "contrast": 0.005,
+        "weight": 179.6
+      },
+      {
+        "text": "Pull · 16 Sept\n4 days ag",
+        "area": 33271,
+        "contrast": 0.005,
+        "weight": 179.6
       },
       {
         "text": "Train",
@@ -90,8 +90,8 @@
       }
     ],
     "thumbnail": {
-      "largestTextPx": 24,
-      "at20pct": 4.8,
+      "largestTextPx": 26,
+      "at20pct": 5.2,
       "text": "History"
     }
   },
@@ -100,7 +100,7 @@
       "dominantCell": {
         "col": 2,
         "r": 4,
-        "weight": 115.30080000000001,
+        "weight": 120.18478181818178,
         "cx": 77.5,
         "cy": 139.5
       },
@@ -108,7 +108,7 @@
       "elementUnder": {
         "tag": "button",
         "text": "+ New exercise",
-        "cls": "min-h-14 w-full rounded-xl bg-accent px-4 font-semibold text"
+        "cls": "min-h-14 w-full rounded-lg bg-accent px-4 font-semibold text"
       }
     },
     "greyscaleTop4": [
@@ -138,28 +138,34 @@
       }
     ],
     "thumbnail": {
-      "largestTextPx": 24,
-      "at20pct": 4.8,
+      "largestTextPx": 26,
+      "at20pct": 5.2,
       "text": "Exercises"
     }
   },
   "/food": {
     "squint": {
       "dominantCell": {
-        "col": 1,
-        "r": 4,
-        "weight": 37.5283388429752,
-        "cx": 46.5,
-        "cy": 139.5
+        "col": 3,
+        "r": 17,
+        "weight": 119.28765785123954,
+        "cx": 108.5,
+        "cy": 542.5
       },
-      "dominanceRatio": 1.29,
+      "dominanceRatio": 1,
       "elementUnder": {
-        "tag": "span",
-        "text": "348",
-        "cls": "tabular text-2xl font-semibold"
+        "tag": "button",
+        "text": "+ Add",
+        "cls": "min-h-12 w-full rounded-lg bg-accent text-sm font-semibold t"
       }
     },
     "greyscaleTop4": [
+      {
+        "text": "+ Add",
+        "area": 15216,
+        "contrast": 0.346,
+        "weight": 5260.3
+      },
       {
         "text": "Library",
         "area": 2815,
@@ -168,13 +174,7 @@
       },
       {
         "text": "Set daily targets in Set",
-        "area": 22638,
-        "contrast": 0,
-        "weight": 0
-      },
-      {
-        "text": "+ Add",
-        "area": 15216,
+        "area": 23324,
         "contrast": 0,
         "weight": 0
       },
@@ -186,8 +186,8 @@
       }
     ],
     "thumbnail": {
-      "largestTextPx": 24,
-      "at20pct": 4.8,
+      "largestTextPx": 26,
+      "at20pct": 5.2,
       "text": "Food"
     }
   },
@@ -196,7 +196,7 @@
       "dominantCell": {
         "col": 2,
         "r": 6,
-        "weight": 127.5009090909089,
+        "weight": 129.07465454545445,
         "cx": 77.5,
         "cy": 201.5
       },
@@ -204,7 +204,7 @@
       "elementUnder": {
         "tag": "button",
         "text": "+ New recipe",
-        "cls": "min-h-14 w-full rounded-xl bg-accent font-semibold text-acce"
+        "cls": "min-h-14 w-full rounded-lg bg-accent font-semibold text-acce"
       }
     },
     "greyscaleTop4": [
@@ -234,8 +234,8 @@
       }
     ],
     "thumbnail": {
-      "largestTextPx": 24,
-      "at20pct": 4.8,
+      "largestTextPx": 26,
+      "at20pct": 5.2,
       "text": "Library"
     }
   },
@@ -243,16 +243,16 @@
     "squint": {
       "dominantCell": {
         "col": 2,
-        "r": 18,
-        "weight": 31.028920661157034,
+        "r": 19,
+        "weight": 30.291970247933875,
         "cx": 77.5,
-        "cy": 573.5
+        "cy": 604.5
       },
-      "dominanceRatio": 1.06,
+      "dominanceRatio": 1.04,
       "elementUnder": {
         "tag": "p",
-        "text": "40 min",
-        "cls": "text-2xl font-semibold"
+        "text": "6 × 5:00 work, 2:00 break between",
+        "cls": "mt-0.5 text-xs text-text-dim"
       }
     },
     "greyscaleTop4": [
@@ -282,39 +282,39 @@
       }
     ],
     "thumbnail": {
-      "largestTextPx": 24,
-      "at20pct": 4.8,
+      "largestTextPx": 26,
+      "at20pct": 5.2,
       "text": "Cardio"
     }
   },
   "/progress": {
     "squint": {
       "dominantCell": {
-        "col": 1,
-        "r": 6,
-        "weight": 33.73007933884296,
-        "cx": 46.5,
-        "cy": 201.5
+        "col": 10,
+        "r": 3,
+        "weight": 87.81491900826447,
+        "cx": 325.5,
+        "cy": 108.5
       },
-      "dominanceRatio": 1.2,
+      "dominanceRatio": 2.39,
       "elementUnder": {
-        "tag": "p",
-        "text": "78.1kg latest",
-        "cls": "tabular mb-1 text-2xl font-semibold"
+        "tag": "button",
+        "text": "+ Log",
+        "cls": "rounded-full bg-accent min-h-11 px-3 text-xs font-semibold\n "
       }
     },
     "greyscaleTop4": [
+      {
+        "text": "+ Log",
+        "area": 2460,
+        "contrast": 0.346,
+        "weight": 850.4
+      },
       {
         "text": "Barbell Row",
         "area": 4444,
         "contrast": 0.013,
         "weight": 58.9
-      },
-      {
-        "text": "+ Log",
-        "area": 2519,
-        "contrast": 0.013,
-        "weight": 33.4
       },
       {
         "text": "Train",
@@ -330,8 +330,8 @@
       }
     ],
     "thumbnail": {
-      "largestTextPx": 24,
-      "at20pct": 4.8,
+      "largestTextPx": 26,
+      "at20pct": 5.2,
       "text": "Progress"
     }
   },
@@ -339,24 +339,24 @@
     "squint": {
       "dominantCell": {
         "col": 2,
-        "r": 1,
-        "weight": 30.684826446281015,
+        "r": 14,
+        "weight": 123.67110909090916,
         "cx": 77.5,
-        "cy": 46.5
+        "cy": 449.5
       },
-      "dominanceRatio": 1.42,
+      "dominanceRatio": 1,
       "elementUnder": {
-        "tag": "header",
-        "text": "Settings",
-        "cls": "sticky top-0 z-10 border-b border-border bg-bg/95 px-4 pb-3 "
+        "tag": "button",
+        "text": "Sync now",
+        "cls": "mt-3 min-h-12 w-full rounded-lg bg-accent font-semibold text"
       }
     },
     "greyscaleTop4": [
       {
         "text": "Sync now",
         "area": 16464,
-        "contrast": 0.005,
-        "weight": 88.9
+        "contrast": 0.346,
+        "weight": 5691.7
       },
       {
         "text": "Exercises\n›",
@@ -378,8 +378,8 @@
       }
     ],
     "thumbnail": {
-      "largestTextPx": 24,
-      "at20pct": 4.8,
+      "largestTextPx": 26,
+      "at20pct": 5.2,
       "text": "Settings"
     }
   }

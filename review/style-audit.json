@@ -3,19 +3,19 @@
   "routes": 10,
   "elementsPerRoute": {
     "/signin": 11,
-    "/train": 95,
+    "/train": 62,
     "/history": 63,
     "/history/w-mid": 110,
     "/exercises": 54,
-    "/food": 96,
+    "/food": 90,
     "/foods": 50,
     "/cardio": 73,
-    "/progress": 251,
+    "/progress": 248,
     "/settings": 106
   },
   "fontFamilies": {
     "system-ui": {
-      "count": 899,
+      "count": 857,
       "routes": 10
     },
     "-apple-system": {
@@ -24,103 +24,79 @@
     }
   },
   "typeScale": {
-    "11px / 16.5px / 400": {
-      "count": 71,
+    "12px / 18px / 400": {
+      "count": 108,
       "routes": 9
     },
-    "12px / 16px / 400": {
-      "count": 39,
-      "routes": 8
-    },
-    "14px / 20px / 400": {
-      "count": 37,
+    "14px / 21px / 400": {
+      "count": 38,
       "routes": 9
     },
-    "14px / 20px / 500": {
-      "count": 26,
-      "routes": 7
+    "14px / 21px / 500": {
+      "count": 20,
+      "routes": 6
+    },
+    "16px / 24px / 400": {
+      "count": 17,
+      "routes": 5
     },
     "16px / 24px / 600": {
       "count": 16,
-      "routes": 7
+      "routes": 6
     },
-    "16px / 24px / 400": {
+    "26px / 32.5px / 600": {
       "count": 13,
-      "routes": 5
+      "routes": 10
     },
-    "24px / 32px / 600": {
-      "count": 12,
-      "routes": 9
-    },
-    "14px / 20px / 600": {
-      "count": 12,
-      "routes": 3
-    },
-    "11px / 13.75px / 500": {
-      "count": 10,
-      "routes": 2
-    },
-    "16px / 24px / 500": {
-      "count": 9,
-      "routes": 5
-    },
-    "20px / 20px / 400": {
-      "count": 8,
-      "routes": 2
-    },
-    "18px / 28px / 600": {
-      "count": 5,
-      "routes": 5
-    },
-    "12px / 16px / 500": {
-      "count": 5,
+    "14px / 21px / 600": {
+      "count": 13,
       "routes": 4
     },
-    "18px / 28px / 400": {
-      "count": 5,
+    "12px / 18px / 600": {
+      "count": 10,
+      "routes": 5
+    },
+    "12px / 18px / 500": {
+      "count": 9,
+      "routes": 4
+    },
+    "16px / 24px / 500": {
+      "count": 6,
       "routes": 3
     },
-    "11px / 16.5px / 600": {
+    "18px / 27px / 600": {
       "count": 5,
       "routes": 5
     },
-    "12px / 19.5px / 400": {
-      "count": 5,
-      "routes": 3
+    "18px / 27px / 400": {
+      "count": 4,
+      "routes": 2
     },
-    "12px / 16px / 600": {
+    "20px / 20px / 400": {
       "count": 4,
       "routes": 1
     },
-    "30px / 36px / 600": {
-      "count": 1,
-      "routes": 1
-    },
-    "14px / 22.75px / 400": {
-      "count": 1,
-      "routes": 1
-    },
-    "12px / 19.5px / 700": {
+    "12px / 18px / 700": {
       "count": 1,
       "routes": 1
     }
   },
   "textColours": {
     "rgb(151, 163, 179)": {
-      "count": 164,
+      "count": 148,
       "routes": 10
     },
     "rgb(232, 237, 243)": {
-      "count": 101,
+      "count": 95,
+      "routes": 10
+    },
+    "rgb(4, 18, 31)": {
+      "count": 10,
       "routes": 10
     },
     "rgb(78, 163, 255)": {
-      "count": 12,
-      "routes": 8
-    },
-    "rgb(4, 18, 31)": {
-      "count": 6,
-      "routes": 6
+      "count": 9,
+      "routes": 7
     },
     "rgb(255, 107, 107)": {
       "count": 2,
@@ -129,14 +105,18 @@
   },
   "backgrounds": {
     "rgb(20, 26, 34)": {
-      "count": 53,
+      "count": 49,
       "routes": 10
     },
     "rgb(29, 37, 47)": {
-      "count": 26,
+      "count": 16,
       "routes": 6
     },
     "rgb(11, 15, 20)": {
+      "count": 10,
+      "routes": 10
+    },
+    "rgb(78, 163, 255)": {
       "count": 10,
       "routes": 10
     },
@@ -148,20 +128,12 @@
       "count": 9,
       "routes": 9
     },
-    "rgb(78, 163, 255)": {
-      "count": 6,
-      "routes": 6
-    },
     "oklab(0.705067 -0.047462 -0.151071 / 0.1)": {
-      "count": 6,
-      "routes": 4
+      "count": 4,
+      "routes": 3
     },
     "rgb(57, 135, 229)": {
       "count": 2,
-      "routes": 1
-    },
-    "oklab(0.705067 -0.047462 -0.151071 / 0.15)": {
-      "count": 1,
       "routes": 1
     },
     "rgb(151, 163, 179)": {
@@ -175,64 +147,56 @@
   },
   "borderColours": {
     "rgb(42, 52, 65)": {
-      "count": 125,
+      "count": 106,
       "routes": 10
     },
-    "oklab(0.705067 -0.047462 -0.151071 / 0.4)": {
-      "count": 3,
+    "rgb(78, 163, 255)": {
+      "count": 2,
       "routes": 2
     },
-    "rgb(78, 163, 255)": {
-      "count": 3,
-      "routes": 3
+    "oklab(0.705067 -0.047462 -0.151071 / 0.4)": {
+      "count": 2,
+      "routes": 1
     }
   },
   "radii": {
     "8px": {
-      "count": 38,
-      "routes": 6
-    },
-    "12px": {
-      "count": 27,
-      "routes": 8
+      "count": 49,
+      "routes": 10
     },
     "16px": {
       "count": 27,
       "routes": 9
     },
     "3.35544e+07px": {
-      "count": 17,
+      "count": 16,
       "routes": 7
-    },
-    "4px": {
-      "count": 1,
-      "routes": 1
     }
   },
   "paddings": {
     "16px": {
-      "count": 91,
+      "count": 89,
       "routes": 10
-    },
-    "12px": {
-      "count": 51,
-      "routes": 9
     },
     "8px": {
       "count": 50,
       "routes": 9
     },
-    "4px": {
-      "count": 18,
-      "routes": 4
+    "12px": {
+      "count": 46,
+      "routes": 9
     },
-    "2px": {
-      "count": 11,
-      "routes": 3
+    "4px": {
+      "count": 17,
+      "routes": 4
     },
     "14px": {
       "count": 9,
       "routes": 9
+    },
+    "2px": {
+      "count": 5,
+      "routes": 1
     },
     "48px": {
       "count": 2,
@@ -243,29 +207,33 @@
       "routes": 2
     },
     "6px": {
-      "count": 2,
-      "routes": 2
+      "count": 1,
+      "routes": 1
     }
   },
   "gaps": {
     "4px": {
-      "count": 60,
+      "count": 57,
       "routes": 9
     },
     "12px": {
-      "count": 30,
+      "count": 25,
       "routes": 9
     },
     "8px": {
-      "count": 20,
+      "count": 17,
       "routes": 8
     },
     "16px": {
-      "count": 10,
-      "routes": 3
+      "count": 11,
+      "routes": 4
     },
     "6px": {
       "count": 4,
+      "routes": 1
+    },
+    "2px": {
+      "count": 3,
       "routes": 1
     },
     "normal 8px": {

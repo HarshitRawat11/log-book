@@ -55,14 +55,21 @@ needing the phone**:
 - **G3** — offline on the *installed* PWA. The mechanism is proven on desktop; the stated
   configuration is not.
 
-G2, G4, G5 and G6 are closed.
+G2, G4, G5 and G6 are closed. So are the quality-gate defects **G7–G11** — fix batches F1–F8
+landed on 2026-09-20 and **Stage 1 passed**. Gates 2, 3, 6, 7 and 10 pass.
 
-**Plus the quality-gate defects G7–G12** (FINISH-LINE.md §5), all doable from this machine:
-type scale and line-heights (F5), radii (F6), the h1 thumbnail size (F7), a dominant
-interactive element on `/food` `/progress` `/settings` `/history` (F8), and the five-second
-test at Stage 2.
+**G12 is the one quality item left:** Gate 8, the five-second test. Its protocol is run by the
+owner, not by Claude, so it cannot be closed from here.
 
-When G1, G3 and G7–G12 land, v1 is done and every request is EXTRA.
+When G1, G3 and G12 land, v1 is done and every request is EXTRA.
+
+**Three things the gates now pin down, so a future change does not undo them by accident:**
+
+- **Type is six steps**, declared once in the `@theme` block in `index.css`, each with exactly
+  one line-height. Do not add a `text-[Npx]` or a `leading-*` utility; change the block.
+- **Three radii only** — `rounded-lg` controls, `rounded-2xl` containers, `rounded-full` pills.
+- **One filled accent action per screen.** A second one breaks Gate 3b; removing the only one
+  breaks it too.
 
 **Re-checking the 44px rule:** use the browser, not a grep. Enumerate
 `button, a, input, select, textarea` in the live DOM and read `getBoundingClientRect()`,
