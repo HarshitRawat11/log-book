@@ -180,13 +180,22 @@ number better than these is EXTRA.
 
 ## 2. Deployment criterion
 
-`VERIFIED` Deployed and responding **200** at **https://log-book-hr.netlify.app**, serving
-`sha: 3d4524a`, identical to local `HEAD` at the moment of measurement.
+`VERIFIED` **2026-09-20** — deployed and responding **200** at
+**https://log-book-hr.netlify.app**, serving `sha: 7399107`, identical to local `HEAD`.
 
 **This URL is final for v1. No custom domain is required.**
 
-The lock commit is documentation only and does not change the deployed application, so
-production continues to serve `3d4524a` and the criterion stays satisfied without a redeploy.
+Evidence, because a bare 200 means little here: the SPA rewrite returns `index.html` with a
+**200** for any missing asset, so every probe was run against a control. The real entry chunk
+came back as `application/javascript`, 62,616 bytes; a deliberately nonexistent one came back
+as `text/html`, 1,630 bytes. All ten routes 200. The build stamp inside the Settings chunk
+*as served by production* reads `7399107`. `manifest.webmanifest` is served as
+`application/manifest+json`. No `service_role` and no sandbox credential appears in what
+production serves.
+
+`--prod` returned `JSONHTTPError: Forbidden` for the **third** time (14 Sep, 17 Sep, 20 Sep),
+and the documented draft-then-`restoreSiteDeploy` path worked again. It is the normal path
+for this site, not an incident.
 
 ---
 

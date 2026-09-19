@@ -803,8 +803,9 @@ prints the ID.
 
 ### If `--prod` returns `JSONHTTPError: Forbidden`
 
-First seen 14 Sep 2026, after several successful deploys the same day; **again on 17 Sep**,
-so treat it as the normal path rather than a one-off. The account is fine — still signed in,
+First seen 14 Sep 2026, after several successful deploys the same day; **again on 17 Sep, and
+again on 20 Sep**. Three occurrences and no successful `--prod` since: treat the draft-then-
+promote route below as *the* way this site deploys, not as a fallback. The account is fine — still signed in,
 site `state: current`, no stuck deploy, nothing over its limit — and a **draft deploy of the
 identical directory succeeds**. Only the production publish is refused, so it is something
 server-side rather than anything in this repo.
