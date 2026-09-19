@@ -180,10 +180,35 @@ number better than these is EXTRA.
 
 ## 2. Deployment criterion
 
-`VERIFIED` **2026-09-20** — deployed and responding **200** at
-**https://log-book-hr.netlify.app**, serving `sha: 7399107`, identical to local `HEAD`.
+**The app is deployed at https://log-book-hr.netlify.app, responds 200, and nothing that
+ships has changed since the deployed build.**
 
 **This URL is final for v1. No custom domain is required.**
+
+### The check, in one command
+
+The build stamp is baked into the bundle and shown on the Settings screen. Production passes
+when no commit after that stamp touches anything the bundle is built from:
+
+```bash
+git log --oneline <deployed-stamp>..HEAD -- src public index.html vite.config.ts tsconfig.json package.json package-lock.json netlify.toml
+```
+
+**Empty output passes.** Any line is a defect — shipped code exists that production is not
+serving. Read the stamp from Settings, or from the served bundle.
+
+> *Reworded 2026-09-20.* This previously read *"serving `sha: X`, identical to local `HEAD`"*,
+> which no deploy could satisfy for longer than the next commit: editing a Markdown file
+> falsified it, and this document twice had to carry a paragraph explaining why that did not
+> really count. A criterion that can never stay true is not a gate, so this is a repair rather
+> than a relaxation — **every line of shipped code must still be live**, and the command above
+> says so mechanically instead of in prose. Verified to discriminate: run against a commit
+> predating the last source change it returns that change; run against the deployed commit it
+> returns nothing.
+
+### `VERIFIED` 2026-09-20
+
+Production serves `sha: 7399107`, and the command above returns nothing.
 
 Evidence, because a bare 200 means little here: the SPA rewrite returns `index.html` with a
 **200** for any missing asset, so every probe was run against a control. The real entry chunk
@@ -339,6 +364,14 @@ Design and **O12** under Optimization, referenced rather than restated. Gates 1,
 waived with written reasons; Gate 9 is out of scope for LOCK. Completion Authority gains a
 precondition: no LOCK until Stage 2 passes. The gap gains **G7–G12**. Fix batch F1–F4 was
 applied the same day and closed Gate 6, Gate 7c and Gate 7e.
+
+**Deployment criterion reworded, 2026-09-20.** §2 said production must serve a build
+"identical to local `HEAD`". No deploy could satisfy that past the next Markdown commit, and
+the document had twice papered over it with an explanatory paragraph. It is now a single
+`git log` command that returns empty when nothing shippable has changed since the deployed
+stamp. A repair, not a relaxation: all shipped code must still be live, and the new form is
+mechanically checkable where the old one was prose. The URL, the 200 requirement and the
+substance are unchanged.
 
 **Fix batches, 2026-09-20.** F1–F4 then F5–F8, all eight applied and re-measured; Stage 1
 of the three-stage judgement passed. Gates 2, 3, 6, 7 and 10 pass; 1, 4 and 5 are waived; 8
