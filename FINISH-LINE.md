@@ -117,10 +117,10 @@ in `index.css`:
 
 | # | Criterion | Status |
 |---|---|---|
-| D1 | No screen deviates from the token set above (no hardcoded hex outside `index.css`) | **NOT VERIFIED** — see G6 |
-| D2 | Renders correctly at **375px** and **390px** wide | `VERIFIED` at 375 on Train, Exercises, History, Progress, Settings |
-| D3 | No horizontal page scroll at 375px on any route | `VERIFIED` on the five above; **unverified on `/food`, `/foods`, `/cardio`** — see G4 |
-| D4 | Every list has a designed empty state (brief 8) | **NOT VERIFIED** — see G5 |
+| D1 | No screen deviates from the token set above (no hardcoded hex outside `index.css`) | `VERIFIED` met 2026-09-19 — a grep for hex, `rgb()` or `hsl()` outside `index.css` returns nothing |
+| D2 | Renders correctly at **375px** and **390px** wide | `VERIFIED` met 2026-09-19 — all 8 tabbed routes at both widths, seeded and empty |
+| D3 | No horizontal page scroll at 375px on any route | `VERIFIED` met 2026-09-19 — `scrollWidth === clientWidth` on all 8 routes at 375 and 390 |
+| D4 | Every list has a designed empty state (brief 8) | `VERIFIED` met 2026-09-19 — all 7 list screens, each with a named next action |
 
 **Design exclusions:** light mode is supported but not designed-for; no animation; no custom
 iconography beyond the five inline tab glyphs.
@@ -143,8 +143,8 @@ number better than these is EXTRA.
 | O7 | Two builds of one commit produce identical filenames | `VERIFIED` met, 23 assets |
 | O8 | Signed out, every synced table returns zero rows; a signed-out insert is refused | `VERIFIED` met 2026-09-17 — 15/15 tables `200 []`, insert `42501` |
 | O9 | No secret in the bundle: no `service_role`, no sandbox credentials | `VERIFIED` met |
-| O10 | Every interactive control ≥ **44 × 44 px** | **NOT MET** — 7 known failures, see G2 |
-| O11 | The app loads and renders with the network offline | **NOT VERIFIED** — never tested, see G3 |
+| O10 | Every interactive control ≥ **44 × 44 px** | `VERIFIED` met 2026-09-19 — 0 controls under 44px across 8 routes × 2 widths, seeded and empty, plus 4 interactive states |
+| O11 | The app loads and renders with the network offline | **PARTIAL** — mechanism proven on desktop, not on the installed PWA. See G3 |
 
 ---
 
@@ -198,33 +198,56 @@ are manual and local by deliberate choice.
 
 The **only** remaining work in scope. Everything else is EXTRA.
 
-| # | Item | What makes it VERIFIED |
-|---|---|---|
-| G1 | **Cardio step 4** — a real 30-minute session on the phone | Every cue on time · total drift < 2s · correct round count logged · survives one deliberate backgrounding. Recorded in README with the date. |
-| G2 | **O10** — seven controls below 44px (table below) | Each measured ≥ 44px at 375px |
-| G3 | **O11** — offline has never been proven | Load the installed PWA with the network off; the app renders and a set can be logged |
-| G4 | **D3** — horizontal-scroll check on `/food`, `/foods`, `/cardio` at 375px | `scrollWidth <= clientWidth` on each |
-| G5 | **D4** — empty-state check on every list | Each list screen shows a designed empty state with a next action |
-| G6 | **D1** — no hardcoded hex outside `index.css` | A grep returns only token references |
+| # | Item | Status | What makes it VERIFIED |
+|---|---|---|---|
+| G1 | **Cardio step 4** — a real 30-minute session on the phone | **OPEN** | Every cue on time · total drift < 2s · correct round count logged · survives one deliberate backgrounding. Recorded in README with the date. |
+| G2 | **O10** — controls below 44px | **CLOSED** `8c45f7e` | Each measured ≥ 44px at 375px |
+| G3 | **O11** — offline on the installed PWA | **PARTIAL** | Load the installed PWA with the network off; the app renders and a set can be logged |
+| G4 | **D3** — horizontal-scroll check on `/food`, `/foods`, `/cardio` | **CLOSED** `8c45f7e` | `scrollWidth <= clientWidth` on each |
+| G5 | **D4** — empty-state check on every list | **CLOSED** `8c45f7e` | Each list screen shows a designed empty state with a next action |
+| G6 | **D1** — no hardcoded hex outside `index.css` | **CLOSED** `bdff75f` | A grep returns only token references |
 
-**G2 in full** — v0 of this document said *four*. That was an undercount: I had only measured
-the five routes I opened at 375px, so the two Food chips were never looked at. The same
-omission is why G4 exists.
+### G2 — closed, and wrong twice before it was
 
-| Control | Where | Declared height |
-|---|---|---|
-| `History` chip | `Train.tsx:223` | 36px — *browser-measured* |
-| Suggestion pill | `ExerciseCard.tsx:505` | 36px — *browser-measured* |
-| `Why?` | `ExerciseCard.tsx:517` | 36px — *browser-measured* |
-| Sync pill | `SyncPill.tsx:52` | 26px — *browser-measured* |
-| `Library` chip | `Food.tsx:48` | 36px — from source (`min-h-9`) |
-| `Today` chip | `Foods.tsx:60` | 36px — from source (`min-h-9`) |
-| Meal-slot filter | `Foods.tsx:75` | 40px — from source (`min-h-10`) |
+v0 said **four** controls. v1.0 corrected that to **seven**. Both were undercounts; the real
+number was **nine**. The method was the problem, not the arithmetic:
+
+- Grepping the source for height utilities cannot see a control sized by **padding alone** —
+  the two chart buttons on `Progress` were exactly that.
+- Grepping at all only covers the routes you think to look at. The two Food chips were missed
+  at v0 because I had only opened five routes at 375px, which is the same omission that
+  created G4.
+- Two more controls **only exist once there is data** — the Reps input and the strength-chart
+  `select` — so neither a grep nor a sweep of empty screens could find them.
+
+What actually worked: enumerating `button, a, input, select, textarea` in the live DOM and
+reading `getBoundingClientRect()`, across every route, at both widths, with and without
+seeded data, and again with the picker, reorder, note and remove-confirm states open. That
+is the method this criterion should be re-checked with in future, not a grep.
+
+The delicate one was the `NumberField` steppers at 40px. They were narrowed to 40 in the
+first place to stop the weight input collapsing and clipping `62.5` — the regression that
+shipped in `bdfdf2f`. Widening them back was measured, not assumed: 53px of text space
+remains and the widest realistic value, `127.5`, needs 46px.
 
 The 20px checkbox at `Exercises.tsx:338` **passes**: it sits inside a `<label>` with `p-3` and
 two lines of text, and the whole label is the tap target.
 
-**The gap is not empty.** G1 is the substantive one; G2–G6 are verification and polish.
+### G3 — what was proven, and what was not
+
+`VERIFIED` on desktop, 2026-09-19: a production build was served, its service worker took
+control and precached 29 entries including `/index.html`, the origin was then **stopped**
+(`curl` → connection refused), and on reload the app rendered `/train` in full from cache.
+A set was logged with the origin dead: `sets` 1 → 2, `outbox` 0 → 1. With `navigator.onLine`
+forced false the sync pill read *"Offline · 1 to sync"*.
+
+`NOT VERIFIED`: the criterion says **the installed PWA with the network off**. This was
+desktop Chrome with one origin unreachable while the machine still had a network. The
+mechanism is proven; the stated configuration is not. G3 stays open, and it is an
+owner-phone task alongside G1.
+
+**The gap is two items, both needing the phone.** Everything verifiable from this machine is
+done.
 
 ---
 
@@ -244,6 +267,13 @@ CI, so the commit is the only durable marker of what "v1" pointed at.
 ---
 
 ## Changelog
+
+**Status update — 2026-09-19, after the lock.** No criterion changed; only our position
+against them. G2, G4, G5 and G6 closed, taking D1–D4 and O10 to met. G3 moved to PARTIAL:
+offline is proven on desktop but not on the installed PWA. The gap is now **G1 and G3**, both
+of which need the phone. The corrected sub-44px count — four, then seven, then nine — is
+recorded in §5 along with why grepping kept missing them, because the method matters more
+than the number.
 
 **v1.0 — 2026-09-19 — LOCKED.** From v0:
 

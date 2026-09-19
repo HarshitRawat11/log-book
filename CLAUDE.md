@@ -28,8 +28,19 @@ Reopening scope is a deliberate act, not a drift. It requires the explicit word 
 
 ## What is still in scope
 
-The gap in FINISH-LINE.md §5, and nothing else: **G1** cardio step 4 · **G2** seven controls
-below 44px · **G3** offline unproven · **G4** horizontal-scroll check on three routes ·
-**G5** empty-state check · **G6** no hardcoded hex outside `index.css`.
+The gap in FINISH-LINE.md §5, and nothing else. As of 2026-09-19 that is **two items, both
+needing the phone**:
 
-When the gap is empty, v1 is done and every request is EXTRA.
+- **G1** — cardio step 4: a real 30-minute session, cues on time, drift < 2s, survives one
+  backgrounding.
+- **G3** — offline on the *installed* PWA. The mechanism is proven on desktop; the stated
+  configuration is not.
+
+G2, G4, G5 and G6 are closed. When G1 and G3 land, v1 is done and every request is EXTRA.
+
+**Re-checking the 44px rule:** use the browser, not a grep. Enumerate
+`button, a, input, select, textarea` in the live DOM and read `getBoundingClientRect()`,
+on every route, at 375 and 390, with and without data, and with the picker, reorder, note and
+remove-confirm states open. A grep cannot see a control sized by padding, and neither a grep
+nor an empty screen can see one that only exists once there is data. That mistake was made
+twice; §5 records it.
