@@ -45,7 +45,7 @@ export function NumberField({
           aria-label={`Decrease ${label}`}
           onClick={() => nudge(-step)}
           className="h-12 w-11 shrink-0 rounded-lg border border-border bg-surface-2 text-xl
-                     leading-none text-text-dim active:bg-border"
+                     text-text-dim active:bg-border"
         >
           −
         </button>
@@ -66,7 +66,7 @@ export function NumberField({
           aria-label={`Increase ${label}`}
           onClick={() => nudge(step)}
           className="h-12 w-11 shrink-0 rounded-lg border border-border bg-surface-2 text-xl
-                     leading-none text-text-dim active:bg-border"
+                     text-text-dim active:bg-border"
         >
           +
         </button>

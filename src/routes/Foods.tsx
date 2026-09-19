@@ -87,7 +87,7 @@ export function Foods() {
         <div className="flex flex-col gap-3 pb-4">
           <button
             onClick={async () => setEditingRecipe(await createRecipe())}
-            className="min-h-14 w-full rounded-xl bg-accent font-semibold text-accent-text"
+            className="min-h-14 w-full rounded-lg bg-accent font-semibold text-accent-text"
           >
             + New recipe
           </button>
@@ -123,7 +123,7 @@ export function Foods() {
         <div className="flex flex-col gap-3 pb-4">
           <button
             onClick={() => setEditingFood('new')}
-            className="min-h-14 w-full rounded-xl border border-border bg-surface font-semibold"
+            className="min-h-14 w-full rounded-lg border border-border bg-surface font-semibold"
           >
             + Add food manually
           </button>
@@ -224,7 +224,7 @@ function FoodEditor({ food, onClose }: { food: Food | null; onClose: () => void 
       </div>
 
       {food && (
-        <p className="px-1 text-xs leading-relaxed text-text-dim">
+        <p className="px-1 text-xs text-text-dim">
           Changing these does not alter anything already logged — past entries keep the numbers
           they were logged with.
         </p>
@@ -234,12 +234,12 @@ function FoodEditor({ food, onClose }: { food: Food | null; onClose: () => void 
         <button
           onClick={() => void save()}
           disabled={!valid}
-          className="min-h-14 flex-1 rounded-xl bg-accent font-semibold text-accent-text
+          className="min-h-14 flex-1 rounded-lg bg-accent font-semibold text-accent-text
                      disabled:opacity-40"
         >
           Save
         </button>
-        <button onClick={onClose} className="min-h-14 rounded-xl border border-border px-4">
+        <button onClick={onClose} className="min-h-14 rounded-lg border border-border px-4">
           Cancel
         </button>
       </div>

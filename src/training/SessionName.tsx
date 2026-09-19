@@ -93,7 +93,7 @@ export function SessionName({ workout }: { workout: Workout }) {
     <button
       onClick={() => setEditing(true)}
       aria-label={`Session name: ${workout.name}. Tap to rename.`}
-      className="flex min-h-11 w-full items-center gap-2 rounded-xl border border-border
+      className="flex min-h-11 w-full items-center gap-2 rounded-lg border border-border
                  bg-surface px-3 text-left"
     >
       <span className="min-w-0 flex-1 truncate font-semibold">{workout.name}</span>

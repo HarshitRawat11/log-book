@@ -106,7 +106,7 @@ export function RecipeEditor({ recipe, onClose }: { recipe: Recipe; onClose: () 
         ) : (
           <button
             onClick={() => setAdding(true)}
-            className="mt-2 min-h-12 w-full rounded-xl border border-dashed border-border text-sm
+            className="mt-2 min-h-12 w-full rounded-lg border border-dashed border-border text-sm
                        font-medium text-text-dim"
           >
             + Add ingredient
@@ -123,7 +123,7 @@ export function RecipeEditor({ recipe, onClose }: { recipe: Recipe; onClose: () 
         >
           Save yield
         </button>
-        <p className="mt-2 text-xs leading-relaxed text-text-dim">
+        <p className="mt-2 text-xs text-text-dim">
           Weigh the pan contents after cooking. Ingredients here total{' '}
           <span className="tabular text-text">{Math.round(rawWeight)}&nbsp;g</span> raw — the difference
           is water lost, which is exactly what makes the per-100g figure right.
@@ -162,7 +162,7 @@ export function RecipeEditor({ recipe, onClose }: { recipe: Recipe; onClose: () 
             await saveHeader()
             onClose()
           }}
-          className="min-h-14 flex-1 rounded-xl bg-accent font-semibold text-accent-text"
+          className="min-h-14 flex-1 rounded-lg bg-accent font-semibold text-accent-text"
         >
           Done
         </button>
@@ -173,7 +173,7 @@ export function RecipeEditor({ recipe, onClose }: { recipe: Recipe; onClose: () 
             })
             scheduleFlush()
           }}
-          className="min-h-14 rounded-xl border border-border px-4 text-sm"
+          className="min-h-14 rounded-lg border border-border px-4 text-sm"
         >
           {recipe.is_favourite ? '★ Favourite' : '☆ Favourite'}
         </button>

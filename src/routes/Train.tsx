@@ -238,7 +238,7 @@ export function Train() {
               action={
                 <Link
                   to="/exercises"
-                  className="flex min-h-12 items-center rounded-xl bg-accent px-4 font-semibold
+                  className="flex min-h-12 items-center rounded-lg bg-accent px-4 font-semibold
                              text-accent-text"
                 >
                   Build exercise library
@@ -249,7 +249,7 @@ export function Train() {
             <>
               <button
                 onClick={() => void startSession()}
-                className="min-h-14 w-full rounded-xl bg-accent px-4 text-lg font-semibold
+                className="min-h-14 w-full rounded-lg bg-accent px-4 text-lg font-semibold
                            text-accent-text"
               >
                 Start session
@@ -428,7 +428,7 @@ export function Train() {
           ) : (
             <button
               onClick={() => setPicking(true)}
-              className="min-h-14 w-full rounded-xl border border-dashed border-border
+              className="min-h-14 w-full rounded-lg border border-dashed border-border
                          font-semibold text-text-dim"
             >
               + Add exercise
@@ -451,7 +451,7 @@ export function Train() {
           {working.length > 0 && (
             <button
               onClick={() => void startSession()}
-              className="min-h-12 w-full rounded-xl border border-dashed border-border text-sm
+              className="min-h-12 w-full rounded-lg border border-dashed border-border text-sm
                          font-medium text-text-dim"
             >
               + Start another session today

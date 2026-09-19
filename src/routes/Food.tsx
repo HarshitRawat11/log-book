@@ -12,6 +12,26 @@ import { logByDate, logForDate, MEAL_SLOTS, type MealSlot } from '../food/querie
 import { todayIso } from '../lib/dates'
 
 /**
+ * The meal you are most likely logging into, by the clock.
+ *
+ * Only used to decide which of the four Add buttons is filled. Four filled
+ * buttons would be four dominant elements, which is no hierarchy at all and
+ * exactly the "busy" the intent brief rules out; none would leave the screen
+ * with no prominent action, which is what gate 3b caught. One is the answer,
+ * and the clock is the only signal available for choosing it.
+ *
+ * Getting it wrong costs nothing: the other three are still there, still one
+ * tap away, and look exactly as they always did.
+ */
+function slotNow(now = new Date()): MealSlot {
+  const h = now.getHours()
+  if (h < 11) return 'breakfast'
+  if (h < 16) return 'lunch'
+  if (h < 21) return 'dinner'
+  return 'snack'
+}
+
+/**
  * Today's food log.
  *
  * The 7-day average sits directly under the daily total and is given the same
@@ -19,6 +39,8 @@ import { todayIso } from '../lib/dates'
  */
 export function Food() {
   const date = todayIso()
+  // Safe because this screen is always today - there is no date picker here.
+  const nowSlot = slotNow()
   const [addingTo, setAddingTo] = useState<MealSlot | null>(null)
 
   const entries = useLiveQuery(() => logForDate(date), [date], [])
@@ -162,8 +184,12 @@ export function Food() {
                 ) : (
                   <button
                     onClick={() => setAddingTo(slot)}
-                    className="min-h-12 w-full rounded-lg border border-dashed border-border
-                               text-sm font-medium text-text-dim"
+                    className={
+                      slot === nowSlot
+                        ? 'min-h-12 w-full rounded-lg bg-accent text-sm font-semibold text-accent-text'
+                        : `min-h-12 w-full rounded-lg border border-dashed border-border
+                           text-sm font-medium text-text-dim`
+                    }
                   >
                     + Add
                   </button>

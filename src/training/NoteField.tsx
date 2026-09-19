@@ -114,7 +114,7 @@ export function NoteField({
         onClick={() => setOpen(true)}
         className={
           collapsedClassName ??
-          'min-h-11 w-full rounded-xl border border-dashed border-border text-sm ' +
+          'min-h-11 w-full rounded-lg border border-dashed border-border text-sm ' +
             'font-medium text-text-dim'
         }
       >
@@ -140,7 +140,7 @@ export function NoteField({
         rows={rows}
         placeholder={placeholder}
         className="w-full resize-y rounded-lg border border-border bg-surface-2 p-2 text-base
-                   leading-relaxed outline-none focus:border-accent"
+                   outline-none focus:border-accent"
       />
     </div>
   )

@@ -34,8 +34,8 @@ export function ConfirmDelete({
   }
 
   return (
-    <div className="rounded-xl border border-danger/40 bg-danger/10 p-4">
-      <p className="text-sm leading-relaxed">{warning}</p>
+    <div className="rounded-lg border border-danger/40 bg-danger/10 p-4">
+      <p className="text-sm">{warning}</p>
       <div className="mt-3 flex gap-2">
         <button
           disabled={busy}

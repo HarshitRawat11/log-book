@@ -329,8 +329,11 @@ function BodyweightCard({ series }: { series: ReturnType<typeof bodyweightSeries
         !adding && (
           <button
             onClick={() => setAdding(true)}
-            className="rounded-full border border-border bg-surface-2 min-h-11 px-3 text-xs
-                       text-text-dim"
+            // Filled: Progress is otherwise read-only, so this is the only
+            // thing on it that writes anything, and gate 3b wants a primary
+            // action that survives greyscale.
+            className="rounded-full bg-accent min-h-11 px-3 text-xs font-semibold
+                       text-accent-text"
           >
             + Log
           </button>

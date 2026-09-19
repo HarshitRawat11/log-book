@@ -64,7 +64,7 @@ export function CardioReview() {
     <Screen title={session.completed ? 'Session complete' : 'Session ended early'}>
       <div className="flex flex-col gap-4 pb-4">
         <section className="rounded-2xl border border-border bg-surface p-4">
-          <p className="tabular text-3xl font-semibold">
+          <p className="tabular text-2xl font-semibold">
             {done} <span className="text-lg font-normal text-text-dim">of {planned} rounds</span>
           </p>
           <p className="tabular mt-1 text-sm text-text-dim">
@@ -109,20 +109,20 @@ export function CardioReview() {
             onChange={(e) => setNotes(e.target.value)}
             rows={4}
             placeholder="How it went, what to change next time."
-            className="w-full resize-y rounded-xl border border-border bg-surface p-3 text-base
-                       leading-relaxed outline-none focus:border-accent"
+            className="w-full resize-y rounded-lg border border-border bg-surface p-3 text-base
+                       outline-none focus:border-accent"
           />
         </label>
 
         <button
           onClick={() => void save()}
-          className="min-h-14 w-full rounded-xl bg-accent text-lg font-semibold text-accent-text"
+          className="min-h-14 w-full rounded-lg bg-accent text-lg font-semibold text-accent-text"
         >
           Save
         </button>
         <button
           onClick={() => navigate('/cardio', { replace: true })}
-          className="min-h-12 w-full rounded-xl border border-border bg-surface font-medium
+          className="min-h-12 w-full rounded-lg border border-border bg-surface font-medium
                      text-text-dim"
         >
           Skip for now

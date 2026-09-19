@@ -138,7 +138,7 @@ function BmrCalculator({ onUse }: { onUse: (kcal: number) => void }) {
   const tdee = bmr ? Math.round(bmr * Number(activity)) : null
 
   return (
-    <div className="mt-3 rounded-xl border border-border bg-surface-2 p-3">
+    <div className="mt-3 rounded-lg border border-border bg-surface-2 p-3">
       <div className="flex gap-3">
         <NumberField label="Weight kg" value={weight} onChange={setWeight} step={1} />
         <NumberField label="Height cm" value={height} onChange={setHeight} step={1} />
@@ -167,7 +167,7 @@ function BmrCalculator({ onUse }: { onUse: (kcal: number) => void }) {
             BMR <span className="font-semibold">{bmr}</span> kcal · maintenance ≈{' '}
             <span className="font-semibold">{tdee}</span> kcal
           </p>
-          <p className="mt-2 text-xs leading-relaxed text-text-dim">
+          <p className="mt-2 text-xs text-text-dim">
             Mifflin-St Jeor. This is a <em>starting estimate</em>, not a prescription — the only
             number that settles it is your own bodyweight trend over a few weeks. Adjust from here.
           </p>

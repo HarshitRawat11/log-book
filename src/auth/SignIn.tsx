@@ -45,12 +45,12 @@ export function SignIn() {
   return (
     <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center gap-8 px-6 py-12">
       <header>
-        <h1 className="text-3xl font-semibold tracking-tight">log-book</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">log-book</h1>
         <p className="mt-2 text-text-dim">Sign in with a magic link. No password.</p>
       </header>
 
       {status.kind === 'sent' ? (
-        <div className="rounded-xl border border-border bg-surface p-5">
+        <div className="rounded-lg border border-border bg-surface p-5">
           <p className="font-medium text-ok">Check your email</p>
           <p className="mt-2 text-sm text-text-dim">
             A sign-in link is on its way to <span className="text-text">{email}</span>. Open it on
@@ -78,7 +78,7 @@ export function SignIn() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
-            className="min-h-14 rounded-xl border border-border bg-surface px-4 text-lg
+            className="min-h-14 rounded-lg border border-border bg-surface px-4 text-lg
                        outline-none placeholder:text-text-dim focus:border-accent"
           />
 
@@ -91,7 +91,7 @@ export function SignIn() {
           <button
             type="submit"
             disabled={status.kind === 'sending'}
-            className="min-h-14 rounded-xl bg-accent px-4 text-lg font-semibold
+            className="min-h-14 rounded-lg bg-accent px-4 text-lg font-semibold
                        text-accent-text disabled:opacity-60"
           >
             {status.kind === 'sending' ? 'Sending…' : 'Send magic link'}

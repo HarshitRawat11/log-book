@@ -210,7 +210,7 @@ export function Cardio() {
             <h2 className="text-sm font-semibold">
               {(presets ?? []).length === 0 ? 'No presets yet' : 'Add a starter preset'}
             </h2>
-            <p className="mt-1 text-xs leading-relaxed text-text-dim">
+            <p className="mt-1 text-xs text-text-dim">
               Start from one of these and adjust it, or set the durations below and save your own.
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
@@ -284,7 +284,7 @@ export function Cardio() {
         <button
           onClick={() => void testSound()}
           disabled={testing}
-          className="min-h-12 w-full rounded-xl border border-border bg-surface font-medium
+          className="min-h-12 w-full rounded-lg border border-border bg-surface font-medium
                      disabled:opacity-50"
         >
           {testing ? 'Playing all four cues…' : 'Test sound'}
@@ -299,7 +299,7 @@ export function Cardio() {
         )}
 
         {speed > 1 && (
-          <p className="rounded-xl border border-danger/40 bg-danger/10 p-3 text-center text-xs
+          <p className="rounded-lg border border-danger/40 bg-danger/10 p-3 text-center text-xs
                         text-danger">
             Fast-forward ×{speed} — {humanDuration(totalSeconds(config) / speed)} instead of{' '}
             {humanDuration(totalSeconds(config))}. Drop <code>?speed=</code> from the URL for a real
@@ -349,7 +349,7 @@ export function Cardio() {
             navigate('/cardio/session')
           }}
           disabled={!valid}
-          className="min-h-16 w-full rounded-xl bg-accent text-lg font-semibold text-accent-text
+          className="min-h-16 w-full rounded-lg bg-accent text-lg font-semibold text-accent-text
                      disabled:opacity-40"
         >
           Start session
@@ -425,13 +425,13 @@ function SavePreset({
       <div className="flex gap-2">
         <button
           onClick={async () => onSaved(await savePreset({ ...fields, name: existing.name }, existing))}
-          className="min-h-12 flex-1 rounded-xl border border-border bg-surface text-sm font-medium"
+          className="min-h-12 flex-1 rounded-lg border border-border bg-surface text-sm font-medium"
         >
           Update “{existing.name}”
         </button>
         <button
           onClick={() => setNaming(true)}
-          className="min-h-12 rounded-xl border border-border bg-surface px-4 text-sm"
+          className="min-h-12 rounded-lg border border-border bg-surface px-4 text-sm"
         >
           Save as new
         </button>
@@ -455,7 +455,7 @@ function SavePreset({
           setNaming(false)
         }}
         disabled={!name.trim()}
-        className="min-h-12 shrink-0 rounded-xl border border-border bg-surface px-4 text-sm
+        className="min-h-12 shrink-0 rounded-lg border border-border bg-surface px-4 text-sm
                    font-medium disabled:opacity-40"
       >
         Save

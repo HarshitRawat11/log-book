@@ -97,7 +97,7 @@ export function History() {
               <p className="mb-2 text-xs text-text-dim">
                 or repeat — same lifts on that date, nothing pre-logged
               </p>
-              <ul className="divide-y divide-border overflow-hidden rounded-xl border
+              <ul className="divide-y divide-border overflow-hidden rounded-lg border
                              border-border bg-surface-2">
                 {recent!.map((s) => {
                   const names = s.exercise_ids.map((id) => byId.get(id)?.name).filter(Boolean)
@@ -133,8 +133,10 @@ export function History() {
       ) : (
         <button
           onClick={() => setAdding(true)}
-          className="mb-4 min-h-12 w-full rounded-xl border border-dashed border-border
-                     font-medium text-text-dim"
+          // Filled, because it is this screen's one action and gate 3b wants
+          // the primary action to survive greyscale. The list below it is
+          // navigation; this is the only thing here that writes anything.
+          className="mb-4 min-h-12 w-full rounded-lg bg-accent font-semibold text-accent-text"
         >
           + Log a session on another date
         </button>
@@ -147,7 +149,7 @@ export function History() {
           action={
             <Link
               to="/train"
-              className="flex min-h-12 items-center rounded-xl bg-accent px-4 font-semibold
+              className="flex min-h-12 items-center rounded-lg bg-accent px-4 font-semibold
                          text-accent-text"
             >
               Go to today
@@ -172,7 +174,7 @@ export function History() {
                       {workout.name ? `${workout.name} · ` : ''}
                       {shortDate(workout.date)}
                       {workout.date === today && (
-                        <span className="ml-2 rounded bg-accent/15 px-1.5 py-0.5 text-xs
+                        <span className="ml-2 rounded-lg bg-accent/15 px-1.5 py-0.5 text-xs
                                          font-medium text-accent">
                           today
                         </span>
@@ -183,7 +185,7 @@ export function History() {
                       <span className="text-xs text-text-dim">{relativeAge(workout.date)}</span>
                     )}
                     {workout.source === 'import' && (
-                      <span className="rounded bg-surface-2 px-1.5 py-0.5 text-xs text-text-dim">
+                      <span className="rounded-lg bg-surface-2 px-1.5 py-0.5 text-xs text-text-dim">
                         imported
                       </span>
                     )}

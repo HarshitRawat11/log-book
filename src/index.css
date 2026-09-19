@@ -103,6 +103,42 @@
   }
 }
 
+/* ---------------------------------------------------------------------------
+   Type scale (quality gates 2d, 2e, 3c, 7d).
+
+   Six steps, each with exactly one line-height, declared here and nowhere
+   else. Three gates lean on that:
+
+     2d  the app may render at most six distinct sizes
+     2e  a size may carry exactly one line-height
+     7d  body sizes (12-18) sit between 1.5 and 1.7
+
+   Declaring leading here is what makes 2e STRUCTURAL rather than a thing to
+   re-check: there are no leading-* utilities left in the app to contradict it,
+   so a second line-height for a step cannot appear by accident.
+
+   2xl is 26px, not the Tailwind default 24. At the 20% of the app-switcher
+   card that is 5.2px, which clears gate 3c's 5px floor; 24px gave 4.8.
+
+   One documented exception: /cardio/session. It is the full-screen timer read
+   from three metres, its numeral is sized in viewport units, and it keeps its
+   own leading - the same reason its colours bypass the palette.
+--------------------------------------------------------------------------- */
+@theme {
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1.5;
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.5;
+  --text-base: 1rem;
+  --text-base--line-height: 1.5;
+  --text-lg: 1.125rem;
+  --text-lg--line-height: 1.5;
+  --text-xl: 1.25rem;
+  --text-xl--line-height: 1;
+  --text-2xl: 1.625rem;
+  --text-2xl--line-height: 1.25;
+}
+
 @theme inline {
   --color-bg: var(--bg);
   --color-surface: var(--surface);

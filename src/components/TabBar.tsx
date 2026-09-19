@@ -65,7 +65,7 @@ export function TabBar() {
                   // height is a token because the rest-timer bar sits on top of
                   // it and has to know how tall it is.
                   'flex min-h-[var(--tabbar-h)] flex-col items-center justify-center gap-1 py-2',
-                  'text-[11px]',
+                  'text-xs',
                   isActive ? 'text-accent' : 'text-text-dim',
                 ].join(' ')
               }

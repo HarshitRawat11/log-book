@@ -72,7 +72,7 @@ export function SyncPill() {
           role="status"
           // Right-aligned under the pill and 288px wide, which clears 375px
           // with the header's own padding.
-          className="absolute right-0 top-full z-30 mt-1 w-72 rounded-xl border border-danger/40
+          className="absolute right-0 top-full z-30 mt-1 w-72 rounded-lg border border-danger/40
                      bg-surface p-3 text-left shadow-lg"
         >
           <p className="text-xs font-medium">
@@ -80,10 +80,10 @@ export function SyncPill() {
           </p>
           {/* Verbatim. The constraint name is the part that identifies it, and
               a friendlier paraphrase would be the part that gets dropped. */}
-          <p className="mt-1 break-words text-xs leading-relaxed text-text-dim">
+          <p className="mt-1 break-words text-xs text-text-dim">
             {s.stuckDetail.error ?? 'No error recorded yet.'}
           </p>
-          <p className="mt-2 text-xs leading-relaxed text-text-dim">
+          <p className="mt-2 text-xs text-text-dim">
             Nothing is lost — it retries. Writes to this table wait behind it.
           </p>
           <div className="mt-2 flex items-center gap-2">

@@ -20,7 +20,7 @@ export function FinishSession({ workout, hasSets }: { workout: Workout; hasSets:
 
   if (workout.finished_at) {
     return (
-      <div className="flex items-center justify-between gap-2 rounded-xl border border-border
+      <div className="flex items-center justify-between gap-2 rounded-lg border border-border
                       bg-surface px-3 py-1.5">
         <span className="text-sm">
           Finished
@@ -41,7 +41,7 @@ export function FinishSession({ workout, hasSets }: { workout: Workout; hasSets:
   return (
     <button
       onClick={() => void finishWorkout(workout.id)}
-      className="min-h-12 w-full rounded-xl border border-border bg-surface-2 text-sm
+      className="min-h-12 w-full rounded-lg border border-border bg-surface-2 text-sm
                  font-medium text-text-dim"
     >
       Finish session

@@ -16,7 +16,7 @@ import { shortDate } from '../lib/dates'
  * Chart primitives.
  *
  * Conventions applied throughout, so no individual chart has to remember them:
- * recessive grid and axes, 2px lines, 8px markers, rounded data-ends anchored
+ * recessive grid and axes, 2px lines, 8px markers, rounded-lg data-ends anchored
  * to the baseline, a 2px surface gap between stacked segments, and a tooltip on
  * everything. Colours come from --series-N, which are validated slots - assign
  * by slot, never cycle.
@@ -37,7 +37,7 @@ const fmtLabel = (d: unknown) => (typeof d === 'string' ? shortDate(d) : String(
 
 const axis = {
   stroke: 'var(--border)',
-  tick: { fill: 'var(--text-dim)', fontSize: 11 },
+  tick: { fill: 'var(--text-dim)', fontSize: 12 },
   tickLine: false,
 } as const
 
@@ -97,7 +97,7 @@ export function ChartCard({
         <h2 className="text-sm font-semibold">{title}</h2>
         {right}
       </header>
-      {note && <p className="mb-2 text-xs leading-relaxed text-text-dim">{note}</p>}
+      {note && <p className="mb-2 text-xs text-text-dim">{note}</p>}
       {empty ? <p className="py-6 text-center text-sm text-text-dim">{empty}</p> : children}
     </section>
   )
@@ -144,7 +144,7 @@ export function TimeLine({
   )
 }
 
-/** Single-series bars, rounded at the data end only. */
+/** Single-series bars, rounded-lg at the data end only. */
 export function TimeBars({ data, unit }: { data: Array<Record<string, unknown>>; unit?: string }) {
   return (
     <ResponsiveContainer width="100%" height={180}>

@@ -107,7 +107,7 @@ export function WorkoutDetail() {
           title="Session not found"
           body="It may have been deleted on this or another device."
           action={
-            <Link to="/history" className="flex min-h-12 items-center rounded-xl bg-accent px-4
+            <Link to="/history" className="flex min-h-12 items-center rounded-lg bg-accent px-4
                                             font-semibold text-accent-text">
               Back to history
             </Link>
@@ -199,7 +199,7 @@ export function WorkoutDetail() {
         ) : (
           <button
             onClick={() => setPicking(true)}
-            className="min-h-14 w-full rounded-xl border border-dashed border-border font-semibold
+            className="min-h-14 w-full rounded-lg border border-dashed border-border font-semibold
                        text-text-dim"
           >
             + Add exercise

@@ -48,7 +48,7 @@ function NotConfigured() {
   return (
     <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center gap-4 px-6">
       <h1 className="text-xl font-semibold">Not configured</h1>
-      <p className="text-sm leading-relaxed text-text-dim">
+      <p className="text-sm text-text-dim">
         Copy <code className="text-text">.env.local.example</code> to{' '}
         <code className="text-text">.env.local</code> and fill in your Supabase project URL and
         anon key, then restart the dev server.

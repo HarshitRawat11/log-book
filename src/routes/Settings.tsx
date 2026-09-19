@@ -104,7 +104,10 @@ export function Settings() {
       <button
         onClick={() => void syncNow({ manual: true })}
         disabled={!sync.online}
-        className="mt-3 min-h-12 w-full rounded-xl border border-border bg-surface font-medium
+        // Filled: everything else on Settings is a field you edit in place, so
+        // this is the only action on the screen, and gate 3b wants one that
+        // survives greyscale.
+        className="mt-3 min-h-12 w-full rounded-lg bg-accent font-semibold text-accent-text
                    disabled:opacity-40"
       >
         Sync now
@@ -143,7 +146,7 @@ export function Settings() {
       </section>
       <button
         onClick={() => void checkForUpdate()}
-        className="mt-3 min-h-12 w-full rounded-xl border border-border bg-surface font-medium"
+        className="mt-3 min-h-12 w-full rounded-lg border border-border bg-surface font-medium"
       >
         {update === 'checking'
           ? 'Checking…'
@@ -156,7 +159,7 @@ export function Settings() {
       {update === 'found' && (
         <button
           onClick={() => window.location.reload()}
-          className="mt-2 min-h-12 w-full rounded-xl bg-accent font-semibold text-accent-text"
+          className="mt-2 min-h-12 w-full rounded-lg bg-accent font-semibold text-accent-text"
         >
           Reload now
         </button>
@@ -170,31 +173,31 @@ export function Settings() {
       <div className="grid grid-cols-2 gap-2">
         <button
           onClick={() => void exportJson()}
-          className="min-h-12 rounded-xl border border-border bg-surface text-sm font-medium"
+          className="min-h-12 rounded-lg border border-border bg-surface text-sm font-medium"
         >
           All data (JSON)
         </button>
         <button
           onClick={() => void exportSetsCsv()}
-          className="min-h-12 rounded-xl border border-border bg-surface text-sm font-medium"
+          className="min-h-12 rounded-lg border border-border bg-surface text-sm font-medium"
         >
           Sets (CSV)
         </button>
         <button
           onClick={() => void exportFoodCsv()}
-          className="min-h-12 rounded-xl border border-border bg-surface text-sm font-medium"
+          className="min-h-12 rounded-lg border border-border bg-surface text-sm font-medium"
         >
           Food log (CSV)
         </button>
         <button
           onClick={() => void exportBodyweightCsv()}
-          className="min-h-12 rounded-xl border border-border bg-surface text-sm font-medium"
+          className="min-h-12 rounded-lg border border-border bg-surface text-sm font-medium"
         >
           Bodyweight (CSV)
         </button>
         <button
           onClick={() => void exportCardioCsv()}
-          className="min-h-12 rounded-xl border border-border bg-surface text-sm font-medium"
+          className="min-h-12 rounded-lg border border-border bg-surface text-sm font-medium"
         >
           Cardio (CSV)
         </button>
@@ -208,7 +211,7 @@ export function Settings() {
       <div className="flex gap-2">
         <button
           onClick={() => void copyDiagnostics()}
-          className="min-h-12 flex-1 rounded-xl border border-border bg-surface font-medium"
+          className="min-h-12 flex-1 rounded-lg border border-border bg-surface font-medium"
         >
           {copied === 'ok'
             ? 'Copied'
@@ -218,7 +221,7 @@ export function Settings() {
         </button>
         <button
           onClick={() => void showDiagnostics()}
-          className="min-h-12 rounded-xl border border-border bg-surface px-4 text-sm"
+          className="min-h-12 rounded-lg border border-border bg-surface px-4 text-sm"
         >
           {diag ? 'Hide' : 'View'}
         </button>
@@ -229,13 +232,13 @@ export function Settings() {
           value={diag}
           onFocus={(e) => e.currentTarget.select()}
           rows={14}
-          className="mt-2 w-full rounded-xl border border-border bg-surface-2 p-3 font-mono
-                     text-[11px] leading-snug outline-none"
+          className="mt-2 w-full rounded-lg border border-border bg-surface-2 p-3 font-mono
+                     text-xs outline-none"
         />
       )}
 
       {blocked !== null ? (
-        <div className="mt-6 rounded-xl border border-danger/40 bg-danger/10 p-4">
+        <div className="mt-6 rounded-lg border border-danger/40 bg-danger/10 p-4">
           <p className="text-sm">
             {blocked} change{blocked === 1 ? '' : 's'} {blocked === 1 ? 'has' : 'have'} not reached
             the server yet. Signing out clears this device, so {blocked === 1 ? 'it' : 'they'} would
@@ -260,7 +263,7 @@ export function Settings() {
       ) : (
         <button
           onClick={() => void doSignOut()}
-          className="mt-6 min-h-14 w-full rounded-xl border border-border bg-surface px-4
+          className="mt-6 min-h-14 w-full rounded-lg border border-border bg-surface px-4
                      font-semibold text-danger"
         >
           Sign out
@@ -316,7 +319,7 @@ function RestLength() {
             +
           </button>
         </div>
-        <p className="mt-3 text-xs leading-relaxed text-text-dim">
+        <p className="mt-3 text-xs text-text-dim">
           Starts automatically when you log a set, with a warning ten seconds before the end and a
           bell at zero. Warm-ups do not start one. You can stretch or skip any individual rest from
           the bar without changing this.

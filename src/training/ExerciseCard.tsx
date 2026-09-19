@@ -370,7 +370,7 @@ export function ExerciseCard({
   if (confirmRemove) {
     return (
       <section className="rounded-2xl border border-danger/40 bg-danger/10 p-4">
-        <p className="text-sm leading-relaxed">
+        <p className="text-sm">
           Remove <strong>{exercise.name}</strong> from this session? Its{' '}
           <strong>
             {mine.length} logged set{mine.length === 1 ? '' : 's'}
@@ -431,7 +431,7 @@ export function ExerciseCard({
           {/* The setup numbers, at the top of the card, because the moment they
               are useful is standing in front of the machine before set one. */}
           {exercise.machine_setup && (
-            <span className="mt-1 inline-block rounded bg-surface-2 px-1.5 py-0.5 text-xs text-text-dim">
+            <span className="mt-1 inline-block rounded-lg bg-surface-2 px-1.5 py-0.5 text-xs text-text-dim">
               {exercise.machine_setup}
             </span>
           )}
@@ -439,7 +439,7 @@ export function ExerciseCard({
               means the opposite of what it normally does, and the one place
               that has to be unambiguous is where you are typing them in. */}
           {assisted && (
-            <span className="mt-1 ml-1 inline-block rounded bg-accent/10 px-1.5 py-0.5 text-xs text-accent">
+            <span className="mt-1 ml-1 inline-block rounded-lg bg-accent/10 px-1.5 py-0.5 text-xs text-accent">
               assisted · less is progress
             </span>
           )}
@@ -487,7 +487,7 @@ export function ExerciseCard({
           two lines, and putting it behind a tap would defeat the point. */}
       {lastNote && (
         <p className="mx-4 mt-2 rounded-lg border-l-2 border-accent/50 bg-surface-2 py-1.5 pl-2.5
-                      pr-2 text-xs leading-relaxed text-text-dim">
+                      pr-2 text-xs text-text-dim">
           <span className="font-medium text-text">{shortDate(lastNote.date)}</span>
           {' · '}
           {lastNote.note}
@@ -522,7 +522,7 @@ export function ExerciseCard({
             </button>
           </div>
           {showWhy && (
-            <p className="mt-2 text-xs leading-relaxed text-text-dim">{suggestion.reason}</p>
+            <p className="mt-2 text-xs text-text-dim">{suggestion.reason}</p>
           )}
         </div>
       )}
@@ -564,7 +564,7 @@ export function ExerciseCard({
                     {formatKg(s.weight_kg)} × {s.reps}
                   </span>
                   {toKind(s) !== 'working' && (
-                    <span className="rounded bg-surface-2 px-1.5 py-0.5 text-xs text-text-dim">
+                    <span className="rounded-lg bg-surface-2 px-1.5 py-0.5 text-xs text-text-dim">
                       {KINDS.find((k) => k.kind === toKind(s))!.short}
                     </span>
                   )}
@@ -638,7 +638,7 @@ export function ExerciseCard({
                     aria-pressed={kind === k.kind}
                     title={disabled ? 'Log a set first — this one attaches to it' : k.hint}
                     className={[
-                      'min-h-11 rounded-lg border px-0.5 text-[11px] font-medium leading-tight',
+                      'min-h-11 rounded-lg border px-0.5 text-xs font-medium',
                       kind === k.kind
                         ? 'border-accent bg-accent/10 text-accent'
                         : 'border-border bg-surface-2 text-text-dim',
@@ -678,7 +678,7 @@ export function ExerciseCard({
               whole point of writing "seat was one notch low" was to read it
               without hunting for it. */}
           {note && (
-            <p className="border-t border-border px-4 py-2 text-xs leading-relaxed text-text-dim">
+            <p className="border-t border-border px-4 py-2 text-xs text-text-dim">
               {note}
             </p>
           )}

@@ -141,7 +141,7 @@ export function Exercises() {
         <div className="flex flex-col gap-3 pb-4">
           <button
             onClick={startNew}
-            className="min-h-14 w-full rounded-xl bg-accent px-4 font-semibold text-accent-text"
+            className="min-h-14 w-full rounded-lg bg-accent px-4 font-semibold text-accent-text"
           >
             + New exercise
           </button>
@@ -330,7 +330,7 @@ function EditorForm({
           The reasoning used to be three paragraphs on screen. It is in the
           README and in the code, which is where it belongs: this is a form you
           edit while standing up, not a document. */}
-      <label className="flex items-center gap-3 rounded-xl border border-border bg-surface p-3">
+      <label className="flex items-center gap-3 rounded-lg border border-border bg-surface p-3">
         <input
           type="checkbox"
           checked={draft.load_is_assistance}
@@ -349,12 +349,12 @@ function EditorForm({
         <button
           onClick={onSave}
           disabled={!draft.name.trim() || rangeBad || nameTaken}
-          className="min-h-14 flex-1 rounded-xl bg-accent px-4 font-semibold text-accent-text
+          className="min-h-14 flex-1 rounded-lg bg-accent px-4 font-semibold text-accent-text
                      disabled:opacity-40"
         >
           Save
         </button>
-        <button onClick={onCancel} className="min-h-14 rounded-xl border border-border px-4">
+        <button onClick={onCancel} className="min-h-14 rounded-lg border border-border px-4">
           Cancel
         </button>
       </div>

@@ -51,7 +51,7 @@ export function RestBar({ timer }: { timer: RestTimer }) {
 
         <div className="min-w-0 flex-1 px-1">
           <p
-            className="tabular text-xl font-semibold leading-none"
+            className="tabular text-xl font-semibold"
             // Announced only at the end: a live region ticking every second
             // would make a screen reader unusable.
             aria-live={done ? 'polite' : 'off'}

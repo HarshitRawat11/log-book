@@ -282,7 +282,7 @@ function Portion({
               onDone()
             }}
             disabled={!grams || Number(grams) <= 0}
-            className="mt-4 min-h-14 w-full rounded-xl bg-accent text-lg font-semibold
+            className="mt-4 min-h-14 w-full rounded-lg bg-accent text-lg font-semibold
                        text-accent-text disabled:opacity-40"
           >
             Log it

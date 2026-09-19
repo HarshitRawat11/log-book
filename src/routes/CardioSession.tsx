@@ -179,7 +179,7 @@ export function CardioSession() {
             e.stopPropagation()
             void rearm()
           }}
-          className="mt-6 min-h-14 rounded-xl bg-accent px-6 font-semibold text-accent-text"
+          className="mt-6 min-h-14 rounded-lg bg-accent px-6 font-semibold text-accent-text"
         >
           Tap to re-arm sound
         </button>

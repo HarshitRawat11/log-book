@@ -38,7 +38,7 @@ export function AuthCallback() {
         </p>
         <a
           href="/"
-          className="mt-2 flex min-h-14 items-center justify-center rounded-xl bg-accent
+          className="mt-2 flex min-h-14 items-center justify-center rounded-lg bg-accent
                      px-4 font-semibold text-accent-text"
         >
           Try again

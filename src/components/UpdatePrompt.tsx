@@ -19,7 +19,7 @@ export function UpdatePrompt() {
     <div
       role="status"
       className="fixed inset-x-3 bottom-20 z-30 mx-auto flex max-w-lg items-center gap-3
-                 rounded-xl border border-border bg-surface-2 px-4 py-3 shadow-lg"
+                 rounded-lg border border-border bg-surface-2 px-4 py-3 shadow-lg"
     >
       <span className="flex-1 text-sm">A new version is ready.</span>
       <button

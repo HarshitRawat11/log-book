@@ -19,7 +19,7 @@ export function EmptyState({
     <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed
                     border-border px-6 py-12 text-center">
       <h2 className="text-lg font-semibold">{title}</h2>
-      <p className="max-w-xs text-sm leading-relaxed text-text-dim">{body}</p>
+      <p className="max-w-xs text-sm text-text-dim">{body}</p>
       {action && <div className="mt-2">{action}</div>}
     </div>
   )
