@@ -44,12 +44,12 @@ export function NumberField({
           type="button"
           aria-label={`Decrease ${label}`}
           onClick={() => nudge(-step)}
-          className="h-12 w-10 shrink-0 rounded-lg border border-border bg-surface-2 text-xl
+          className="h-12 w-11 shrink-0 rounded-lg border border-border bg-surface-2 text-xl
                      leading-none text-text-dim active:bg-border"
         >
           −
         </button>
-        <div className="flex-1">
+        <div className="min-w-11 flex-1">
           <input
             inputMode="decimal"
             enterKeyHint="done"
@@ -65,7 +65,7 @@ export function NumberField({
           type="button"
           aria-label={`Increase ${label}`}
           onClick={() => nudge(step)}
-          className="h-12 w-10 shrink-0 rounded-lg border border-border bg-surface-2 text-xl
+          className="h-12 w-11 shrink-0 rounded-lg border border-border bg-surface-2 text-xl
                      leading-none text-text-dim active:bg-border"
         >
           +

@@ -220,7 +220,7 @@ export function Train() {
               anchor - it navigates, so the element should say so. */}
           <Link
             to="/history"
-            className="flex min-h-9 items-center rounded-full border border-border bg-surface-2
+            className="flex min-h-11 items-center rounded-full border border-border bg-surface-2
                        px-3 text-xs font-medium text-text-dim active:bg-border"
           >
             History

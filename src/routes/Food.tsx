@@ -45,7 +45,7 @@ export function Food() {
         <div className="flex items-center gap-2">
           <Link
             to="/foods"
-            className="flex min-h-9 items-center rounded-full border border-border bg-surface-2
+            className="flex min-h-11 items-center rounded-full border border-border bg-surface-2
                        px-3 text-xs font-medium text-text-dim active:bg-border"
           >
             Library
@@ -147,6 +147,13 @@ export function Food() {
                     </li>
                   ))}
                 </ul>
+              )}
+
+              {/* A slot with nothing in it still says so, rather than leaving the
+                  heading floating above an Add button. Four words, not a banner:
+                  there are four of these on screen at once. */}
+              {forSlot.length === 0 && (
+                <p className="px-4 pt-1 text-xs text-text-dim">Nothing logged</p>
               )}
 
               <div className="p-3">

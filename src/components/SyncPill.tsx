@@ -50,7 +50,7 @@ export function SyncPill() {
         aria-expanded={stuck ? open : undefined}
         title={s.lastError ?? undefined}
         className={[
-          'flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium',
+          'flex items-center gap-1.5 rounded-full border min-h-11 px-3 text-xs font-medium',
           stuck
             ? 'border-danger/40 bg-danger/10 text-danger'
             : 'border-border bg-surface-2 text-text-dim',

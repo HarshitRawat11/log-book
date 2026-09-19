@@ -146,7 +146,7 @@ export function Progress() {
                 <select
                   value={selected}
                   onChange={(e) => setExerciseId(e.target.value)}
-                  className="max-w-40 rounded-lg border border-border bg-surface-2 px-2 py-1
+                  className="max-w-40 min-h-11 rounded-lg border border-border bg-surface-2 px-2
                              text-xs outline-none"
                 >
                   {(exercises ?? []).map((e) => (
@@ -250,7 +250,7 @@ function WeeklyVolumeCard({
       right={
         <button
           onClick={() => setAsTable((v) => !v)}
-          className="rounded-full border border-border bg-surface-2 px-2.5 py-1 text-xs
+          className="rounded-full border border-border bg-surface-2 min-h-11 px-3 text-xs
                      text-text-dim"
         >
           {asTable ? 'Chart' : 'Table'}
@@ -329,7 +329,7 @@ function BodyweightCard({ series }: { series: ReturnType<typeof bodyweightSeries
         !adding && (
           <button
             onClick={() => setAdding(true)}
-            className="rounded-full border border-border bg-surface-2 px-2.5 py-1 text-xs
+            className="rounded-full border border-border bg-surface-2 min-h-11 px-3 text-xs
                        text-text-dim"
           >
             + Log

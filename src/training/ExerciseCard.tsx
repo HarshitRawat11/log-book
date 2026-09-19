@@ -502,7 +502,7 @@ export function ExerciseCard({
                 setReps(String(suggestion.reps))
               }}
               className={[
-                'tabular min-h-9 rounded-full border px-3 text-sm font-medium',
+                'tabular min-h-11 rounded-full border px-3 text-sm font-medium',
                 suggestion.stalling
                   ? 'border-danger/40 bg-danger/10 text-danger'
                   : 'border-accent/40 bg-accent/10 text-accent',
@@ -514,7 +514,7 @@ export function ExerciseCard({
             <button
               onClick={() => setShowWhy((v) => !v)}
               aria-expanded={showWhy}
-              className="min-h-9 text-sm text-text-dim underline underline-offset-4"
+              className="min-h-11 min-w-11 px-2 text-sm text-text-dim underline underline-offset-4"
             >
               {showWhy ? 'Hide' : 'Why?'}
             </button>

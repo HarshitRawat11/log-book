@@ -57,7 +57,7 @@ export function Foods() {
         <div className="flex items-center gap-2">
           <Link
             to="/food"
-            className="flex min-h-9 items-center rounded-full border border-border bg-surface-2
+            className="flex min-h-11 items-center rounded-full border border-border bg-surface-2
                        px-3 text-xs font-medium text-text-dim active:bg-border"
           >
             Today
@@ -72,7 +72,7 @@ export function Foods() {
             key={t}
             onClick={() => setTab(t)}
             className={[
-              'min-h-10 flex-1 rounded-full border text-sm font-medium capitalize',
+              'min-h-11 flex-1 rounded-full border text-sm font-medium capitalize',
               tab === t
                 ? 'border-accent bg-accent/10 text-accent'
                 : 'border-border bg-surface text-text-dim',
