@@ -131,14 +131,15 @@
       <ol class="steps muted">
         <li>Configure to about <b>30 min</b> — e.g. 6 × 4:00 work / 1:00 break.</li>
         <li><b>No <code>?speed=</code> in the URL.</b></li>
-        <li><b>Note the wall-clock time the instant you tap Start.</b> Without it, drift cannot be computed and the session has to be run again.</li>
+        <li><b>Note the wall-clock time the instant you tap Start</b> — the independent check, since the app cannot audit its own clock.</li>
         <li>Train. Hands off the screen.</li>
         <li>Midway, background the app once for about a minute, then return.</li>
         <li>At the final cue, note the time. Elapsed minus planned = drift, must be <b>&lt; 2s</b>.</li>
-        <li>Check the logged round count.</li>
       </ol>
+      <p class="muted"><b>If you forget the start time, the session is not wasted.</b> Settings → Export gives the raw <code>cardio_sessions</code> row with <code>started_at</code> and <code>ended_at</code>, so total drift and the round count can both be read off afterwards. It is weaker evidence — both timestamps come from the same device clock the scheduler used — but it is evidence.</p>
       <div class="flag">
-        <p class="muted" style="margin:0"><b>If "Tap to re-arm sound" appears</b>, Android killed the page. The clock survives but audio will not sound until you tap — which breaks the no-screen-contact rule. Note it if it happens.</p>
+        <p class="muted" style="margin:0"><b>Only your ear can check two things</b>, and no export will tell you: whether every cue actually <i>sounded</i>, and whether each landed as the display flipped phase.</p>
+        <p class="muted" style="margin:8px 0 0"><b>If "Tap to re-arm sound" appears</b>, Android killed the page. The clock survives but audio will not sound until you tap — which breaks the no-screen-contact rule. Note it if it happens.</p>
       </div>
     </div>
 
