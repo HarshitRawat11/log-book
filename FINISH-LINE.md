@@ -209,9 +209,9 @@ serving. Read the stamp from Settings, or from the served bundle.
 > predating the last source change it returns that change; run against the deployed commit it
 > returns nothing.
 
-### `VERIFIED` 2026-09-20
+### `VERIFIED` 2026-09-22
 
-Production serves `sha: 7399107`, and the command above returns nothing.
+Production serves `sha: 0eafdc6`, and the command above returns nothing.
 
 Evidence, because a bare 200 means little here: the SPA rewrite returns `index.html` with a
 **200** for any missing asset, so every probe was run against a control. The real entry chunk
