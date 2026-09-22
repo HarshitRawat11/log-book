@@ -95,6 +95,20 @@ export function formatKg(kg: number): string {
 }
 
 /**
+ * A run of weights sharing one unit: `40/35/30 kg`, collapsing to `40 kg` when
+ * every set used the same load.
+ *
+ * Exists because the "last time" line pairs a list of reps with a weight, and
+ * pairing `8/6/5` with a single number claims three sets happened at a load
+ * only the first one used. Either both sides are lists or neither is.
+ */
+export function formatKgList(kgs: readonly number[]): string {
+  const rounded = kgs.map((k) => Number(k.toFixed(2)))
+  const shown = new Set(rounded).size === 1 ? rounded.slice(0, 1) : rounded
+  return `${shown.join('/')}\u00A0kg`
+}
+
+/**
  * Working sets at the HARDEST load used, in the order they were performed.
  *
  * Hardest means heaviest normally, and lightest on an assisted machine, where

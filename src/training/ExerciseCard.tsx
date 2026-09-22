@@ -11,7 +11,7 @@ import { deleteRow, newRow, patchRow, putRow } from '../db/mutate'
 import { scheduleFlush } from '../db/sync'
 import { NumberField } from '../components/NumberField'
 import { NoteField } from './NoteField'
-import { formatKg, repeatOf, suggestNext } from './progression'
+import { formatKg, formatKgList, repeatOf, suggestNext } from './progression'
 import { nextSetIndex, recentSessions, saveExerciseNote } from './queries'
 import { relativeAge, shortDate } from '../lib/dates'
 
@@ -348,15 +348,6 @@ export function ExerciseCard({
     setUndoable(null)
   }
 
-  // "Last time" quotes the HARDEST set, which on an assisted machine is the
-  // lightest one. Quoting the heaviest would report the moment the machine
-  // helped you most and call it your best.
-  const lastLoad = lastSession
-    ? assisted
-      ? Math.min(...lastSession.sets.map((s) => s.weight_kg))
-      : Math.max(...lastSession.sets.map((s) => s.weight_kg))
-    : null
-
   /**
    * The × in the header.
    *
@@ -420,8 +411,14 @@ export function ExerciseCard({
               <>
                 {' · last '}
                 {shortDate(lastSession.date)} ({relativeAge(lastSession.date)}){': '}
+                {/* Both sides are lists or neither is. This used to pair every
+                    set's reps with the session's heaviest load alone, which
+                    read as "8/6/5 @ 40 kg" for a session where only the first
+                    set was at 40 - the app telling you that you lifted
+                    something you did not. */}
                 <span className="tabular text-text">
-                  {lastSession.sets.map((s) => s.reps).join('/')} @ {formatKg(lastLoad!)}
+                  {lastSession.sets.map((s) => s.reps).join('/')}{' @ '}
+                  {formatKgList(lastSession.sets.map((s) => s.weight_kg))}
                 </span>
               </>
             ) : (

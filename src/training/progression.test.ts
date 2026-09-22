@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   epley1RM,
   formatKg,
+  formatKgList,
   repeatOf,
   suggestNext,
   type SessionPerformance,
@@ -350,5 +351,46 @@ describe('formatKg', () => {
 
   it('drops floating-point dust', () => {
     expect(formatKg(52.500000000000004)).toBe('52.5 kg')
+  })
+})
+
+describe('formatKgList', () => {
+  /**
+   * The bug this function exists for: the "last time" line joined every set's
+   * reps with a slash and then printed ONE weight, so a session of 8 at 40kg,
+   * 6 at 35 and 5 at 30 rendered as "8/6/5 @ 40 kg" - three sets reported at a
+   * load only the first one used. Either both sides are lists or neither is.
+   */
+  it('lists every weight when they differ, so it cannot claim reps at a load they were not lifted at', () => {
+    expect(formatKgList([40, 35, 30])).toBe('40/35/30 kg')
+  })
+
+  it('collapses to one number when every set used the same load', () => {
+    expect(formatKgList([40, 40, 40])).toBe('40 kg')
+  })
+
+  it('keeps one set to one number', () => {
+    expect(formatKgList([62.5])).toBe('62.5 kg')
+  })
+
+  it('rounds the way formatKg does, and drops trailing zeroes', () => {
+    expect(formatKgList([62.5, 57.5])).toBe('62.5/57.5 kg')
+    expect(formatKgList([40.0, 35.0])).toBe('40/35 kg')
+  })
+
+  it('uses the same non-breaking space as formatKg', () => {
+    expect(formatKgList([40])).toBe(formatKg(40))
+    expect(formatKgList([40, 35])).toContain(' ')
+  })
+
+  it('pairs one-to-one with the rep list it is printed beside', () => {
+    const sets = [
+      { reps: 8, weight_kg: 40 },
+      { reps: 6, weight_kg: 35 },
+      { reps: 5, weight_kg: 30 },
+    ]
+    const reps = sets.map((s) => s.reps).join('/')
+    const weights = formatKgList(sets.map((s) => s.weight_kg))
+    expect(reps.split('/')).toHaveLength(weights.replace(' kg', '').split('/').length)
   })
 })
