@@ -126,7 +126,6 @@ export function ExerciseCard({
   onActivate,
   onCollapse,
   onRemove,
-  onSetLogged,
   showSuggestion = true,
 }: {
   exercise: Exercise
@@ -151,12 +150,6 @@ export function ExerciseCard({
    * sets are about to go.
    */
   onRemove: () => void
-  /**
-   * Fired after a set is written, so the screen can start the rest timer.
-   * Absent when reviewing a past session - correcting a typo from nine days
-   * ago should not start a two-minute countdown.
-   */
-  onSetLogged?: (info: { warmup: boolean; exerciseName: string }) => void
   /**
    * Off when reviewing a past session. "Next time do 62.5kg" is noise when you
    * have opened a session from nine days ago to correct a typo, and worse than
@@ -319,7 +312,6 @@ export function ExerciseCard({
     scheduleFlush()
     // Called from inside the tap, which is what unlocks audio: a context
     // created outside a user gesture stays suspended and silent.
-    onSetLogged?.({ warmup: kind === 'warmup', exerciseName: exercise.name })
   }
 
   async function updateSet(id: string, patch: Partial<WorkoutSet>) {

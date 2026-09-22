@@ -144,34 +144,3 @@ export async function reopenWorkout(workoutId: string) {
   await patchRow<Workout>('workouts', workoutId, { finished_at: null })
   scheduleFlush()
 }
-
-/* ------------------------------------------------------------ rest timer -- */
-
-const REST_KEY = 'rest:defaultSeconds'
-
-/**
- * How long a rest is, by default.
- *
- * Local-only `meta` rather than a synced column, for the same reason the
- * per-session exercise order lives there: it is a preference about this device,
- * and losing it costs one number retyped, never a set. A migration to sync a
- * number you change twice a year is not a trade worth making.
- *
- * 120s is the starting point, not a hardcoded value - it is editable in
- * Settings, because "set manually, not hardcoded" is the rule the cardio timer
- * was built to and this is the same kind of number.
- */
-export const DEFAULT_REST_SECONDS = 120
-
-export async function getDefaultRest(): Promise<number> {
-  const stored = (await db.meta.get(REST_KEY))?.value
-  return typeof stored === 'number' && stored > 0 ? stored : DEFAULT_REST_SECONDS
-}
-
-export async function setDefaultRest(seconds: number): Promise<void> {
-  // Floored at 15s and capped at 10 minutes: outside that it is not a rest
-  // between sets, and an accidental 0 would make the timer fire instantly
-  // forever.
-  const clamped = Math.min(600, Math.max(15, Math.round(seconds)))
-  await db.meta.put({ key: REST_KEY, value: clamped })
-}

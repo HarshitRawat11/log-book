@@ -226,7 +226,7 @@ Three details, each of which was wrong on the first attempt:
   commit. rAF looked right and was not: it does not fire at all on a hidden page, so the
   scroll silently never happened under test.
 - **`auto`, not `smooth`.** Nothing else in this app animates — cards open, the picker
-  appears and the rest bar arrives instantly — so one 300ms pan would be the odd one out.
+  appears and the picker arrives instantly — so one 300ms pan would be the odd one out.
 
 ### The picker can be searched
 
@@ -312,45 +312,19 @@ later. `previousExerciseNotes` reads it for the whole screen in one query rather
 per card, and takes notes dated **on or before** the session being viewed, so opening one
 from six weeks ago shows what was true then rather than what has been written since.
 
-### Rest between sets
+### Rest between sets — removed 2026-09-22
 
-Logging a set starts a countdown, shown in a bar floating above the tab bar: a warning cue
-ten seconds out and a bell at zero, both from `cardio/audio.ts` unchanged. Warm-ups do not
-start one - two minutes after a warm-up is a delay, not a rest - and everything else does,
-including a drop. Logging again simply restarts it, which is right: the rest begins after
-the last thing you actually did.
+There was one: a countdown started by logging a set, a bar floating above the tab bar, cues
+from `cardio/audio.ts`, the hook living above the router so it survived leaving the Train
+tab, and an editable length in Settings.
 
-Same split as the cardio timer, and it is the whole design. **The display counts down from
-`Date.now()` against an absolute end timestamp; the audio is handed to the AudioContext
-clock the moment the timer starts.** A throttled or frozen main thread can make the number
-on screen stutter. It cannot make the cue late, because the cue left the main thread before
-the freeze. Adjusting the rest cancels the queued oscillators and re-schedules both, rather
-than queueing a second set on top of the first.
+It is gone at the owner's request, under UNFREEZE, along with its setting and the stored
+`rest:defaultSeconds` key. Recorded rather than quietly deleted because the thing it solved
+is real and someone will propose it again: the argument for it was that you look at Progress
+or a recipe between sets and a timer that dies when you switch tabs is worse than none. The
+argument that won is simpler - it was not wanted on the screen.
 
-It lives in `RestProvider`, **above the router**, and the bar renders in the app shell so it
-is on every tab. That is not tidiness: with the hook inside the Train route, switching tabs
-unmounted it and the cleanup cancelled the scheduled cues, so the countdown silently ended.
-Measured at 1:52, tapping Food and coming back left no bar and no bell. Between sets you do
-look at Progress or a recipe, and a rest that stops when you do is worse than none, because
-you are waiting for a sound that is not coming.
-
-Deliberately much smaller than `cardio/useSession`:
-
-- **no rounds**, so no schedule to build and nothing to reconcile
-- **no persistence.** A rest timer that survived a reload would be resuming a rest you
-  stopped taking four hours ago. It dies with the page, on purpose.
-- **no wake lock.** This is ninety seconds with the phone in your hand, not thirty
-  unattended minutes with gloves on.
-
-It counts *down*, which is the opposite of the rule the cardio timer was built to. That
-rule exists because a round is read from across a room with gloves on, where the only
-question is how long is left in the abstract. Between sets the phone is in your hand and
-the question really is how long is left, so a countdown is right here and wrong there.
-
-The length is set in Settings, not hardcoded, and lives in local-only `meta` for the same
-reason the per-session exercise order does: it is a preference about this device, losing it
-costs one number retyped, and a migration to sync a number changed twice a year is not a
-trade worth making. Clamped to 15s-10min. The bar's ±30 changes only the rest in flight.
+`FINISH-LINE.md` v1.2 drops it from the required content on `/train` and `/settings`.
 
 ### Warm-ups pre-fill from warm-ups
 
@@ -895,7 +869,7 @@ A second pass on 18 Sep 2026, gated on migration `0005`:
 A follow-up pass on 18 Sep 2026, needing no migration:
 
 - [x] last session's note shown on the card, which is what makes notes worth writing
-- [x] a rest timer between sets, reusing the cardio cue engine
+- [x] a rest timer between sets, reusing the cardio cue engine — **removed 2026-09-22**
 - [x] warm-ups pre-fill from warm-ups, not from the working weight
 - [x] the bodyweight card says how stale it is
 - [x] three never-writable routine tables out of the sync loop
@@ -903,7 +877,7 @@ A follow-up pass on 18 Sep 2026, needing no migration:
 - [x] the copy list offers every recent session with sets in it, not just one
 - [x] the log block cut from 343px to 257px
 - [x] the sync pill says what is stuck, not just how many
-- [x] the rest timer survives leaving the Train tab
+- [x] the rest timer survives leaving the Train tab — **removed 2026-09-22**
 - [x] deleting a set can be undone
 - [x] `finished_at` put to use as session duration; `rir` removed from the client
 - [x] opening a card scrolls it into view

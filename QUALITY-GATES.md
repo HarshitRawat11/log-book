@@ -111,22 +111,22 @@ ratio is indicative only and is not used as a threshold.
 No scroll reveals and no hover states are required: the target device is a touch phone where
 hover does not exist, and FINISH-LINE.md §1c locks "no motion" as the system.
 
-**Full inventory — 4 animations, all functional, none decorative:**
+**Full inventory — 3 animations, all functional, none decorative.** The rest bar was a
+fourth until 2026-09-22, when the rest timer was removed from scope under UNFREEZE:
 
 | Element | Trigger | Duration / easing | Property |
 |---|---|---|---|
 | Sync dot `animate-pulse` | while flushing | 2s `cubic-bezier`, infinite | opacity |
 | Hold-to-end fill | press and hold | 2000ms `linear` | **transform** (was width — F2) |
 | Reorder row | drag | ~150ms Tailwind default | transform |
-| Rest bar | timer tick | Tailwind default | **transform** (was width — F2) |
 
 | # | Check | Threshold | Current | Status |
 |---|---|---|---|---|
 | 6a | Every interactive element has a visible focus state | all | **110 of 110 tab stops** across 9 routes show the ring — `2px solid rgb(78, 163, 255)`, one style everywhere ([index.css:145](src/index.css:145)) | **PASS** |
 | 6b | No decorative motion added | 0 new animations | 0 at rest across all 8 tabbed routes | **PASS** |
-| 6c | `prefers-reduced-motion` respected | all 4 stop or resolve instantly | **PASS** — under emulated `reduce`: transitions 1e-05s, `animate-pulse` iteration count **1** (was infinite). With no preference it returns to 2s infinite, so the rule discriminates | **PASS** |
+| 6c | `prefers-reduced-motion` respected | all stop or resolve instantly | **PASS** — under emulated `reduce`: transitions 1e-05s, `animate-pulse` iteration count **1** (was infinite). With no preference it returns to 2s infinite, so the rule discriminates | **PASS** |
 | 6d | No layout shift from motion | CLS ≤ 0.1 | **0, 0, 0.0003** | **PASS** |
-| 6e | Animations use transform/opacity only | all 4 | **PASS** — a DOM sweep finds **zero** elements with a `width` transition | **PASS** |
+| 6e | Animations use transform/opacity only | all | **PASS** — a DOM sweep finds **zero** elements with a `width` transition | **PASS** |
 
 **The one documented exception (F1).** `.motion-hold-progress` keeps its 2000ms transition
 under `reduce`, verified at 2s while everything around it drops to 1e-05s. That bar *is* the

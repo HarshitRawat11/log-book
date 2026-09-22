@@ -1,8 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useLiveQuery } from 'dexie-react-hooks'
 import { Link } from 'react-router-dom'
-import { mmss } from '../cardio/schedule'
-import { getDefaultRest, setDefaultRest } from '../training/session'
 import { Screen } from '../components/Screen'
 import { SyncPill } from '../components/SyncPill'
 import { useAuth } from '../auth/AuthProvider'
@@ -135,7 +132,6 @@ export function Settings() {
         </Link>
       </div>
 
-      <RestLength />
 
       <Targets />
 
@@ -274,57 +270,3 @@ export function Settings() {
 }
 
 
-/**
- * How long a rest is, by default.
- *
- * Its own control because "set manually, not hardcoded" is the rule this app
- * was built to for the cardio timer, and a rest length is the same kind of
- * number - 90 seconds on curls and three minutes on a heavy press are both
- * correct, for different people on different days.
- *
- * Stored in local-only `meta`, so it does not sync. Deliberate: it is a
- * preference about this device, losing it costs one number retyped, and a
- * migration to sync a number changed twice a year is not a trade worth making.
- */
-function RestLength() {
-  const seconds = useLiveQuery(getDefaultRest, [], null)
-  if (seconds === null) return null
-
-  const step = async (delta: number) => {
-    await setDefaultRest(seconds + delta)
-  }
-
-  return (
-    <>
-      <h2 className="mb-2 mt-6 px-1 text-sm font-semibold text-text-dim">Rest timer</h2>
-      <section className="rounded-2xl border border-border bg-surface p-4">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => void step(-15)}
-            disabled={seconds <= 15}
-            aria-label="Shorten the default rest by 15 seconds"
-            className="min-h-12 w-12 shrink-0 rounded-lg border border-border text-lg
-                       disabled:opacity-40"
-          >
-            −
-          </button>
-          <p className="tabular flex-1 text-center text-2xl font-semibold">{mmss(seconds)}</p>
-          <button
-            onClick={() => void step(15)}
-            disabled={seconds >= 600}
-            aria-label="Lengthen the default rest by 15 seconds"
-            className="min-h-12 w-12 shrink-0 rounded-lg border border-border text-lg
-                       disabled:opacity-40"
-          >
-            +
-          </button>
-        </div>
-        <p className="mt-3 text-xs text-text-dim">
-          Starts automatically when you log a set, with a warning ten seconds before the end and a
-          bell at zero. Warm-ups do not start one. You can stretch or skip any individual rest from
-          the bar without changing this.
-        </p>
-      </section>
-    </>
-  )
-}

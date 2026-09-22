@@ -1,7 +1,8 @@
 # CLAUDE.md — log-book
 
-v1 of this project was frozen on **2026-09-19** and amended to **v1.1** on **2026-09-20** to
-add quality gates as v1 criteria. The finish line is written in
+v1 of this project was frozen on **2026-09-19**, amended to **v1.1** on **2026-09-20** to add
+quality gates as v1 criteria, and to **v1.2** on **2026-09-22** to remove the rest timer from
+scope. The finish line is written in
 [FINISH-LINE.md](FINISH-LINE.md) and that document is the only source of truth for what is in
 scope. Read it before acting on any request.
 
@@ -39,7 +40,7 @@ This project has approved quality gates in QUALITY-GATES.md and an intent brief 
 - The **imagery policy** resolves to *no content imagery*. Gate 5 is waived; `<img>` appears
   nowhere in `src/`. Adding images is EXTRA.
 - The **motion minimum** is the adapted Gate 6, not the generic one: focus states, bounds on
-  the four existing functional animations, and `prefers-reduced-motion`. **No scroll reveals
+  the three existing functional animations, and `prefers-reduced-motion`. **No scroll reveals
   and no hover states** — the device is a touch phone, and FINISH-LINE.md §1c locks "no
   motion" as the system. Adding animation is EXTRA.
 

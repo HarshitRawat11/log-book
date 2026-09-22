@@ -1,16 +1,17 @@
-# FINISH-LINE.md — v1.1 · AMENDED, AWAITING RE-LOCK
+# FINISH-LINE.md — v1.2 · AMENDED, AWAITING RE-LOCK
 
 | | |
 |---|---|
-| **Version** | **v1.1** — quality gates added as v1 criteria under **UNFREEZE FOR QUALITY**, 2026-09-20 |
-| **Previously** | v1.0, locked 2026-09-19, tagged `v1.0` at `d956164` |
+| **Version** | **v1.2** — rest timer removed from scope under **UNFREEZE**, 2026-09-22 |
+| **Previously** | v1.1 (quality gates, 2026-09-20) · v1.0, locked 2026-09-19, tagged `v1.0` at `d956164` |
 | **Completion authority** | Harshit Rawat, sign-off alone (personal project) |
 | **Acceptance status** | **SIGNED OFF** on v1.0 scope; the added gate criteria are not yet satisfied |
 | **Re-LOCK** | **pending** — not permitted until QUALITY-GATES.md shows Stage 2 PASSED. The `v1.0` tag stays where it is until then |
 
-> **What the unfreeze authorised, and nothing more:** adding the approved quality gates as v1
-> criteria and bumping the version. Every other request remains EXTRA under the existing
-> freeze. Reopening anything else still requires the word **UNFREEZE**.
+> **Two unfreezes so far, each narrow.** v1.1 added the approved quality gates as v1 criteria
+> (UNFREEZE FOR QUALITY, 2026-09-20). v1.2 removed the rest timer from scope (UNFREEZE,
+> 2026-09-22). Neither authorised anything beyond itself. Every other request remains EXTRA,
+> and reopening anything else still requires the word **UNFREEZE**.
 
 > **This document is the only definition of what v1 is.** A criterion that is not
 > written here does not exist. Anything not written here is EXTRA — see
@@ -81,7 +82,7 @@ A screen not on this list is out of scope.
 | Route | Must exist | Status |
 |---|---|---|
 | `/signin` | Magic-link form; no account creation | `VERIFIED` 200 |
-| `/train` | Today's session: add lift, log set, edit set in place, 5 set types, rest timer, session name, notes, reorder, finish | `VERIFIED` 200 |
+| `/train` | Today's session: add lift, log set, edit set in place, 5 set types, session name, notes, reorder, finish | `VERIFIED` 200 |
 | `/history` | Every session newest-first; backfill any date | `VERIFIED` 200 |
 | `/history/:id` | One past session, fully editable | `VERIFIED` route exists |
 | `/exercises` | Library CRUD: rep range, increment, floor, machine setting, assisted flag | `VERIFIED` 200 |
@@ -91,7 +92,7 @@ A screen not on this list is out of scope.
 | `/cardio/session` | Running timer, no navigation chrome | `VERIFIED` route exists |
 | `/cardio/review/:id` | RPE and notes after the fact | `VERIFIED` route exists |
 | `/progress` | Strength chart, tonnage, weekly volume, bodyweight | `VERIFIED` 200 |
-| `/settings` | Sync, library links, rest length, targets, version, export, diagnostics, sign out | `VERIFIED` 200 |
+| `/settings` | Sync, library links, targets, version, export, diagnostics, sign out | `VERIFIED` 200 |
 
 **Owed content: none.** `VERIFIED` — a scan of all tracked source for `TODO`, `FIXME`,
 `lorem`, `coming soon`, `[FILL`, `PLACEHOLDER` and empty `alt` returned zero. There is no
@@ -103,6 +104,9 @@ owed-content register because nothing is owed, by me or by anyone else.
 - A routine/template editor. Replaced by "repeat a session" by deliberate decision.
 - Unilateral left/right set tracking. Handled manually by the owner.
 - Per-exercise set history screen. Suggested, never built.
+- **The rest timer between sets. Built, shipped, then removed at the owner's request
+  2026-09-22 under UNFREEZE** — with its Settings control and its stored
+  `rest:defaultSeconds` key. Re-adding it is EXTRA.
 
 ### 1c. Design / creativity
 
@@ -120,10 +124,9 @@ in `index.css`:
   animation is EXTRA.
 
   *Corrected 2026-09-20.* This previously read "none. Nothing in the app animates", which was
-  never true: four functional animations existed at lock time and are now enumerated in
-  QUALITY-GATES.md Gate 6 — a sync pulse, two progress fills and a drag. The rule is
-  unchanged and no scope moved; only the description was wrong, and it contradicted the gate
-  inventory added to this document below.
+  never true: four functional animations existed at lock time — a sync pulse, two progress
+  fills and a drag. The rule is unchanged and no scope moved; only the description was wrong.
+  Three remain since v1.2 removed the rest bar; QUALITY-GATES.md Gate 6 enumerates them.
 
 | # | Criterion | Status |
 |---|---|---|
@@ -357,6 +360,18 @@ CI, so the commit is the only durable marker of what "v1" pointed at.
 ---
 
 ## Changelog
+
+**v1.2 — 2026-09-22 — rest timer removed from scope, under UNFREEZE.** It was required
+content on `/train` ("rest timer") and on `/settings` ("rest length"); both are struck. The
+feature, its setting and its stored key are gone from the app, and it is now listed under
+*Explicitly out of scope*, so re-adding it would be EXTRA.
+
+This is a **narrowing** of v1, not a defect fix — nothing was failing. It needed UNFREEZE
+precisely because deleting a criterion is a scope change, and the owner gave it.
+
+Knock-on: quality Gate 6's motion inventory drops from four functional animations to three,
+since the rest bar was one of them. Recorded in QUALITY-GATES.md; the gate still passes.
+
 
 **v1.1 — 2026-09-20 — quality gates added as v1 criteria under UNFREEZE FOR QUALITY.**
 The approved gates in [QUALITY-GATES.md](QUALITY-GATES.md) are now criteria **D5–D10** under

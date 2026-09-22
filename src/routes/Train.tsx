@@ -30,13 +30,11 @@ import {
   addExerciseToSession,
   createWorkout,
   defaultActiveExercise,
-  getDefaultRest,
   removeExerciseFromSession,
   reorderSessionExercises,
   sessionExerciseIds,
   workoutsOnDate,
 } from '../training/session'
-import { useRest } from '../training/RestProvider'
 import { relativeAge, shortDate, todayIso } from '../lib/dates'
 
 /**
@@ -189,27 +187,6 @@ export function Train() {
   const working = (sets ?? []).filter(isWorkingSet)
   const assisted = assistedIds(everyExercise ?? [])
 
-  /**
-   * The rest between sets.
-   *
-   * Started from inside the tap that logs the set, which is what unlocks audio
-   * on Android. Warm-ups do not start one - two minutes after a warm-up is not
-   * a rest, it is a delay - and everything else does, including a drop. Logging
-   * again simply restarts it, which is correct: the rest begins after the last
-   * thing you actually did.
-   *
-   * The timer itself lives in RestProvider, above the router, so leaving this
-   * tab does not end it. The BAR is rendered by the app shell for the same
-   * reason; this screen only starts it and leaves room for it.
-   */
-  const rest = useRest()
-  const restSeconds = useLiveQuery(getDefaultRest, [], null)
-
-  function onSetLogged({ warmup, exerciseName }: { warmup: boolean; exerciseName: string }) {
-    if (warmup || !restSeconds) return
-    rest.start(restSeconds, exerciseName)
-  }
-
   return (
     <Screen
       title="Train"
@@ -350,7 +327,6 @@ export function Train() {
                 sets={sets ?? []}
                 note={notes?.get(e.id)?.note ?? null}
                 lastNote={lastNotes?.get(e.id) ?? null}
-                onSetLogged={onSetLogged}
                 active={e.id === active}
                 onActivate={() => setActiveId(e.id)}
                 onCollapse={() => setActiveId(null)}
@@ -469,10 +445,6 @@ export function Train() {
           >
             Discard empty session
           </button>
-
-          {/* Room for the floating bar, so the last control is still reachable
-              while a rest is running. */}
-          {rest.remaining !== null && <div aria-hidden="true" className="h-16" />}
         </div>
       )}
 
