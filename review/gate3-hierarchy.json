@@ -71,13 +71,13 @@
         "weight": 5691.7
       },
       {
-        "text": "Pull · 20 Septtoday\nBarb",
+        "text": "Pull · 25 Septtoday\nBarb",
         "area": 33271,
         "contrast": 0.005,
         "weight": 179.6
       },
       {
-        "text": "Pull · 16 Sept\n4 days ag",
+        "text": "Pull · 21 Sept\n4 days ag",
         "area": 33271,
         "contrast": 0.005,
         "weight": 179.6
@@ -146,17 +146,17 @@
   "/food": {
     "squint": {
       "dominantCell": {
-        "col": 3,
-        "r": 17,
-        "weight": 119.28765785123954,
-        "cx": 108.5,
-        "cy": 542.5
+        "col": 1,
+        "r": 4,
+        "weight": 39.89485454545452,
+        "cx": 46.5,
+        "cy": 139.5
       },
-      "dominanceRatio": 1,
+      "dominanceRatio": 1.16,
       "elementUnder": {
-        "tag": "button",
-        "text": "+ Add",
-        "cls": "min-h-12 w-full rounded-lg bg-accent text-sm font-semibold t"
+        "tag": "span",
+        "text": "348",
+        "cls": "tabular text-2xl font-semibold"
       }
     },
     "greyscaleTop4": [
@@ -179,8 +179,8 @@
         "weight": 0
       },
       {
-        "text": "×",
-        "area": 1936,
+        "text": "+ Add",
+        "area": 15216,
         "contrast": 0,
         "weight": 0
       }
@@ -317,13 +317,13 @@
         "weight": 58.9
       },
       {
-        "text": "Train",
-        "area": 4500,
-        "contrast": 0,
-        "weight": 0
+        "text": "Table",
+        "area": 2344,
+        "contrast": 0.013,
+        "weight": 31.1
       },
       {
-        "text": "Food",
+        "text": "Train",
         "area": 4500,
         "contrast": 0,
         "weight": 0
@@ -359,22 +359,22 @@
         "weight": 5691.7
       },
       {
-        "text": "Exercises\n›",
-        "area": 19096,
-        "contrast": 0,
-        "weight": 0
+        "text": "Not set\n›",
+        "area": 19208,
+        "contrast": 0.005,
+        "weight": 103.7
       },
       {
-        "text": "Workout history\n›",
-        "area": 19096,
-        "contrast": 0,
-        "weight": 0
+        "text": "Sign out",
+        "area": 19208,
+        "contrast": 0.005,
+        "weight": 103.7
       },
       {
-        "text": "Foods and recipes\n›",
-        "area": 19096,
-        "contrast": 0,
-        "weight": 0
+        "text": "Check for updates",
+        "area": 16464,
+        "contrast": 0.005,
+        "weight": 88.9
       }
     ],
     "thumbnail": {

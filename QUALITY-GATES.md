@@ -1,6 +1,7 @@
-# QUALITY-GATES.md — v4 · STAGE 1 PASSED, NOTHING UNVERIFIED
+# QUALITY-GATES.md — v5 · RE-VERIFIED AFTER v1.2
 
-> **QUALITY STATUS: PROVISIONAL.** Stage 1 (self-review) passed 2026-09-20. Awaiting Stage 2.
+> **QUALITY STATUS: PROVISIONAL.** Stage 1 (self-review) passed 2026-09-20 and was re-run in
+> full on **2026-09-25** after the history fix and the rest-timer removal. Awaiting Stage 2.
 > Thresholds approved and final. Fixes **F1–F8 applied and verified**, and the one item Stage 1
 > carried as `UNVERIFIED` is now measured. **No claim in this document rests on reasoning
 > alone.**
@@ -23,14 +24,17 @@ reasons. Gate 9 is **not applicable** (personal project).
 | 3 Hierarchy | **PASS** ✔ was FAIL | **8 of 8** routes; greyscale weights 850–7,589 (were 37–174 on four of them); h1 **5.2px** at 20% | `review/gate3-hierarchy.json`, `review/squint-*.png` |
 | 6 Motion (adapted) | **PASS** ✔ was FAIL | all 5; reduced-motion honoured under emulation, zero `width` animations | `review/verify-f1-f4.json` |
 | 7 Typography craft | **PASS** ✔ was FAIL | 6.04:1 min contrast, 74-char measure, 8 of 8 primary elements ≥16px, every body size at **1.5** leading, 0 orphans | `review/craft-audit.json` |
-| 10 Accessibility floor | **PASS** | 6.04:1 min contrast, zero failures; **110 of 110 tab stops show the focus ring**; no images; 0.5 Hz max | `review/craft-audit.json`, `review/focus-audit.json` |
+| 10 Accessibility floor | **PASS** | 6.04:1 min contrast, zero failures; **108 of 108 tab stops show the focus ring**; no images; 0.5 Hz max | `review/craft-audit.json`, `review/focus-audit.json` |
 | 8 Five-second test | **NOT MEASURED** | Stage 2 by construction — its protocol is run by the reviewer, not by Claude Code | — |
 | 1 Intent · 4 Distinctiveness · 5 Imagery | **WAIVED** | not passed — see Waivers | — |
 | 9 Behavioural metrics | **N/A** | personal project | — |
 
-**Regression after every batch**, 8 routes × 375 and 390px: **0 controls under 44px, 0
-horizontal overflow**, contrast steady at 6.04:1, zero console errors, `tsc` clean, 168 tests
-passing.
+**Re-measured 2026-09-25**, against the build that removed the rest timer: 6 type steps with
+one line-height each · 3 radii · 6.04:1 minimum contrast, 0 failures · 8 of 8 routes with a
+prominent primary action · 108 tab stops, 0 missing a focus ring · 0 controls under 44px ·
+0 horizontal overflow · 0 heading orphans · 0 console errors · `tsc` clean · 174 tests.
+
+Tab stops fell 110 → 108: the two rest-length steppers in Settings are gone.
 
 ## How everything was measured
 
@@ -106,6 +110,20 @@ three routes because a wide filled button spans several grid cells with identica
 "second place" is often the same element. The greyscale ranking is the reliable signal; the
 ratio is indicative only and is not used as a threshold.
 
+**Method corrected 2026-09-25.** The greyscale ranking used to skip elements below the fold.
+That filter is not in the criterion — 3b says "the most prominent interactive element", not
+"above the fold" — and it made the result depend on the clock. Re-running at 16:00 put `/food`
+back at weight 37 because the one filled Add had moved to the dinner slot, 15px below an
+844px viewport. The filter is gone and the ranking now covers the whole page, which is what
+the criterion asks. The first post-F8 measurement passed partly by luck: it ran just after
+midnight, when the filled slot was breakfast and therefore near the top.
+
+**A real finding underneath that, not a criterion failure.** On `/food` the single filled
+action follows the clock, so for dinner and snack — roughly half the day — it sits below the
+fold, and nothing above the fold is prominent. Gate 3 as written still passes, because it
+does not mention the fold. Whether that is good enough is a design question for the owner,
+not one to settle by quietly rewording the gate.
+
 ## Gate 6 — Motion, **ADAPTED** · **PASS** (fixed by F1 and F2, 2026-09-20)
 
 No scroll reveals and no hover states are required: the target device is a touch phone where
@@ -122,7 +140,7 @@ fourth until 2026-09-22, when the rest timer was removed from scope under UNFREE
 
 | # | Check | Threshold | Current | Status |
 |---|---|---|---|---|
-| 6a | Every interactive element has a visible focus state | all | **110 of 110 tab stops** across 9 routes show the ring — `2px solid rgb(78, 163, 255)`, one style everywhere ([index.css:145](src/index.css:145)) | **PASS** |
+| 6a | Every interactive element has a visible focus state | all | **108 of 108 tab stops** across 9 routes show the ring — `2px solid rgb(78, 163, 255)`, one style everywhere ([index.css:145](src/index.css:145)) | **PASS** |
 | 6b | No decorative motion added | 0 new animations | 0 at rest across all 8 tabbed routes | **PASS** |
 | 6c | `prefers-reduced-motion` respected | all stop or resolve instantly | **PASS** — under emulated `reduce`: transitions 1e-05s, `animate-pulse` iteration count **1** (was infinite). With no preference it returns to 2s infinite, so the rule discriminates | **PASS** |
 | 6d | No layout shift from motion | CLS ≤ 0.1 | **0, 0, 0.0003** | **PASS** |
@@ -200,8 +218,8 @@ time**, and **the weight/reps inputs with Log set**. PASS if all three. Record a
 | # | Check | Threshold | Current | Status |
 |---|---|---|---|---|
 | 10a | WCAG AA contrast | 4.5:1 / 3:1 | **6.04:1 minimum, zero failures** | **PASS** |
-| 10b | Visible focus indicators | all focusable | **110 of 110 tab stops**, including all 11 that carry `outline-none` | **PASS** |
-| 10c | Keyboard-navigable | all interactive | the tab order walked end to end on all 9 routes — **110 stops**, every one reachable by `Tab` alone | **PASS** ✔ was PARTIAL |
+| 10b | Visible focus indicators | all focusable | **108 of 108 tab stops**, including all 11 that carry `outline-none` | **PASS** |
+| 10c | Keyboard-navigable | all interactive | the tab order walked end to end on all 9 routes — **108 stops**, every one reachable by `Tab` alone | **PASS** ✔ was PARTIAL |
 | 10d | Alt text on every image | all | **No images exist.** No `<img>` in `src/`; 5 inline tab glyphs and 1 chevron, all beside text labels | **PASS** |
 | 10e | No motion flashing > 3 Hz | none | Fastest is `animate-pulse`, 2s cycle = **0.5 Hz** | **PASS** |
 | 10f | Touch targets ≥ 44 × 44px | all | Criterion **O10** in FINISH-LINE.md, met 2026-09-19. Referenced, not restated | **PASS** |
@@ -270,6 +288,16 @@ there to look pleasant.
    tag moved.
 
 ## Changelog
+
+**v5 — 2026-09-25 — re-verified after v1.2.** Every gate re-run against the build that
+removed the rest timer and fixed the history line. All five still pass; `review/` screenshots
+refreshed, because they had been showing a rest bar and a wrong history line for three days.
+
+Two things found while re-running, both recorded in Gate 3 above rather than smoothed over:
+the greyscale ranking had a below-the-fold filter that is not in the criterion and made the
+result depend on the time of day, and — underneath that — `/food`'s one filled action drops
+below the fold at dinner and snack. The filter is fixed. The design question is the owner's.
+
 
 **v4 — 2026-09-20 — the last unverified item settled.** The focus ring on fields carrying
 `outline-none` was reasoned from CSS source order at Stage 1 but never proved. It is proved

@@ -3,19 +3,19 @@
   "routes": 10,
   "elementsPerRoute": {
     "/signin": 11,
-    "/train": 62,
+    "/train": 95,
     "/history": 63,
     "/history/w-mid": 110,
     "/exercises": 54,
-    "/food": 90,
+    "/food": 96,
     "/foods": 50,
     "/cardio": 73,
     "/progress": 248,
-    "/settings": 106
+    "/settings": 99
   },
   "fontFamilies": {
     "system-ui": {
-      "count": 857,
+      "count": 889,
       "routes": 10
     },
     "-apple-system": {
@@ -25,7 +25,7 @@
   },
   "typeScale": {
     "12px / 18px / 400": {
-      "count": 108,
+      "count": 105,
       "routes": 9
     },
     "14px / 21px / 400": {
@@ -33,48 +33,48 @@
       "routes": 9
     },
     "14px / 21px / 500": {
-      "count": 20,
-      "routes": 6
+      "count": 24,
+      "routes": 7
     },
     "16px / 24px / 400": {
-      "count": 17,
-      "routes": 5
+      "count": 20,
+      "routes": 7
     },
     "16px / 24px / 600": {
-      "count": 16,
-      "routes": 6
+      "count": 18,
+      "routes": 7
+    },
+    "12px / 18px / 500": {
+      "count": 15,
+      "routes": 5
     },
     "26px / 32.5px / 600": {
-      "count": 13,
+      "count": 12,
       "routes": 10
     },
     "14px / 21px / 600": {
-      "count": 13,
+      "count": 12,
       "routes": 4
     },
     "12px / 18px / 600": {
       "count": 10,
       "routes": 5
     },
-    "12px / 18px / 500": {
-      "count": 9,
+    "16px / 24px / 500": {
+      "count": 8,
       "routes": 4
     },
-    "16px / 24px / 500": {
-      "count": 6,
-      "routes": 3
+    "20px / 20px / 400": {
+      "count": 8,
+      "routes": 2
     },
     "18px / 27px / 600": {
       "count": 5,
       "routes": 5
     },
     "18px / 27px / 400": {
-      "count": 4,
+      "count": 3,
       "routes": 2
-    },
-    "20px / 20px / 400": {
-      "count": 4,
-      "routes": 1
     },
     "12px / 18px / 700": {
       "count": 1,
@@ -83,20 +83,20 @@
   },
   "textColours": {
     "rgb(151, 163, 179)": {
-      "count": 148,
+      "count": 159,
       "routes": 10
     },
     "rgb(232, 237, 243)": {
-      "count": 95,
+      "count": 96,
       "routes": 10
+    },
+    "rgb(78, 163, 255)": {
+      "count": 12,
+      "routes": 8
     },
     "rgb(4, 18, 31)": {
       "count": 10,
       "routes": 10
-    },
-    "rgb(78, 163, 255)": {
-      "count": 9,
-      "routes": 7
     },
     "rgb(255, 107, 107)": {
       "count": 2,
@@ -105,11 +105,11 @@
   },
   "backgrounds": {
     "rgb(20, 26, 34)": {
-      "count": 49,
+      "count": 51,
       "routes": 10
     },
     "rgb(29, 37, 47)": {
-      "count": 16,
+      "count": 25,
       "routes": 6
     },
     "rgb(11, 15, 20)": {
@@ -129,11 +129,15 @@
       "routes": 9
     },
     "oklab(0.705067 -0.047462 -0.151071 / 0.1)": {
-      "count": 4,
-      "routes": 3
+      "count": 6,
+      "routes": 4
     },
     "rgb(57, 135, 229)": {
       "count": 2,
+      "routes": 1
+    },
+    "oklab(0.705067 -0.047462 -0.151071 / 0.15)": {
+      "count": 1,
       "routes": 1
     },
     "rgb(151, 163, 179)": {
@@ -147,29 +151,29 @@
   },
   "borderColours": {
     "rgb(42, 52, 65)": {
-      "count": 106,
+      "count": 118,
       "routes": 10
     },
-    "rgb(78, 163, 255)": {
-      "count": 2,
+    "oklab(0.705067 -0.047462 -0.151071 / 0.4)": {
+      "count": 3,
       "routes": 2
     },
-    "oklab(0.705067 -0.047462 -0.151071 / 0.4)": {
-      "count": 2,
-      "routes": 1
+    "rgb(78, 163, 255)": {
+      "count": 3,
+      "routes": 3
     }
   },
   "radii": {
     "8px": {
-      "count": 49,
+      "count": 64,
       "routes": 10
     },
     "16px": {
-      "count": 27,
+      "count": 26,
       "routes": 9
     },
     "3.35544e+07px": {
-      "count": 16,
+      "count": 17,
       "routes": 7
     }
   },
@@ -178,25 +182,25 @@
       "count": 89,
       "routes": 10
     },
-    "8px": {
-      "count": 50,
+    "12px": {
+      "count": 51,
       "routes": 9
     },
-    "12px": {
-      "count": 46,
+    "8px": {
+      "count": 50,
       "routes": 9
     },
     "4px": {
       "count": 17,
       "routes": 4
     },
+    "2px": {
+      "count": 11,
+      "routes": 3
+    },
     "14px": {
       "count": 9,
       "routes": 9
-    },
-    "2px": {
-      "count": 5,
-      "routes": 1
     },
     "48px": {
       "count": 2,
@@ -207,33 +211,29 @@
       "routes": 2
     },
     "6px": {
-      "count": 1,
-      "routes": 1
+      "count": 2,
+      "routes": 2
     }
   },
   "gaps": {
     "4px": {
-      "count": 57,
+      "count": 60,
       "routes": 9
     },
     "12px": {
-      "count": 25,
+      "count": 29,
       "routes": 9
     },
     "8px": {
-      "count": 17,
+      "count": 20,
       "routes": 8
     },
     "16px": {
-      "count": 11,
-      "routes": 4
+      "count": 10,
+      "routes": 3
     },
     "6px": {
       "count": 4,
-      "routes": 1
-    },
-    "2px": {
-      "count": 3,
       "routes": 1
     },
     "normal 8px": {
