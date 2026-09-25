@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Link } from 'react-router-dom'
 import { Screen } from '../components/Screen'
@@ -58,6 +58,22 @@ export function Food() {
 
   const kcalTarget = profile?.kcal_target ?? null
   const proteinTarget = profile?.protein_g_target ?? null
+
+  /**
+   * Opening the form from the button at the top means the form itself is
+   * usually below the fold, and a button that opens something you cannot see
+   * is worse than no button. Armed on that tap only, so tapping a meal's own
+   * Add - already in view - does not yank the page.
+   *
+   * `auto`, not `smooth`: nothing else in this app animates, and a smooth
+   * scroll does not run at all on a hidden page, which makes it untestable.
+   */
+  const armed = useRef(false)
+  useLayoutEffect(() => {
+    if (!armed.current || !addingTo) return
+    armed.current = false
+    document.getElementById(`meal-${addingTo}`)?.scrollIntoView({ behavior: 'auto', block: 'start' })
+  }, [addingTo])
 
   return (
     <Screen
@@ -132,12 +148,40 @@ export function Food() {
           </Link>
         )}
 
+        {/* The screen's one filled action, and the only one.
+
+            It used to be the current meal's own Add button, which followed the
+            clock - and so fell below the fold for dinner and snack, roughly
+            half the day, leaving nothing prominent in view. Here it is above
+            the fold whatever the time.
+
+            Placed after the 7-day average rather than above it: the brief
+            gives the daily total and the average equal billing and sits them
+            together, so a button wedged between them would break the pair.
+            This is as high as it goes without doing that. */}
+        {addingTo === null && (
+          <button
+            onClick={() => {
+              armed.current = true
+              setAddingTo(nowSlot)
+            }}
+            className="min-h-12 w-full rounded-lg bg-accent font-semibold text-accent-text"
+          >
+            {/* capitalize on the button would title-case the "to" as well. */}
+            + Add to <span className="capitalize">{nowSlot}</span>
+          </button>
+        )}
+
         {/* Meals */}
         {MEAL_SLOTS.map((slot) => {
           const forSlot = (entries ?? []).filter((e) => e.meal_slot === slot)
           const slotTotal = totalLogged(forSlot)
           return (
-            <section key={slot} className="overflow-hidden rounded-2xl border border-border bg-surface">
+            <section
+              key={slot}
+              id={`meal-${slot}`}
+              className="scroll-mt-20 overflow-hidden rounded-2xl border border-border bg-surface"
+            >
               <header className="flex items-baseline justify-between px-4 pt-3">
                 <h2 className="font-semibold capitalize">{slot}</h2>
                 <span className="tabular text-sm text-text-dim">
@@ -184,12 +228,8 @@ export function Food() {
                 ) : (
                   <button
                     onClick={() => setAddingTo(slot)}
-                    className={
-                      slot === nowSlot
-                        ? 'min-h-12 w-full rounded-lg bg-accent text-sm font-semibold text-accent-text'
-                        : `min-h-12 w-full rounded-lg border border-dashed border-border
-                           text-sm font-medium text-text-dim`
-                    }
+                    className="min-h-12 w-full rounded-lg border border-dashed border-border
+                               text-sm font-medium text-text-dim"
                   >
                     + Add
                   </button>

@@ -1,4 +1,4 @@
-# QUALITY-GATES.md — v5 · RE-VERIFIED AFTER v1.2
+# QUALITY-GATES.md — v6 · GATE 3 TIGHTENED TO THE FOLD
 
 > **QUALITY STATUS: PROVISIONAL.** Stage 1 (self-review) passed 2026-09-20 and was re-run in
 > full on **2026-09-25** after the history fix and the rest-timer removal. Awaiting Stage 2.
@@ -91,8 +91,8 @@ cell's centre mapped back with `elementFromPoint`. GREYSCALE: interactive elemen
 
 | # | Check | Threshold | Current | Status |
 |---|---|---|---|---|
-| 3a | One dominant element per view, and it is the intended focal point | 8 of 8 routes | **8 of 8** | **PASS** |
-| 3b | Hierarchy survives greyscale: the primary action is the most prominent interactive element | 8 of 8 | **8 of 8**, weights 850–7,589 | **PASS** |
+| 3a | One dominant element per view, and it is the intended focal point. **"View" means the first viewport at 390×844 — not the whole scrollable document** | 8 of 8 routes | **8 of 8** | **PASS** |
+| 3b | Hierarchy survives greyscale: the primary action is the most prominent interactive element, **and is reachable without scrolling** | 8 of 8 | **8 of 8**, weights 850–7,589 | **PASS** |
 | 3c | Screen title identifiable at 20% (the app-switcher case) | ≥ 5px | **5.2px** — the h1 step is 26px | **PASS** |
 
 **One cause, one fix.** The four failing routes had no filled control at all — every action
@@ -118,11 +118,19 @@ back at weight 37 because the one filled Add had moved to the dinner slot, 15px 
 the criterion asks. The first post-F8 measurement passed partly by luck: it ran just after
 midnight, when the filled slot was breakfast and therefore near the top.
 
-**A real finding underneath that, not a criterion failure.** On `/food` the single filled
-action follows the clock, so for dinner and snack — roughly half the day — it sits below the
-fold, and nothing above the fold is prominent. Gate 3 as written still passes, because it
-does not mention the fold. Whether that is good enough is a design question for the owner,
-not one to settle by quietly rewording the gate.
+**Resolved 2026-09-25, by the owner.** The question above — does "per view" mean the visible
+screen or the whole document? — was genuinely open, and the owner answered it: the add button
+belongs above the fold. 3a and 3b now say so explicitly, which makes them **stricter** than
+before, and `/food` was changed to meet them.
+
+The fix is one filled `+ Add to <meal>` placed after the 7-day average and before the meal
+sections. It does not follow the clock down the page; only its label does. Measured bottom at
+**500px**, which clears both a 390×844 phone and a 375×667 one. Tapping it opens that meal's
+form and scrolls to it — armed on that tap only, so a meal's own Add does not yank the page —
+and the button hides while a form is open, so there are never two add surfaces.
+
+The four per-slot Add buttons went back to plain borders, leaving exactly one filled action on
+the screen, which is what 3b wants.
 
 ## Gate 6 — Motion, **ADAPTED** · **PASS** (fixed by F1 and F2, 2026-09-20)
 
@@ -288,6 +296,21 @@ there to look pleasant.
    tag moved.
 
 ## Changelog
+
+**v6 — 2026-09-25 — Gate 3 tightened to the fold, and `/food` changed to meet it.** The
+ambiguity flagged in v5 is resolved the strict way at the owner's direction: "per view" means
+the first viewport, and the primary action must be reachable without scrolling. `/food` now
+carries one filled `+ Add to <meal>` at a fixed position, bottom at 500px, above the fold on
+both a 390×844 and a 375×667 phone.
+
+Worth stating plainly: this **edits two written criteria**. It makes them stricter, in the
+direction the owner just specified, so I did not ask for UNFREEZE. If that reading is wrong it
+is one revert.
+
+All five gates re-measured after the change and still pass: 6 type steps, no duplicate
+line-heights, 6.04:1 contrast with 0 failures, 8 of 8 routes, 0 controls under 44px, 0
+overflow, 0 orphans. Screenshots refreshed again.
+
 
 **v5 — 2026-09-25 — re-verified after v1.2.** Every gate re-run against the build that
 removed the rest timer and fixed the history line. All five still pass; `review/` screenshots

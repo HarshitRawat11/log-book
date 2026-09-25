@@ -146,25 +146,25 @@
   "/food": {
     "squint": {
       "dominantCell": {
-        "col": 1,
-        "r": 4,
-        "weight": 39.89485454545452,
-        "cx": 46.5,
-        "cy": 139.5
+        "col": 2,
+        "r": 15,
+        "weight": 118.78567272727251,
+        "cx": 77.5,
+        "cy": 480.5
       },
-      "dominanceRatio": 1.16,
+      "dominanceRatio": 1,
       "elementUnder": {
-        "tag": "span",
-        "text": "348",
-        "cls": "tabular text-2xl font-semibold"
+        "tag": "button",
+        "text": "+ Add to Dinner",
+        "cls": "min-h-12 w-full rounded-lg bg-accent font-semibold text-acce"
       }
     },
     "greyscaleTop4": [
       {
-        "text": "+ Add",
-        "area": 15216,
+        "text": "+ Add to Dinner",
+        "area": 16464,
         "contrast": 0.346,
-        "weight": 5260.3
+        "weight": 5691.7
       },
       {
         "text": "Library",
