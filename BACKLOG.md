@@ -13,4 +13,4 @@ Pre-freeze suggestions that never shipped are not repeated here. They are listed
 
 | Date | Item | Source |
 |---|---|---|
-| 2026-09-22 | Remove the rest timer from the training session. Note this deletes a criterion — the rest timer is named in FINISH-LINE.md §1b as required content on `/train` — so it needs UNFREEZE, not just a yes. | user |
+| 2026-09-22 | ~~Remove the rest timer from the training session.~~ **Done same day** under UNFREEZE — it deleted a criterion, so FINISH-LINE.md went to v1.2. | user |
