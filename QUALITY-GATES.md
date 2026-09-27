@@ -1,13 +1,13 @@
 # QUALITY-GATES.md — v6 · GATE 3 TIGHTENED TO THE FOLD
 
-> **QUALITY STATUS: PROVISIONAL.** Stage 1 (self-review) passed 2026-09-20 and was re-run in
-> full on **2026-09-25** after the history fix and the rest-timer removal. Awaiting Stage 2.
+> **QUALITY STATUS: PASSED.** Stage 1 (self-review) passed 2026-09-20 and was re-run in full
+> on **2026-09-25**. **Stage 2 passed 2026-09-27**, on the owner's sign-off. Stage 3 does not
+> apply — personal project.
 > Thresholds approved and final. Fixes **F1–F8 applied and verified**, and the one item Stage 1
 > carried as `UNVERIFIED` is now measured. **No claim in this document rests on reasoning
 > alone.**
 > Intent is in [INTENT-BRIEF.md](INTENT-BRIEF.md). These gates are v1 criteria of
-> [FINISH-LINE.md](FINISH-LINE.md), amended to **v1.1** under **UNFREEZE FOR QUALITY**
-> (granted 2026-09-20). The document is **not re-LOCKed** — that waits for Stage 2.
+> [FINISH-LINE.md](FINISH-LINE.md), which is **LOCKED at v1.2** as of 2026-09-27.
 
 **Scope:** Gates 2, 3, 6 (adapted), 7, 8 and 10 apply. Gates 1, 4 and 5 are **waived** with
 reasons. Gate 9 is **not applicable** (personal project).

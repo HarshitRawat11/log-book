@@ -1,12 +1,13 @@
-# FINISH-LINE.md — v1.2 · AMENDED, AWAITING RE-LOCK
+# FINISH-LINE.md — v1.2 · LOCKED
 
 | | |
 |---|---|
-| **Version** | **v1.2** — rest timer removed from scope under **UNFREEZE**, 2026-09-22 |
-| **Previously** | v1.1 (quality gates, 2026-09-20) · v1.0, locked 2026-09-19, tagged `v1.0` at `d956164` |
+| **Version** | **v1.2** |
+| **Locked** | **2026-09-27**, tagged `v1.2` |
+| **Previously** | v1.1 quality gates 2026-09-20 · v1.2 rest timer removed 2026-09-22 · v1.0 locked 2026-09-19, tagged `v1.0` at `d956164`, deliberately left where it is |
 | **Completion authority** | Harshit Rawat, sign-off alone (personal project) |
-| **Acceptance status** | **SIGNED OFF** on v1.0 scope; the added gate criteria are not yet satisfied |
-| **Re-LOCK** | **pending** — not permitted until QUALITY-GATES.md shows Stage 2 PASSED. The `v1.0` tag stays where it is until then |
+| **Acceptance status** | **SIGNED OFF** — gap empty, all six applicable quality gates pass |
+| **Stage 2** | **PASSED 2026-09-27**, on the owner's instruction to close G1 and move on. Basis recorded under G1 below |
 
 > **Two unfreezes so far, each narrow.** v1.1 added the approved quality gates as v1 criteria
 > (UNFREEZE FOR QUALITY, 2026-09-20). v1.2 removed the rest timer from scope (UNFREEZE,
@@ -275,7 +276,7 @@ The **only** remaining work in scope. Everything else is EXTRA.
 
 | # | Item | Status | What makes it VERIFIED |
 |---|---|---|---|
-| G1 | **Cardio step 4** — a real 30-minute session on the phone | **OPEN** | Every cue on time · total drift < 2s · correct round count logged · survives one deliberate backgrounding. Recorded in README with the date. |
+| G1 | **Cardio step 4** — a real 30-minute session on the phone | **CLOSED** 2026-09-27, accepted by the owner on partial evidence | See the note below |
 | G2 | **O10** — controls below 44px | **CLOSED** `8c45f7e` | Each measured ≥ 44px at 375px |
 | G3 | **O11** — offline on the installed PWA | **CLOSED** 2026-09-27 | Owner ran it: 6 of 6 — opened online, aeroplane mode, force-closed, reopened, rendered fully, set saved, pill read *Offline · 1 to sync* then cleared |
 | G4 | **D3** — horizontal-scroll check on `/food`, `/foods`, `/cardio` | **CLOSED** `8c45f7e` | `scrollWidth <= clientWidth` on each |
@@ -321,8 +322,29 @@ desktop Chrome with one origin unreachable while the machine still had a network
 mechanism is proven; the stated configuration is not. G3 stays open, and it is an
 owner-phone task alongside G1.
 
-**The v1.0 gap is two items, both needing the phone.** Everything verifiable from this machine
-is done.
+**The gap is empty.**
+
+### G1 — closed by the owner, on partial evidence
+
+Recorded plainly, because the honesty model this document runs on is worth more than a tidy
+tick.
+
+**What the criterion asked for:** a real **thirty-minute** session on the phone — every cue on
+time, total drift under 2 s, correct round count, surviving one deliberate backgrounding.
+
+**What was run, 2026-09-27:** a **4:30** session, 2 rounds of 2:00 with a 0:30 break. Every
+qualitative check inside it passed — each cue sounded on time, it survived a deliberate
+backgrounding, the round count logged correctly, and no "Tap to re-arm sound" prompt
+appeared. Drift was about **+1 s** against a 4:30 plan, inside the 2 s threshold.
+
+**What was therefore never exercised:** thirty unattended minutes. Cue accuracy and clock
+drift across that span are the specific things this criterion existed to test, and four and a
+half minutes does not test them — drift that accumulates shows at thirty minutes and hides at
+four.
+
+**The owner closed it anyway**, with *"you can close the cardio section and move to next task.
+if there will be any bugs i will let you know"*. §3 gives him sole completion authority, so
+that is his call. It is written down rather than dressed up as a pass.
 
 ### Quality-gate defects (added v1.1)
 
@@ -360,6 +382,18 @@ CI, so the commit is the only durable marker of what "v1" pointed at.
 ---
 
 ## Changelog
+
+**v1.2 — LOCKED 2026-09-27.** The gap is empty and Stage 2 passed. G3 and G12 were run by the
+owner and passed outright; G1 was closed by the owner on partial evidence, and §5 records
+exactly what that evidence was and what it did not cover.
+
+The `v1.0` tag stays at `d956164`. A new annotated `v1.2` tag marks this commit, so both
+lines remain findable from history rather than one overwriting the other.
+
+**From here every request is EXTRA** unless it names a criterion written in this document.
+The owner's standing instruction — *"if there will be any bugs i will let you know"* — is the
+DEFECT channel, not a licence to keep adding.
+
 
 **v1.2 — 2026-09-22 — rest timer removed from scope, under UNFREEZE.** It was required
 content on `/train` ("rest timer") and on `/settings` ("rest length"); both are struck. The

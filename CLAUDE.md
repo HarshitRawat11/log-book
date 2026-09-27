@@ -6,8 +6,11 @@ scope. The finish line is written in
 [FINISH-LINE.md](FINISH-LINE.md) and that document is the only source of truth for what is in
 scope. Read it before acting on any request.
 
-It is **awaiting re-LOCK**: no LOCK until [QUALITY-GATES.md](QUALITY-GATES.md) shows Stage 2
-PASSED. The `v1.0` tag has not been moved.
+**v1.2 is LOCKED as of 2026-09-27**, tagged `v1.2`. The gap is empty, all six applicable
+quality gates pass, and Stage 2 is signed. The `v1.0` tag was left at `d956164` rather than
+moved, so both lines stay findable.
+
+**Every request from here is EXTRA** unless it names a criterion written in FINISH-LINE.md.
 
 ---
 
@@ -48,18 +51,17 @@ This project has approved quality gates in QUALITY-GATES.md and an intent brief 
 
 ## What is still in scope
 
-The gap in FINISH-LINE.md §5, and nothing else. As of **2026-09-27 that is one item**:
+**Nothing.** The gap in FINISH-LINE.md §5 is empty as of 2026-09-27 and v1 is done.
 
-- **G1** — cardio step 4: a real **30-minute** session on the phone, cues on time, total drift
-  under 2s, correct round count, survives one deliberate backgrounding.
+G2, G4, G5, G6 and the quality-gate defects G7–G11 closed in fix batches F1–F8. **G3**
+(offline on the installed PWA) and **G12** (Gate 8, the five-second test) were run by the
+owner and passed outright. **G1** (the 30-minute cardio session) was closed by the owner on
+partial evidence — a 4:30 run — and §5 records what that did and did not exercise. Do not
+re-open it silently; if cue drift over a long session is ever suspected, that note is the
+place to start.
 
-Everything else is closed. G2, G4, G5, G6 and the quality-gate defects G7–G11 went in fix
-batches F1–F8; **G3** (offline on the installed PWA) and **G12** (Gate 8, the five-second
-test) were both run by the owner on 2026-09-27 and passed. All six applicable quality gates
-pass and Stage 1 is signed.
-
-When G1 lands, v1 is done on the owner's Stage 2 sign-off, and every request after that is
-EXTRA.
+Classify every request DEFECT or EXTRA. There is no third bucket and no remaining in-scope
+work.
 
 **Three things the gates now pin down, so a future change does not undo them by accident:**
 
