@@ -211,7 +211,7 @@ serving. Read the stamp from Settings, or from the served bundle.
 
 ### `VERIFIED` 2026-09-25
 
-Production serves `sha: 06d2e4b`, and the command above returns nothing.
+Production serves `sha: 61c7c33`, and the command above returns nothing.
 
 Evidence, because a bare 200 means little here: the SPA rewrite returns `index.html` with a
 **200** for any missing asset, so every probe was run against a control. The real entry chunk
