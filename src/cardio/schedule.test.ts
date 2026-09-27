@@ -26,6 +26,27 @@ describe('totalSeconds', () => {
     expect(humanDuration(2400)).toBe('40 min')
   })
 
+  /**
+   * Reported from a real session: 2 rounds of 2:00 with a 0:30 break announced
+   * itself as "5 min". The total was right at 4:30 - Math.round(4.5) was not.
+   * A label that rounds a half-minute up makes correct arithmetic look like it
+   * is counting a break after the final round.
+   */
+  it('never rounds a remainder away, so 4:30 is not announced as 5 min', () => {
+    expect(totalSeconds({ work_seconds: 120, break_seconds: 30, rounds: 2 })).toBe(270)
+    expect(humanDuration(270)).toBe('4 min 30 s')
+  })
+
+  it('keeps whole minutes clean', () => {
+    expect(humanDuration(300)).toBe('5 min')
+    expect(humanDuration(0)).toBe('0 min')
+  })
+
+  it('carries seconds past the hour too', () => {
+    expect(humanDuration(3840)).toBe('1 h 04 min')
+    expect(humanDuration(3870)).toBe('1 h 04 min 30 s')
+  })
+
   it('handles a single round, which has no breaks at all', () => {
     expect(totalSeconds({ work_seconds: 600, break_seconds: 120, rounds: 1 })).toBe(600)
   })

@@ -16,7 +16,7 @@ reasons. Gate 9 is **not applicable** (personal project).
 
 ## SCORECARD
 
-**5 passing · 0 failing · 1 awaiting Stage 2 · 3 waived · 1 N/A**
+**6 passing · 0 failing · 0 outstanding · 3 waived · 1 N/A**
 
 | Gate | Status | Measured | Evidence |
 |---|---|---|---|
@@ -25,7 +25,7 @@ reasons. Gate 9 is **not applicable** (personal project).
 | 6 Motion (adapted) | **PASS** ✔ was FAIL | all 5; reduced-motion honoured under emulation, zero `width` animations | `review/verify-f1-f4.json` |
 | 7 Typography craft | **PASS** ✔ was FAIL | 6.04:1 min contrast, 74-char measure, 8 of 8 primary elements ≥16px, every body size at **1.5** leading, 0 orphans | `review/craft-audit.json` |
 | 10 Accessibility floor | **PASS** | 6.04:1 min contrast, zero failures; **108 of 108 tab stops show the focus ring**; no images; 0.5 Hz max | `review/craft-audit.json`, `review/focus-audit.json` |
-| 8 Five-second test | **NOT MEASURED** | Stage 2 by construction — its protocol is run by the reviewer, not by Claude Code | — |
+| 8 Five-second test | **PASS** | Owner ran the protocol 2026-09-27: 3 of 3 visible cold, inside five seconds, without scrolling | owner-reported |
 | 1 Intent · 4 Distinctiveness · 5 Imagery | **WAIVED** | not passed — see Waivers | — |
 | 9 Behavioural metrics | **N/A** | personal project | — |
 
@@ -212,12 +212,16 @@ you did last time, which set you are on, and what to do next.
 The set-index column also went `w-5` → `w-6`: at 16px two tabular digits need 20px and the
 old column was exactly that, leaving nothing for the arrow a continuation set gets.
 
-## Gate 8 — Five-Second Test · **NOT MEASURED**
+## Gate 8 — Five-Second Test · **PASS** (owner-run, 2026-09-27)
 
 Adapted per the Intent Brief: run against the owner, not three strangers — the app has one
 user and no visitors, so a stranger's reading of it is not evidence about anything.
 
-**Protocol for Stage 2, run by you.** Open `/train` cold, mid-session, and within five seconds
+**Result, 2026-09-27: PASS, 3 of 3.** The owner ran it cold on `/train` and saw all three
+without scrolling: which exercise, what he did last time, and the weight/reps inputs with
+Log set.
+
+**The protocol, for re-running.** Open `/train` cold, mid-session, and within five seconds
 without scrolling confirm you can see: **which exercise you are on**, **what you did last
 time**, and **the weight/reps inputs with Log set**. PASS if all three. Record answers here.
 
@@ -259,7 +263,7 @@ Every gate re-run from scratch against the production bundle after the final fix
 | 7 Typography craft | **PASS** | `review/craft-audit.json` |
 | 10 Accessibility floor | **PASS** | `review/craft-audit.json`, `review/focus-audit.json` |
 | 1, 4, 5 | **WAIVED** | reasons recorded under Waivers |
-| 8 Five-second test | **NOT MEASURED** | Stage 2 by construction — see below |
+| 8 Five-second test | **PASS** | owner-run 2026-09-27, 3 of 3 |
 | 9 Behavioural metrics | **N/A** | personal project |
 
 **Gate 8 cannot pass at Stage 1.** Its own protocol says it is run by the reviewer, not by
@@ -296,6 +300,17 @@ there to look pleasant.
    tag moved.
 
 ## Changelog
+
+**v7 — 2026-09-27 — Gate 8 passed, owner-run.** Three of three, cold, without scrolling. That
+is the last gate; all six applicable gates now pass and none is outstanding.
+
+Reported in the same run: `/cardio` announced a 4:30 session as "5 min". The total was never
+wrong — `totalSeconds` has always been rounds × work + (rounds−1) × breaks — but
+`humanDuration` rounded to whole minutes, so `Math.round(4.5)` produced 5. A label that
+rounds a half-minute up makes correct arithmetic look like it is counting a break after the
+final round. Fixed to carry the remainder; three tests pin it, and they fail if the rounding
+comes back.
+
 
 **v6 — 2026-09-25 — Gate 3 tightened to the fold, and `/food` changed to meet it.** The
 ambiguity flagged in v5 is resolved the strict way at the owner's direction: "per view" means

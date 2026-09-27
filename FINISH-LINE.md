@@ -150,7 +150,7 @@ restated** — that document is the single definition of how each is measured. I
 | D6 | Quality Gate 3 — hierarchy (squint, greyscale, thumbnail) | **PASS** 2026-09-20 — 8 of 8 routes |
 | D7 | Quality Gate 6 — motion, adapted | **PASS** 2026-09-20 |
 | D8 | Quality Gate 7 — typography craft | **PASS** 2026-09-20 |
-| D9 | Quality Gate 8 — five-second test | **NOT MEASURED** — Stage 2 |
+| D9 | Quality Gate 8 — five-second test | **PASS** 2026-09-27 — owner ran it, 3 of 3 |
 | D10 | Quality Gate 10 — accessibility floor | **PASS**, not adjustable |
 | — | Quality Gates 1, 4, 5 | **WAIVED** with written reasons. A waived gate is not a passed gate |
 
@@ -176,7 +176,7 @@ number better than these is EXTRA.
 | O8 | Signed out, every synced table returns zero rows; a signed-out insert is refused | `VERIFIED` met 2026-09-17 — 15/15 tables `200 []`, insert `42501` |
 | O9 | No secret in the bundle: no `service_role`, no sandbox credentials | `VERIFIED` met |
 | O10 | Every interactive control ≥ **44 × 44 px** | `VERIFIED` met 2026-09-19 — 0 controls under 44px across 8 routes × 2 widths, seeded and empty, plus 4 interactive states |
-| O11 | The app loads and renders with the network offline | **PARTIAL** — mechanism proven on desktop, not on the installed PWA. See G3 |
+| O11 | The app loads and renders with the network offline | `VERIFIED` met 2026-09-27 — owner ran it on the installed PWA in aeroplane mode: rendered fully, set saved, pill read offline then cleared on reconnect |
 | O12 | Motion performance bounds — no layout shift from motion (CLS ≤ 0.1) and animations on transform/opacity only. Method in QUALITY-GATES.md, Gate 6d/6e | `VERIFIED` met 2026-09-20 — CLS 0–0.0003; zero `width` animations remain |
 
 ---
@@ -277,7 +277,7 @@ The **only** remaining work in scope. Everything else is EXTRA.
 |---|---|---|---|
 | G1 | **Cardio step 4** — a real 30-minute session on the phone | **OPEN** | Every cue on time · total drift < 2s · correct round count logged · survives one deliberate backgrounding. Recorded in README with the date. |
 | G2 | **O10** — controls below 44px | **CLOSED** `8c45f7e` | Each measured ≥ 44px at 375px |
-| G3 | **O11** — offline on the installed PWA | **PARTIAL** | Load the installed PWA with the network off; the app renders and a set can be logged |
+| G3 | **O11** — offline on the installed PWA | **CLOSED** 2026-09-27 | Owner ran it: 6 of 6 — opened online, aeroplane mode, force-closed, reopened, rendered fully, set saved, pill read *Offline · 1 to sync* then cleared |
 | G4 | **D3** — horizontal-scroll check on `/food`, `/foods`, `/cardio` | **CLOSED** `8c45f7e` | `scrollWidth <= clientWidth` on each |
 | G5 | **D4** — empty-state check on every list | **CLOSED** `8c45f7e` | Each list screen shows a designed empty state with a next action |
 | G6 | **D1** — no hardcoded hex outside `index.css` | **CLOSED** `bdff75f` | A grep returns only token references |
@@ -336,7 +336,7 @@ QUALITY-GATES.md.
 | G9 | **D5 / Gate 2g** — 5 distinct radii against a cap of 3 | **CLOSED** — 3 | F6 |
 | G10 | **D6 / Gate 3a, 3b** — 4 of 8 routes had no dominant interactive element | **CLOSED** — 8 of 8 | F8 |
 | G11 | **D6 / Gate 3c** — the h1 read 4.8px at 20% | **CLOSED** — 5.2px | F7 |
-| G12 | **D9 / Gate 8** — the five-second test | **OPEN** — Stage 2, run by the owner | — |
+| G12 | **D9 / Gate 8** — the five-second test | **CLOSED** 2026-09-27 | Owner ran it: 3 of 3 — exercise, last time's numbers, and the inputs with Log set, all visible cold inside five seconds without scrolling |
 
 Fix batch F1–F4 closed Gate 6 entirely, Gate 7c and Gate 7e on 2026-09-20; F5–F8 closed
 Gates 2, 3 and the rest of 7 the same day. **Stage 1 passed.** The only quality item left is

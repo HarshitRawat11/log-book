@@ -92,9 +92,21 @@ export function mmss(seconds: number): string {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
 
-/** "40 min" / "1 h 04 min", for the pre-session total. */
+/**
+ * "40 min" / "4 min 30 s" / "1 h 04 min", for the pre-session total.
+ *
+ * Never rounds a remainder away. It used to round to whole minutes, so two
+ * rounds of 2:00 with a 0:30 break - a real total of 4:30 - was announced as
+ * "5 min", and the obvious reading of that is that the app counts a break
+ * after the final round. It does not: `totalSeconds` has always been
+ * rounds x work + (rounds-1) x breaks. Only the label was wrong, which is the
+ * worse kind of wrong, because it makes correct arithmetic look broken.
+ */
 export function humanDuration(seconds: number): string {
-  const m = Math.round(seconds / 60)
-  if (m < 60) return `${m} min`
-  return `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')} min`
+  const total = Math.max(0, Math.round(seconds))
+  const s = total % 60
+  const m = Math.floor(total / 60)
+  const tail = s > 0 ? ` ${s} s` : ''
+  if (m < 60) return `${m} min${tail}`
+  return `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')} min${tail}`
 }

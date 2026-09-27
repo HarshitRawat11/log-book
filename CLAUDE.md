@@ -48,21 +48,18 @@ This project has approved quality gates in QUALITY-GATES.md and an intent brief 
 
 ## What is still in scope
 
-The gap in FINISH-LINE.md §5, and nothing else. As of 2026-09-19 that is **two items, both
-needing the phone**:
+The gap in FINISH-LINE.md §5, and nothing else. As of **2026-09-27 that is one item**:
 
-- **G1** — cardio step 4: a real 30-minute session, cues on time, drift < 2s, survives one
-  backgrounding.
-- **G3** — offline on the *installed* PWA. The mechanism is proven on desktop; the stated
-  configuration is not.
+- **G1** — cardio step 4: a real **30-minute** session on the phone, cues on time, total drift
+  under 2s, correct round count, survives one deliberate backgrounding.
 
-G2, G4, G5 and G6 are closed. So are the quality-gate defects **G7–G11** — fix batches F1–F8
-landed on 2026-09-20 and **Stage 1 passed**. Gates 2, 3, 6, 7 and 10 pass.
+Everything else is closed. G2, G4, G5, G6 and the quality-gate defects G7–G11 went in fix
+batches F1–F8; **G3** (offline on the installed PWA) and **G12** (Gate 8, the five-second
+test) were both run by the owner on 2026-09-27 and passed. All six applicable quality gates
+pass and Stage 1 is signed.
 
-**G12 is the one quality item left:** Gate 8, the five-second test. Its protocol is run by the
-owner, not by Claude, so it cannot be closed from here.
-
-When G1, G3 and G12 land, v1 is done and every request is EXTRA.
+When G1 lands, v1 is done on the owner's Stage 2 sign-off, and every request after that is
+EXTRA.
 
 **Three things the gates now pin down, so a future change does not undo them by accident:**
 
