@@ -1,10 +1,10 @@
-# FINISH-LINE.md — v1.2 · LOCKED
+# FINISH-LINE.md — v1.3 · LOCKED
 
 | | |
 |---|---|
-| **Version** | **v1.2** |
-| **Locked** | **2026-09-27**, tagged `v1.2` |
-| **Previously** | v1.1 quality gates 2026-09-20 · v1.2 rest timer removed 2026-09-22 · v1.0 locked 2026-09-19, tagged `v1.0` at `d956164`, deliberately left where it is |
+| **Version** | **v1.3** |
+| **Locked** | **2026-09-28**, tagged `v1.3` |
+| **Previously** | v1.2 locked 2026-09-27, tagged `v1.2` · v1.1 quality gates 2026-09-20 · v1.0 locked 2026-09-19, tagged `v1.0` at `d956164`. Earlier tags are deliberately left where they are |
 | **Completion authority** | Harshit Rawat, sign-off alone (personal project) |
 | **Acceptance status** | **SIGNED OFF** — gap empty, all six applicable quality gates pass |
 | **Stage 2** | **PASSED 2026-09-27**, on the owner's instruction to close G1 and move on. Basis recorded under G1 below |
@@ -184,10 +184,13 @@ number better than these is EXTRA.
 
 ## 2. Deployment criterion
 
-**The app is deployed at https://log-book-hr.netlify.app, responds 200, and nothing that
+**The app is deployed at https://log-book-hr.pages.dev, responds 200, and nothing that
 ships has changed since the deployed build.**
 
 **This URL is final for v1. No custom domain is required.**
+
+*Host changed 2026-09-28*, Netlify → Cloudflare Pages, under UNFREEZE. The old
+`log-book-hr.netlify.app` stays up as a rollback until Cloudflare has proven itself.
 
 ### The check, in one command
 
@@ -210,9 +213,10 @@ serving. Read the stamp from Settings, or from the served bundle.
 > predating the last source change it returns that change; run against the deployed commit it
 > returns nothing.
 
-### `VERIFIED` 2026-09-25
+### `VERIFIED` 2026-09-28
 
-Production serves `sha: 61c7c33`, and the command above returns nothing.
+Production serves `sha: cc59a45` at **https://log-book-hr.pages.dev**, and the command above
+returns nothing.
 
 Evidence, because a bare 200 means little here: the SPA rewrite returns `index.html` with a
 **200** for any missing asset, so every probe was run against a control. The real entry chunk
@@ -382,6 +386,21 @@ CI, so the commit is the only durable marker of what "v1" pointed at.
 ---
 
 ## Changelog
+
+**v1.3 — LOCKED 2026-09-28 — hosting moved to Cloudflare Pages, under UNFREEZE.** §2 named
+the Netlify URL as final for v1, so changing host changed a written criterion. The URL, the
+deploy command and the verification note are updated; nothing else in the definition moved.
+
+No application code changed — `authRedirectTo()` derives from `window.location.origin`, so
+nothing hardcoded the host. `netlify.toml` became `public/_headers` and `public/_redirects`,
+carrying the same four load-bearing rules, and `netlify.toml` is retained rollback-only while
+the Netlify site stays up.
+
+Two consequences of the origin change that are not the document's business but are recorded
+because they can cost data: **IndexedDB is per-origin**, so anything unsynced on
+`netlify.app` does not travel and must be flushed before the switch; and the Supabase
+redirect allowlist has to name the new origin or every magic link fails.
+
 
 **v1.2 — LOCKED 2026-09-27.** The gap is empty and Stage 2 passed. G3 and G12 were run by the
 owner and passed outright; G1 was closed by the owner on partial evidence, and §5 records

@@ -1,14 +1,19 @@
 # CLAUDE.md — log-book
 
 v1 of this project was frozen on **2026-09-19**, amended to **v1.1** on **2026-09-20** to add
-quality gates as v1 criteria, and to **v1.2** on **2026-09-22** to remove the rest timer from
-scope. The finish line is written in
+quality gates as v1 criteria, to **v1.2** on **2026-09-22** to remove the rest timer from
+scope, and to **v1.3** on **2026-09-28** to move hosting to Cloudflare Pages. The finish line is written in
 [FINISH-LINE.md](FINISH-LINE.md) and that document is the only source of truth for what is in
 scope. Read it before acting on any request.
 
-**v1.2 is LOCKED as of 2026-09-27**, tagged `v1.2`. The gap is empty, all six applicable
-quality gates pass, and Stage 2 is signed. The `v1.0` tag was left at `d956164` rather than
-moved, so both lines stay findable.
+**v1.3 is LOCKED as of 2026-09-28**, tagged `v1.3`. The gap is empty, all six applicable
+quality gates pass, and Stage 2 is signed. Earlier tags are left where they are, so every
+locked line stays findable.
+
+Hosting is **Cloudflare Pages** — `https://log-book-hr.pages.dev`, deployed with
+`wrangler pages deploy dist --project-name=log-book-hr`, config in `public/_headers` and
+`public/_redirects`. `_headers` has no line continuation: the CSP must stay on one line or it
+silently degrades. Netlify is retained as a rollback only.
 
 **Every request from here is EXTRA** unless it names a criterion written in FINISH-LINE.md.
 

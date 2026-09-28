@@ -788,73 +788,79 @@ risk to the one flow that must never break.
 
 ## Deployment
 
-Netlify, site `log-book-hr` → **https://log-book-hr.netlify.app**
+Cloudflare Pages, project `log-book-hr` -> **https://log-book-hr.pages.dev**
 
-(`log-book.netlify.app` was already taken by someone else, hence the suffix.)
-
-Deploys are manual and from a local build — there is no git integration and no
-CI, deliberately, while the app is still being built out phase by phase:
+Moved from Netlify on 28 Sep 2026. Deploys are still **manual and from a local build** — no
+git integration and no CI, deliberately, which is why the project is a direct-upload one
+rather than Git-connected like the others on the account.
 
 ```bash
 git commit ...      # commit FIRST: the build stamps git HEAD into the bundle
 npm run build
-npx netlify-cli deploy --prod --dir=dist --site=d30fc361-f894-43cd-89f2-9b2e7a38200b
+npx wrangler pages deploy dist --project-name=log-book-hr --branch=main --commit-dirty=true
 ```
 
-`--site` takes the project **ID**, not the name. Passing `log-book-hr` fails with
-`Failed retrieving site data ... Not Found`, which reads like a login problem and is not
-one — `netlify-cli status` will happily confirm you are signed in. `netlify-cli sites:list`
-prints the ID.
+`--commit-dirty=true` only silences a warning about deploying with uncommitted changes; the
+stamp still comes from HEAD, so committing first is what actually matters.
 
-### If `--prod` returns `JSONHTTPError: Forbidden`
+### Two config files, not a TOML
 
-First seen 14 Sep 2026, after several successful deploys the same day; **again on 17 Sep, and
-again on 20 Sep**. Three occurrences and no successful `--prod` since: treat the draft-then-
-promote route below as *the* way this site deploys, not as a fallback. The account is fine — still signed in,
-site `state: current`, no stuck deploy, nothing over its limit — and a **draft deploy of the
-identical directory succeeds**. Only the production publish is refused, so it is something
-server-side rather than anything in this repo.
+Cloudflare reads `public/_headers` and `public/_redirects`, which Vite copies to `dist/`
+verbatim. They carry what `netlify.toml` used to:
 
-Deploy as a draft, verify it, then promote that deploy id:
-
-```bash
-npx netlify-cli deploy --dir=dist --site=<site-id>        # prints a deploy id + preview URL
-npx netlify-cli api restoreSiteDeploy --data '{"site_id":"<site-id>","deploy_id":"<id>"}'
-```
-
-The promoted deploy serves correctly at the production URL, but keeps
-`context: deploy-preview` in the API, so do not read that field as evidence of what is
-live — check `getSite`'s `published_deploy.id`, or just fetch the build stamp.
-
-Settings shows that stamp. With `registerType: 'prompt'` a phone keeps serving
-the old bundle until the update pill is tapped, so "the screen looks wrong" and
-"I am on last week's build" are otherwise indistinguishable. Settings also has a
-**Check for updates** button as the manual escape hatch.
-
-`netlify.toml` carries the parts that are easy to get wrong:
-
-- **SPA rewrite** (`/* → /index.html 200`). Without it `/auth/callback` 404s,
-  which breaks every magic link, since that is the URL the email points at.
-- **`Content-Type` for `/manifest.webmanifest`.** Netlify does not recognise the
-  extension and serves it as `application/octet-stream`; Chrome then ignores the
-  manifest and silently drops the install prompt, with no error anywhere.
-- **`Cache-Control: must-revalidate` on `/sw.js` and `/index.html`**, so a deploy
-  actually reaches a phone that already registered the old service worker.
+- **SPA rewrite** (`/* /index.html 200`). Without it `/auth/callback` 404s, which breaks
+  every magic link, since that is the URL the email points at.
 - **CSP** pinning `connect-src` to Supabase and Open Food Facts.
+- **`Content-Type` for `/manifest.webmanifest`.** Netlify served it as octet-stream and
+  Chrome silently dropped the install prompt. Cloudflare gets it right unprompted, but it is
+  pinned anyway and verified after each deploy — a wrong value here is invisible until the
+  install prompt quietly stops appearing.
+- **`must-revalidate` on `/sw.js` and `/index.html`**, so a deploy reaches a phone that
+  already registered the old service worker. `immutable` on `/assets/*`, which are hashed.
 
-Note that new sites on this Netlify account inherit `site_sso_login = true` from
-the account default, which puts them behind an SSO gate and returns 401 to
-everyone. This site has `sso_login` disabled at site level; the account default
-is untouched, so any *new* site will need the same treatment.
+**`_headers` has no line continuation.** The CSP must stay on one line however long it grows:
+a wrapped value is read as a new rule and the policy degrades with no error.
 
-### Supabase auth URLs
+`netlify.toml` is retained, marked rollback-only, while the Netlify site stays up as a
+fallback. Delete both once Cloudflare has proven itself.
 
-Magic links only work for origins Supabase knows about. In
-**Authentication → URL Configuration**:
+### What the move cost, and what it did not
 
-- **Site URL**: `https://log-book-hr.netlify.app`
-- **Redirect URLs**: `https://log-book-hr.netlify.app/auth/callback`,
-  plus `http://localhost:5173/auth/callback` for local development.
+**No application code changed.** `authRedirectTo()` derives from `window.location.origin`, so
+nothing hardcoded the host.
+
+**The origin changed, and that is not free.** IndexedDB is per-origin, so the phone's data
+under `log-book-hr.netlify.app` does not travel to `pages.dev`. Anything still sitting in the
+outbox on the old origin has to be flushed *before* switching, not after — it is otherwise
+stranded on a host nobody opens again. The Supabase redirect allowlist also has to name the
+new origin, or every magic link fails.
+
+### Verifying a deploy
+
+A bare 200 proves nothing here: the SPA rewrite returns `index.html` with a 200 for any
+missing path, so every probe needs a control. After the 28 Sep deploy the real entry chunk
+came back as `application/javascript` at 58,952 bytes and a deliberately nonexistent one as
+`text/html` at 910 — which is what makes the rest meaningful. All ten routes 200, the build
+stamp inside the served Settings chunk matching HEAD, `manifest.webmanifest` as
+`application/manifest+json`, `must-revalidate` on `/sw.js`, `immutable` on hashed assets, and
+all eleven CSP directives intact with `connect-src` carrying both Supabase and both Open Food
+Facts hosts.
+
+Settings shows the build stamp. With `registerType: 'prompt'` a phone keeps serving the old
+bundle until the update pill is tapped, so "the screen looks wrong" and "I am on last week's
+build" are otherwise indistinguishable. Settings also has a **Check for updates** button as
+the manual escape hatch.
+
+### The Netlify years, kept as a note
+
+`netlify deploy --prod` refused with `JSONHTTPError: Forbidden` on 14, 17, 20, 22, 25 and
+27 Sep 2026 — six times, never once succeeding. A draft deploy of the identical directory
+always worked, so the route was `netlify deploy` followed by
+`netlify api restoreSiteDeploy` to promote the id. The account was fine throughout: signed
+in, site `state: current`, nothing over a limit. It was server-side and never explained.
+Recorded because it cost real time to diagnose the first time, and because it is one of the
+reasons the host changed.
+
 
 ## Phase status
 
