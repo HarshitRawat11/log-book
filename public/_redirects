@@ -1,0 +1,8 @@
+# Single-page app. Every unmatched path serves index.html so React Router can
+# resolve it client-side. Without this a hard load of /train — or, far worse,
+# the magic-link landing at /auth/callback — returns 404, and 404 on the
+# callback breaks every sign-in.
+#
+# Cloudflare Pages matches real files first, so /sw.js, /manifest.webmanifest
+# and /icon-*.png are still served as themselves rather than swallowed here.
+/*    /index.html   200

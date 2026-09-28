@@ -1,3 +1,9 @@
+# RETAINED FOR ROLLBACK ONLY. Hosting moved to Cloudflare Pages on 2026-09-28;
+# the live equivalents are public/_headers and public/_redirects. This file is
+# kept while the Netlify site stays up as a fallback, so a rollback deploy has
+# its configuration rather than having to reconstruct it under pressure.
+# Delete it, and the Netlify site, once Cloudflare has proven itself.
+
 [build]
   command = "npm run build"
   publish = "dist"
