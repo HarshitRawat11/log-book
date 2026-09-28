@@ -821,8 +821,8 @@ verbatim. They carry what `netlify.toml` used to:
 **`_headers` has no line continuation.** The CSP must stay on one line however long it grows:
 a wrapped value is read as a new rule and the policy degrades with no error.
 
-`netlify.toml` is retained, marked rollback-only, while the Netlify site stays up as a
-fallback. Delete both once Cloudflare has proven itself.
+`netlify.toml` and the Netlify site are both gone, removed on 28 Sep 2026 once sign-in was
+confirmed working on the new origin. There is one host and one config.
 
 ### What the move cost, and what it did not
 

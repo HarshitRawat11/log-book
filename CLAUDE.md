@@ -13,7 +13,7 @@ locked line stays findable.
 Hosting is **Cloudflare Pages** — `https://log-book-hr.pages.dev`, deployed with
 `wrangler pages deploy dist --project-name=log-book-hr`, config in `public/_headers` and
 `public/_redirects`. `_headers` has no line continuation: the CSP must stay on one line or it
-silently degrades. Netlify is retained as a rollback only.
+silently degrades. Netlify is gone - site deleted and `netlify.toml` removed on 2026-09-28.
 
 **Every request from here is EXTRA** unless it names a criterion written in FINISH-LINE.md.
 

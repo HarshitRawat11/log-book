@@ -189,8 +189,9 @@ ships has changed since the deployed build.**
 
 **This URL is final for v1. No custom domain is required.**
 
-*Host changed 2026-09-28*, Netlify → Cloudflare Pages, under UNFREEZE. The old
-`log-book-hr.netlify.app` stays up as a rollback until Cloudflare has proven itself.
+*Host changed 2026-09-28*, Netlify → Cloudflare Pages, under UNFREEZE. The Netlify site and
+`netlify.toml` were both removed the same day, once sign-in was proven on the new origin.
+There is one host.
 
 ### The check, in one command
 
@@ -198,7 +199,7 @@ The build stamp is baked into the bundle and shown on the Settings screen. Produ
 when no commit after that stamp touches anything the bundle is built from:
 
 ```bash
-git log --oneline <deployed-stamp>..HEAD -- src public index.html vite.config.ts tsconfig.json package.json package-lock.json netlify.toml
+git log --oneline <deployed-stamp>..HEAD -- src public index.html vite.config.ts tsconfig.json package.json package-lock.json
 ```
 
 **Empty output passes.** Any line is a defect — shipped code exists that production is not
@@ -393,8 +394,8 @@ deploy command and the verification note are updated; nothing else in the defini
 
 No application code changed — `authRedirectTo()` derives from `window.location.origin`, so
 nothing hardcoded the host. `netlify.toml` became `public/_headers` and `public/_redirects`,
-carrying the same four load-bearing rules, and `netlify.toml` is retained rollback-only while
-the Netlify site stays up.
+carrying the same four load-bearing rules. Both the Netlify site and `netlify.toml` were
+removed later the same day, after sign-in was confirmed working on the new origin.
 
 Two consequences of the origin change that are not the document's business but are recorded
 because they can cost data: **IndexedDB is per-origin**, so anything unsynced on
