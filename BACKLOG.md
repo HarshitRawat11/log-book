@@ -14,4 +14,4 @@ Pre-freeze suggestions that never shipped are not repeated here. They are listed
 | Date | Item | Source |
 |---|---|---|
 | 2026-09-22 | ~~Remove the rest timer from the training session.~~ **Done same day** under UNFREEZE — it deleted a criterion, so FINISH-LINE.md went to v1.2. | user |
-| 2026-09-28 | Move the Postgres migration-test harness (`prelude.sql`, the throwaway Supabase stub) into the repo as a script. It currently lives in a session temp directory that will evaporate, and it is what keeps untested SQL off the live database. | Claude |
+| 2026-09-28 | ~~Move the Postgres migration-test harness into the repo as a script.~~ **Done same day** — `npm run verify:migrations`, with `supabase/test/prelude.sql`. | Claude |

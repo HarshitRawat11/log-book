@@ -92,6 +92,37 @@ our payload and Postgres. `db/schema.test.ts` reads the migration SQL instead an
 that `pkOf` names a column which actually exists, that `profile` has no `id`, that every
 other synced table does, and that all of them carry `user_id`, `updated_at` and `deleted_at`.
 
+### Migrations are applied to a real Postgres before they are proposed
+
+```bash
+npm run verify:migrations     # needs Docker running
+```
+
+Spins up `postgres:17`, applies `supabase/test/prelude.sql` — a stand-in for the parts of
+Supabase the migrations reference, so the migration files run **unmodified** rather than a
+doctored copy — then applies every migration in order and checks three invariants:
+
+- **RLS is enabled *and* forced on every public table.** 15 of 15.
+- **Every table carries `user_id`, `updated_at`, `deleted_at`**, which the outbox assumes.
+- **One user cannot see another's rows.** The prelude's `auth.uid()` reads a session GUC
+  rather than a JWT, so the harness can hold both identities: insert as user A, switch to
+  user B, count zero.
+
+That last one is the check the deployed app cannot make about itself. Against the live
+project a signed-out read returns zero rows — but zero rows is also what a typo returns, and
+RLS answers `42501` *before* any constraint error, so from the client a working policy and a
+broken query look identical. It is also why migration `0005`'s `set_type` constraint sat
+unverified for eleven days: it could not be exercised through PostgREST at all.
+
+This complements `src/db/schema.test.ts` rather than replacing it. That test reads the
+migration SQL with regexes, runs in vitest anywhere, and needs no Docker. It cannot catch
+what only Postgres discovers at execution time — a constraint that does not compile, an
+`alter table` against a column renamed two migrations earlier, a policy referencing a
+missing function. This script runs the SQL.
+
+Exit code is 0 or 1, and the container is torn down on exit including on Ctrl-C. Verified to
+discriminate: adding a table with no RLS and no sync columns fails two checks by name.
+
 ### Accepted limitation: last-write-wins
 
 Conflict resolution is **last-write-wins on `updated_at`**, which is set by the client.

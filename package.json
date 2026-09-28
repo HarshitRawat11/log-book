@@ -11,7 +11,8 @@
     "icons": "node scripts/generate-icons.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
-    "ifct": "node scripts/generate-ifct.mjs"
+    "ifct": "node scripts/generate-ifct.mjs",
+    "verify:migrations": "node scripts/verify-migrations.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.116.0",
