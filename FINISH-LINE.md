@@ -177,7 +177,7 @@ number better than these is EXTRA.
 | O8 | Signed out, every synced table returns zero rows; a signed-out insert is refused | `VERIFIED` met 2026-09-17 — 15/15 tables `200 []`, insert `42501` |
 | O9 | No secret in the bundle: no `service_role`, no sandbox credentials | `VERIFIED` met |
 | O10 | Every interactive control ≥ **44 × 44 px** | `VERIFIED` met 2026-09-19 — 0 controls under 44px across 8 routes × 2 widths, seeded and empty, plus 4 interactive states |
-| O11 | The app loads and renders with the network offline | `VERIFIED` met 2026-09-27 — owner ran it on the installed PWA in aeroplane mode: rendered fully, set saved, pill read offline then cleared on reconnect |
+| O11 | The app loads and renders with the network offline | `VERIFIED` met 2026-09-27 — owner ran it in a **Chrome tab** in aeroplane mode: rendered fully, set saved, pill read offline then cleared on reconnect. The installed-PWA configuration is untested — see §5 G3 |
 | O12 | Motion performance bounds — no layout shift from motion (CLS ≤ 0.1) and animations on transform/opacity only. Method in QUALITY-GATES.md, Gate 6d/6e | `VERIFIED` met 2026-09-20 — CLS 0–0.0003; zero `width` animations remain |
 
 ---
@@ -283,7 +283,7 @@ The **only** remaining work in scope. Everything else is EXTRA.
 |---|---|---|---|
 | G1 | **Cardio step 4** — a real 30-minute session on the phone | **CLOSED** 2026-09-27, accepted by the owner on partial evidence | See the note below |
 | G2 | **O10** — controls below 44px | **CLOSED** `8c45f7e` | Each measured ≥ 44px at 375px |
-| G3 | **O11** — offline on the installed PWA | **CLOSED** 2026-09-27 | Owner ran it: 6 of 6 — opened online, aeroplane mode, force-closed, reopened, rendered fully, set saved, pill read *Offline · 1 to sync* then cleared |
+| G3 | **O11** — offline on the phone | **CLOSED** 2026-09-27 | Owner ran it in a **Chrome tab**: 6 of 6 — opened online, aeroplane mode, force-closed, reopened, rendered fully, set saved, pill read *Offline · 1 to sync* then cleared |
 | G4 | **D3** — horizontal-scroll check on `/food`, `/foods`, `/cardio` | **CLOSED** `8c45f7e` | `scrollWidth <= clientWidth` on each |
 | G5 | **D4** — empty-state check on every list | **CLOSED** `8c45f7e` | Each list screen shows a designed empty state with a next action |
 | G6 | **D1** — no hardcoded hex outside `index.css` | **CLOSED** `bdff75f` | A grep returns only token references |
@@ -322,10 +322,26 @@ control and precached 29 entries including `/index.html`, the origin was then **
 A set was logged with the origin dead: `sets` 1 → 2, `outbox` 0 → 1. With `navigator.onLine`
 forced false the sync pill read *"Offline · 1 to sync"*.
 
-`NOT VERIFIED`: the criterion says **the installed PWA with the network off**. This was
-desktop Chrome with one origin unreachable while the machine still had a network. The
-mechanism is proven; the stated configuration is not. G3 stays open, and it is an
-owner-phone task alongside G1.
+`NOT VERIFIED` at that point: the desktop run was Chrome with one origin unreachable while
+the machine still had a network. The mechanism was proven; the stated configuration was not,
+so G3 stayed open as an owner-phone task alongside G1.
+
+**Closed on the phone, 2026-09-27:** opened online, aeroplane mode, force-closed, reopened —
+rendered fully, a set saved, the pill read *Offline · 1 to sync* and cleared on reconnect. Six
+of six.
+
+**Corrected 2026-09-29.** That run was a **Chrome tab**, not an installed PWA, and the rows
+above claimed "installed PWA" until the owner corrected it. The app has never been installed
+to a home screen, so the installed configuration remains **untested**. Written down rather
+than quietly reworded, because this very section had already refused one result for exactly
+this reason — it would be a poor section that then accepted the same substitution in its own
+favour.
+
+What bounds the residual risk: the live service worker registers a `NavigationRoute` bound to
+precached `index.html`, so a cold launch at `/` from a home-screen icon resolves through the
+same handler as the tab reload that was tested. Aeroplane mode is also a **stricter** network
+condition than the desktop run it replaced — no network at all, rather than one dead origin.
+What is untested is the launch path, not the offline mechanism.
 
 **The gap is empty.**
 
@@ -387,6 +403,12 @@ CI, so the commit is the only durable marker of what "v1" pointed at.
 ---
 
 ## Changelog
+
+**Correction — 2026-09-29. No criterion changed; only the record of how one was tested.** O11
+and G3 stated that the offline test was run **on the installed PWA**. The owner confirmed it
+was a **Chrome tab** — the app has never been installed to a home screen. §5 G3 now says so,
+and states what consequently remains untested. This corrects evidence, not scope, so the
+version stays **v1.3** and the `v1.3` tag is not moved.
 
 **v1.3 — LOCKED 2026-09-28 — hosting moved to Cloudflare Pages, under UNFREEZE.** §2 named
 the Netlify URL as final for v1, so changing host changed a written criterion. The URL, the

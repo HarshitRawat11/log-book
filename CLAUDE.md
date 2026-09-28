@@ -59,8 +59,8 @@ This project has approved quality gates in QUALITY-GATES.md and an intent brief 
 **Nothing.** The gap in FINISH-LINE.md §5 is empty as of 2026-09-27 and v1 is done.
 
 G2, G4, G5, G6 and the quality-gate defects G7–G11 closed in fix batches F1–F8. **G3**
-(offline on the installed PWA) and **G12** (Gate 8, the five-second test) were run by the
-owner and passed outright. **G1** (the 30-minute cardio session) was closed by the owner on
+(offline on the phone, in a Chrome tab — the app has never been installed) and **G12**
+(Gate 8, the five-second test) were run by the owner and passed outright. **G1** (the 30-minute cardio session) was closed by the owner on
 partial evidence — a 4:30 run — and §5 records what that did and did not exercise. Do not
 re-open it silently; if cue drift over a long session is ever suspected, that note is the
 place to start.
